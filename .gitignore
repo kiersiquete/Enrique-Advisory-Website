@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.playwright-cli/
+output/
+storage/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Local reference/context files used during build, not app source
+message*.txt
+*.xlsx
+*.pdf
+!public/resources/*.pdf
+.vercel
