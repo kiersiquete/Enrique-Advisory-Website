@@ -1,15 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { jsPDF } from "jspdf";
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip
-} from "recharts";
 import {
   ArrowLeft,
   ArrowRight,
@@ -50,6 +40,8 @@ import {
 import { buildFollowUpMessage } from "./utils/messageGenerator.js";
 import { calculateResults, roundedScore } from "./utils/results.js";
 
+const RadarPanel = lazy(() => import("./components/RadarPanel.jsx"));
+
 const STORAGE_KEY = "family-business-maturity-latest";
 const GROUP_STORAGE_KEY = "family-business-maturity-groups";
 const ASSESSMENT_DRAFT_STORAGE_KEY = "family-business-maturity-draft";
@@ -63,17 +55,6 @@ const COMPARISON_COLORS = [
   { line: "#C4713A", soft: "rgba(196, 113, 58, 0.12)" },
   { line: "#2E7C73", soft: "rgba(46, 124, 115, 0.12)" }
 ];
-
-const MOBILE_RADAR_LABELS = {
-  en: {
-    "family-governance": "Bodies",
-    management: "Mgmt."
-  },
-  es: {
-    "family-governance": "Órganos",
-    "next-generation": "Sig. gen."
-  }
-};
 
 function useViewportMatch(query) {
   const [matches, setMatches] = useState(() => {
@@ -110,6 +91,7 @@ const RESULT_DETAIL_COPY = {
     implementationGapBody:
       "After the diagnosis, most families can see the problem and even agree on the solution. The harder part is execution: who leads the work, how decisions are financed, how much time the family can commit, and how to keep momentum when sensitive conversations appear. Gilbert's role is to help convert insight into a sequence of conversations, agreements, and practical governance work.",
     priorityAreas: "Priority areas",
+    loadingChart: "Loading chart...",
     strongestAreas: "Relative strengths",
     noPriority: "No urgent low-score pillar appeared. The next step is refinement and continuity.",
     pdfTitle: "Family Business Maturity Diagnostic Report",
@@ -170,6 +152,7 @@ const RESULT_DETAIL_COPY = {
     implementationGapBody:
       "Después del diagnóstico, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es ejecutar: quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo sostener el avance cuando aparecen conversaciones sensibles. El rol de Gilbert es ayudar a convertir el diagnóstico en una secuencia de conversaciones, acuerdos y trabajo práctico de gobierno.",
     priorityAreas: "Áreas prioritarias",
+    loadingChart: "Cargando gráfica...",
     strongestAreas: "Fortalezas relativas",
     noPriority: "No apareció un pilar con urgencia baja. El siguiente paso es refinamiento y continuidad.",
     pdfTitle: "Reporte de Diagnóstico de Madurez para Empresas Familiares",
@@ -3731,7 +3714,15 @@ function ResultsScreen({
         </section>
 
         <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
-          <RadarPanel result={result} language={language} />
+          <Suspense
+            fallback={
+              <div className="grid h-[280px] w-full place-items-center text-sm font-semibold text-muted sm:h-[430px]">
+                {detailCopy.loadingChart}
+              </div>
+            }
+          >
+            <RadarPanel result={result} language={language} />
+          </Suspense>
           <div className="mt-4 border-t border-forest/10 pt-4">
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
               {detailCopy.priorityAreas}
@@ -4806,77 +4797,6 @@ function ScoreRing({ score }) {
   );
 }
 
-function RadarPanel({ result, language }) {
-  const isMobile = useViewportMatch("(max-width: 640px)");
-  const data = useMemo(
-    () =>
-      PILLARS.map((pillar) => ({
-        label: isMobile
-          ? MOBILE_RADAR_LABELS[language]?.[pillar.id] ?? pillar.shortLabels[language]
-          : pillar.shortLabels[language],
-        score: roundedScore(result.pillarScores.find((item) => item.id === pillar.id).score)
-      })),
-    [isMobile, language, result]
-  );
-  const chartConfig = isMobile
-    ? {
-        className: "h-[280px] w-full",
-        margin: { top: 18, right: 44, bottom: 18, left: 44 },
-        outerRadius: "90%",
-        angleTick: { fill: "#1C3D2E", fontSize: 13, fontWeight: 500 },
-        radiusTick: { fill: "#6B6B5F", fontSize: 11, dx: -7, dy: 6 }
-      }
-    : {
-        className: "h-[260px] w-full sm:h-[430px]",
-        margin: { top: 24, right: 34, bottom: 24, left: 34 },
-        outerRadius: "74%",
-        angleTick: { fill: "#1C3D2E", fontSize: 12, fontWeight: 500 },
-        radiusTick: { fill: "#6B6B5F", fontSize: 12, dx: -10, dy: 8 }
-      };
-
-  return (
-    <div className={chartConfig.className}>
-      <ResponsiveContainer width="100%" height="100%">
-        <RadarChart
-          data={data}
-          outerRadius={chartConfig.outerRadius}
-          margin={chartConfig.margin}
-        >
-          <PolarGrid stroke="#ded7ca" />
-          <PolarAngleAxis
-            dataKey="label"
-            tick={chartConfig.angleTick}
-            tickLine={false}
-          />
-          <PolarRadiusAxis
-            angle={78}
-            domain={[0, 100]}
-            axisLine={false}
-            tick={chartConfig.radiusTick}
-            tickCount={6}
-          />
-          <Tooltip
-            cursor={false}
-            contentStyle={{
-              borderRadius: 12,
-              border: "1px solid rgba(28, 61, 46, 0.14)",
-              color: "#2A2A2A"
-            }}
-          />
-          <Radar
-            dataKey="score"
-            stroke="#1C3D2E"
-            fill="#1C3D2E"
-            fillOpacity={0.24}
-            strokeWidth={2}
-            isAnimationActive
-          />
-        </RadarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
 function FollowUpGenerator({ copy, language, latestResult, copied, onCopy, onBack }) {
   const [stageId, setStageId] = useState(latestResult?.result?.stage?.id ?? "emerging");
   const [familyName, setFamilyName] = useState("");
@@ -5047,7 +4967,8 @@ async function persistResult(resultPackage) {
   }
 }
 
-function downloadPdfSummary(resultPackage, language) {
+async function downloadPdfSummary(resultPackage, language) {
+  const { jsPDF } = await import("jspdf");
   const copy = COPY[language];
   const { result } = resultPackage;
   const detailCopy = getResultDetailCopy(language);
