@@ -10,15 +10,11 @@ import {
   Compass,
   Copy,
   Download,
-  Facebook,
   Handshake,
   Landmark,
   Linkedin,
   Mail,
-  MapPin,
   Menu,
-  MessageCircle,
-  Phone,
   RefreshCcw,
   Scale,
   Search,
@@ -32,12 +28,9 @@ import {
   FULL_QUESTIONS,
   LANGUAGES,
   PILLARS,
-  SHORT_QUESTIONS,
-  STAGES,
   SUPPORT_MESSAGE,
   UNKNOWN_ANSWER
 } from "./data/assessment.js";
-import { buildFollowUpMessage } from "./utils/messageGenerator.js";
 import { calculateResults, roundedScore } from "./utils/results.js";
 
 const RadarPanel = lazy(() => import("./components/RadarPanel.jsx"));
@@ -47,9 +40,6 @@ const GROUP_STORAGE_KEY = "family-business-maturity-groups";
 const ASSESSMENT_DRAFT_STORAGE_KEY = "family-business-maturity-draft";
 const COOKIE_CONSENT_KEY = "gilbert_devlyn_cookie_consent";
 const MAX_GROUP_PARTICIPANTS = 3;
-const BOOKING_URL =
-  "https://api.leadconnectorhq.com/widget/bookings/family-advisory-consultation";
-
 const COMPARISON_COLORS = [
   { line: "#1C3D2E", soft: "rgba(28, 61, 46, 0.1)" },
   { line: "#C4713A", soft: "rgba(196, 113, 58, 0.12)" },
@@ -109,10 +99,10 @@ const RESULT_DETAIL_COPY = {
       "Execution challenge: implementation usually requires time, facilitation, budget, and agreement across generations or ownership branches.",
       "Gilbert's role: help the family prioritize, facilitate the right conversations, and translate decisions into a realistic governance roadmap."
     ],
-    bookingCtaTitle: "Book a conversation with Gilbert",
+    bookingCtaTitle: "Request a conversation with Gilbert",
     bookingCtaBody:
-      "Use this report as the starting point for a focused family governance conversation. Gilbert can help decide what should be discussed first, who should be involved, and how to move from agreement to execution.",
-    bookingCtaButton: "Book a call with Gilbert",
+      "Use this report as the starting point for a focused family governance conversation. Share your result and contact details so Gilbert can follow up personally.",
+    bookingCtaButton: "Request follow-up",
     reportNote:
       "This report is a reflection tool. It is not an audit, legal opinion, or valuation. It is designed to help the family decide what to discuss next.",
     scoreBands: {
@@ -170,10 +160,10 @@ const RESULT_DETAIL_COPY = {
       "Reto de ejecución: implementar suele requerir tiempo, facilitación, presupuesto y acuerdo entre generaciones o ramas propietarias.",
       "Rol de Gilbert: ayudar a priorizar, facilitar las conversaciones correctas y traducir decisiones en una ruta de gobierno realista."
     ],
-    bookingCtaTitle: "Agenda una conversación con Gilbert",
+    bookingCtaTitle: "Solicita una conversación con Gilbert",
     bookingCtaBody:
-      "Usa este reporte como punto de partida para una conversación enfocada de gobierno familiar. Gilbert puede ayudar a decidir qué conversar primero, quién debe participar y cómo pasar del acuerdo a la ejecución.",
-    bookingCtaButton: "Agendar llamada con Gilbert",
+      "Usa este reporte como punto de partida para una conversación enfocada de gobierno familiar. Comparte tu resultado y datos de contacto para que Gilbert te busque personalmente.",
+    bookingCtaButton: "Solicitar seguimiento",
     reportNote:
       "Este reporte es una herramienta de reflexión. No es una auditoría, opinión legal ni valuación. Está diseñado para ayudar a la familia a decidir qué conversar después.",
     scoreBands: {
@@ -776,8 +766,6 @@ export default function App() {
   const [assessmentDraft, setAssessmentDraft] = useState(loadAssessmentDraft);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [groupRefresh, setGroupRefresh] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [bookingContext, setBookingContext] = useState(null);
 
   const copy = COPY[language];
 
@@ -789,7 +777,6 @@ export default function App() {
     const mockPackage = createMockResultPackage(mockLanguage);
     setLanguage(mockLanguage);
     setActiveMode("full");
-    setCopied(false);
     setLatestResult(mockPackage);
     setScreen("results");
   }, []);
@@ -842,11 +829,10 @@ export default function App() {
     clearAssessmentDraft();
     setAssessmentDraft(null);
     setShowResumePrompt(false);
-    setCopied(false);
     setPendingGroupId(null);
     setActiveComparisonGroup(null);
     setActiveMode(mode);
-    setScreen(mode === "followup" ? "followup" : "assessment");
+    setScreen("assessment");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -854,7 +840,6 @@ export default function App() {
     setActiveMode(null);
     setPendingGroupId(null);
     setActiveComparisonGroup(null);
-    setCopied(false);
     setScreen(screenName);
     if (screenName === "home" && loadAssessmentDraft()) {
       setAssessmentDraft(loadAssessmentDraft());
@@ -865,7 +850,7 @@ export default function App() {
 
   function handleComplete(answers, profile) {
     const mode = activeMode;
-    const questions = mode === "full" ? FULL_QUESTIONS[language] : SHORT_QUESTIONS[language];
+    const questions = FULL_QUESTIONS[language];
 
     clearAssessmentDraft();
     setAssessmentDraft(null);
@@ -910,7 +895,6 @@ export default function App() {
     setAssessmentDraft(null);
     setShowResumePrompt(false);
     setActiveMode(null);
-    setCopied(false);
     setScreen("assessment-home");
   }
 
@@ -923,7 +907,6 @@ export default function App() {
     if (!draft) return;
 
     setLanguage(draft.language === "es" ? "es" : "en");
-    setCopied(false);
     setActiveComparisonGroup(null);
     setPendingGroupId(draft.pendingGroupId ?? null);
     setActiveMode(draft.mode ?? "full");
@@ -939,18 +922,14 @@ export default function App() {
     setShowResumePrompt(false);
     setPendingGroupId(null);
     setActiveComparisonGroup(null);
-    setCopied(false);
   }
 
   function startAssessment() {
     startMode("full");
   }
 
-  function openBookingModal(context = {}) {
-    setBookingContext({
-      sourceScreen: screen,
-      ...context
-    });
+  async function requestContact(resultPackage) {
+    await persistResult({ ...resultPackage, contactRequested: true });
   }
 
   function handleCreateInvite(resultPackage, inviteEmail) {
@@ -975,12 +954,6 @@ export default function App() {
     setActiveComparisonGroup(group);
     setScreen("comparison");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function handleCopy(text) {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
   }
 
   const latestGroup =
@@ -1016,21 +989,6 @@ export default function App() {
         />
       )}
 
-      {screen === "case-studies" && (
-        <CaseStudiesPage
-          copy={copy}
-          language={language}
-        />
-      )}
-
-      {screen === "resources" && (
-        <ResourcesPage
-          copy={copy}
-          language={language}
-          onStartAssessment={startAssessment}
-        />
-      )}
-
       {screen === "assessment-home" && (
         <AssessmentLanding
           copy={copy}
@@ -1061,11 +1019,7 @@ export default function App() {
           resultPackage={latestResult}
           group={latestGroup}
           onRetake={restart}
-          onViewFull={() => {
-            setActiveMode("full");
-            setScreen("assessment");
-          }}
-          onOpenBooking={openBookingModal}
+          onRequestContact={requestContact}
           onCreateInvite={handleCreateInvite}
           onViewComparison={handleViewComparison}
         />
@@ -1077,22 +1031,10 @@ export default function App() {
           language={language}
           group={activeComparisonGroup}
           onBackToResult={() => setScreen(latestResult ? "results" : "assessment-home")}
-          onOpenBooking={openBookingModal}
         />
       )}
 
-      {screen === "followup" && (
-        <FollowUpGenerator
-          copy={copy}
-          language={language}
-          latestResult={latestResult}
-          copied={copied}
-          onCopy={handleCopy}
-          onBack={() => navigate("assessment-home")}
-        />
-      )}
-
-      {["home", "about", "case-studies", "resources", "assessment-home", "results", "comparison", "followup"].includes(screen) && (
+      {["home", "about", "assessment-home", "results", "comparison"].includes(screen) && (
         <SiteFooter
           copy={copy}
           language={language}
@@ -1111,15 +1053,6 @@ export default function App() {
           onStartOver={startOverFromDraft}
         />
       )}
-
-      {bookingContext && (
-        <BookingModal
-          copy={copy}
-          language={language}
-          context={bookingContext}
-          onClose={() => setBookingContext(null)}
-        />
-      )}
     </main>
   );
 }
@@ -1136,8 +1069,6 @@ function SiteHeader({
   const navItems = [
     { id: "home", label: copy.nav.home },
     { id: "about", label: copy.nav.about },
-    { id: "case-studies", label: copy.nav.caseStudies },
-    { id: "resources", label: copy.nav.resources },
     { id: "assessment-home", label: copy.nav.assessment }
   ];
 
@@ -1295,10 +1226,7 @@ function CookieConsentBanner({ copy }) {
 function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver }) {
   if (!copy || !draft || typeof document === "undefined") return null;
 
-  const questionCount =
-    draft.mode === "full"
-      ? FULL_QUESTIONS[draft.language]?.length ?? FULL_QUESTIONS.en.length
-      : SHORT_QUESTIONS[draft.language]?.length ?? SHORT_QUESTIONS.en.length;
+  const questionCount = FULL_QUESTIONS[draft.language]?.length ?? FULL_QUESTIONS.en.length;
   const answeredCount = Object.values(draft.answers ?? {}).filter(isAssessmentAnswered).length;
   const currentQuestion = Math.min((draft.index ?? 0) + 1, questionCount);
   const savedAt = draft.updatedAt
@@ -1377,7 +1305,9 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
   ];
 
   const heroLabel =
-    language === "es" ? "Diagnóstico privado de gobierno" : "Private governance diagnostic";
+    language === "es"
+      ? "Diagnóstico de madurez para empresa familiar"
+      : "Family Enterprise Maturity Assessment";
   return (
     <section className="w-full">
       <section className="relative overflow-hidden border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#f4efe6_46%,#e7ddcf_100%)]">
@@ -1399,9 +1329,15 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             >
               {copy.home.subtitle}
             </p>
+            <p
+              className="fade-up mt-4 max-w-full text-[0.98rem] leading-7 text-ink/68 sm:max-w-3xl sm:text-base sm:leading-8"
+              style={{ "--index": 3 }}
+            >
+              {copy.home.body}
+            </p>
             <div
               className="fade-up mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row"
-              style={{ "--index": 3 }}
+              style={{ "--index": 4 }}
             >
               <button
                 type="button"
@@ -1421,7 +1357,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             </div>
             <div
               className="fade-up mt-7 grid max-w-3xl grid-cols-3 gap-2 sm:mt-10 sm:gap-3"
-              style={{ "--index": 4 }}
+              style={{ "--index": 5 }}
             >
               {heroStats.map((item) => (
                 <HeroStat key={item.label} value={item.value} label={item.label} />
@@ -1429,7 +1365,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             </div>
             <p
               className="fade-up mt-6 max-w-2xl border-l-2 border-copper pl-4 text-sm font-medium leading-6 text-muted sm:mt-8 sm:text-base sm:leading-7"
-              style={{ "--index": 5 }}
+              style={{ "--index": 6 }}
             >
               {copy.home.note}
             </p>
@@ -1439,6 +1375,22 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             copy={copy}
             language={language}
           />
+        </div>
+      </section>
+
+      <section className="border-b border-forest/10 bg-white px-5 py-12 sm:px-8 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+              {copy.nav.about}
+            </p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+              {copy.home.gilbertTitle}
+            </h2>
+          </div>
+          <p className="text-base leading-8 text-ink/74 sm:text-lg">
+            {copy.home.gilbertBody}
+          </p>
         </div>
       </section>
 
@@ -1478,7 +1430,61 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
         </div>
       </section>
 
-      <AdvisoryEvidenceSection copy={copy} onNavigate={onNavigate} />
+      <section className="border-b border-forest/10 bg-parchment/56 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+              {copy.nav.assessment}
+            </p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+              {copy.home.toolTitle}
+            </h2>
+          </div>
+          <div className="grid gap-4">
+            {copy.home.toolParagraphs.map((paragraph) => (
+              <p key={paragraph} className="text-base leading-8 text-ink/74 sm:text-lg">
+                {paragraph}
+              </p>
+            ))}
+            <button
+              type="button"
+              className="mt-2 inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
+              onClick={onStartAssessment}
+            >
+              {copy.home.toolCta}
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <AdvisoryEvidenceSection copy={copy} />
+
+      <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="max-w-3xl">
+            <h2 className="font-display text-4xl font-semibold tracking-tight text-forest sm:text-5xl">
+              {copy.about.testimonialsTitle}
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-muted">
+              {copy.about.testimonialsSubtitle}
+            </p>
+          </div>
+          <section className="rounded-lg border border-forest/10 bg-parchment/62 p-6 shadow-line sm:p-8">
+            <h3 className="font-display text-3xl font-semibold leading-tight text-forest">
+              {copy.about.situationsTitle}
+            </h3>
+            <ul className="mt-5 space-y-3">
+              {copy.about.situations.map((item) => (
+                <li key={item} className="flex gap-3 text-base leading-7 text-ink/74">
+                  <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </section>
 
       <section className="px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px]">
@@ -1577,7 +1583,7 @@ function InfoBlock({ icon: Icon, title, body }) {
   );
 }
 
-function AdvisoryEvidenceSection({ copy, onNavigate }) {
+function AdvisoryEvidenceSection({ copy }) {
   const evidence = copy.home.evidence;
 
   return (
@@ -1648,14 +1654,6 @@ function AdvisoryEvidenceSection({ copy, onNavigate }) {
           <p className="text-sm font-medium leading-6 text-ink/68">
             {evidence.sourceNote}
           </p>
-          <button
-            type="button"
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99] sm:w-auto"
-            onClick={() => onNavigate("resources")}
-          >
-            {copy.resourcesPage.viewMoreCta}
-            <ArrowRight aria-hidden="true" size={17} />
-          </button>
         </div>
       </div>
     </section>
@@ -1688,8 +1686,6 @@ function ApproachFeature({ block, index }) {
 }
 
 function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
-  const [selectedCaseStudy, setSelectedCaseStudy] = useState(null);
-
   return (
     <section className="w-full">
       <section className="px-5 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-16 xl:px-8">
@@ -1737,21 +1733,7 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
 
       <section className="border-y border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px]">
-          <div className="grid gap-4 md:grid-cols-4">
-            {copy.about.metrics.map((metric) => (
-              <div
-                key={metric.label}
-                className="rounded-lg border border-forest/8 bg-parchment/70 p-6 text-center"
-              >
-                <p className="font-display text-5xl font-semibold leading-none tracking-tight text-forest">
-                  {metric.value}
-                </p>
-                <p className="mt-3 text-sm font-semibold leading-5 text-muted">{metric.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5 lg:grid-cols-2">
             <CredentialList title={copy.about.educationTitle} items={copy.about.educationItems} />
             <CredentialList title={copy.about.focusTitle} items={copy.about.focusItems} />
           </div>
@@ -1760,37 +1742,28 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
 
       <section className="px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px]">
-          <div className="max-w-3xl">
-            <h2 className="font-display text-4xl font-semibold tracking-tight text-forest sm:text-5xl">
-              {copy.about.testimonialsTitle}
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-muted">{copy.about.testimonialsSubtitle}</p>
-          </div>
-          <div className="mt-10 grid gap-5 lg:grid-cols-[1fr_0.92fr_1.08fr]">
-            {copy.about.testimonials.map((item) => (
-              <article
-                key={item.author}
-                className="flex rounded-lg border border-forest/10 bg-white p-6 shadow-line transition duration-200 hover:-translate-y-1 hover:shadow-soft sm:p-8"
-              >
-                <div className="flex min-h-full flex-col">
-                  <p className="font-display text-2xl font-semibold leading-snug tracking-tight text-forest sm:text-3xl">
-                    “{item.quote}”
-                  </p>
-                  <div className="mt-6 border-t border-forest/10 pt-5">
-                    <p className="font-semibold text-ink">{item.author}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted">{item.role}</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="mt-auto inline-flex min-h-11 w-fit items-center gap-2 rounded-md border border-forest/14 bg-white px-4 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:bg-parchment active:translate-y-px active:scale-[0.99]"
-                    onClick={() => setSelectedCaseStudy(item)}
-                  >
-                    {copy.about.caseStudyCta}
-                    <ArrowRight aria-hidden="true" size={17} />
-                  </button>
-                </div>
-              </article>
-            ))}
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div className="max-w-3xl">
+              <h2 className="font-display text-4xl font-semibold tracking-tight text-forest sm:text-5xl">
+                {copy.about.testimonialsTitle}
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-muted">
+                {copy.about.testimonialsSubtitle}
+              </p>
+            </div>
+            <section className="rounded-lg border border-forest/10 bg-white p-6 shadow-line sm:p-8">
+              <h3 className="font-display text-3xl font-semibold leading-tight text-forest">
+                {copy.about.situationsTitle}
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {copy.about.situations.map((item) => (
+                  <li key={item} className="flex gap-3 text-base leading-7 text-ink/74">
+                    <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
         </div>
       </section>
@@ -1806,7 +1779,7 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
             </h2>
           </div>
           <div className="mt-8 lg:mt-0">
-            {[copy.about.toolBody, copy.about.toolBodySecond, copy.about.toolBodyThird].map(
+            {[copy.about.toolBody, copy.about.toolBodySecond, copy.about.toolBodyThird, copy.about.toolBodyFourth].filter(Boolean).map(
               (paragraph) => (
                 <p key={paragraph} className="mb-5 text-lg leading-8 text-white/76 last:mb-0">
                   {paragraph}
@@ -1825,114 +1798,6 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
         </div>
       </section>
 
-      {selectedCaseStudy && (
-        <CaseStudyModal
-          copy={copy}
-          caseStudy={selectedCaseStudy}
-          onClose={() => setSelectedCaseStudy(null)}
-        />
-      )}
-    </section>
-  );
-}
-
-function CaseStudyModal({ copy, caseStudy, onClose }) {
-  const labels = copy.about.caseStudyLabels;
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") onClose();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-forest/72 p-0 backdrop-blur-sm sm:items-center sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="case-study-title"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label={labels.close}
-        onClick={onClose}
-      />
-      <section className="relative z-10 max-h-[94dvh] w-full max-w-5xl overflow-y-auto rounded-t-lg bg-white shadow-soft sm:rounded-lg">
-        <header className="sticky top-0 border-b border-forest/10 bg-white/94 px-5 py-5 pr-16 backdrop-blur sm:px-8">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-copper">
-            {labels.eyebrow}
-          </p>
-          <h2
-            id="case-study-title"
-            className="mt-2 font-display text-3xl font-semibold leading-tight tracking-tight text-forest sm:text-4xl"
-          >
-            {caseStudy.author}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted sm:text-base">
-            {caseStudy.role}
-          </p>
-          <button
-            type="button"
-            className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-forest/12 bg-white text-forest transition hover:border-copper hover:bg-parchment"
-            aria-label={labels.close}
-            onClick={onClose}
-          >
-            <X aria-hidden="true" size={20} />
-          </button>
-        </header>
-
-        <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[0.78fr_1fr]">
-          <aside className="rounded-lg border border-forest/10 bg-parchment/58 p-5 sm:p-6">
-            <p className="font-display text-2xl font-semibold leading-snug tracking-tight text-forest">
-              “{caseStudy.fullQuote}”
-            </p>
-            <div className="mt-6 border-t border-forest/10 pt-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">
-                {labels.background}
-              </p>
-              <p className="mt-3 text-sm leading-7 text-ink/72 sm:text-base">
-                {caseStudy.background}
-              </p>
-            </div>
-          </aside>
-
-          <div className="grid gap-5">
-            <CaseStudySection title={labels.challenges} items={caseStudy.challenges} />
-            <CaseStudySection title={labels.approach} items={caseStudy.approach} />
-            <CaseStudySection title={labels.outcomes} items={caseStudy.outcomes} accent />
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function CaseStudySection({ title, items, accent = false }) {
-  return (
-    <section className="rounded-lg border border-forest/10 bg-white p-5 shadow-line">
-      <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-copper">{title}</h3>
-      <ul className="mt-4 space-y-3">
-        {items.map((item) => (
-          <li key={item} className="flex gap-3 text-sm leading-6 text-ink/74 sm:text-base">
-            <Check
-              className={`mt-1 shrink-0 ${accent ? "text-forest" : "text-copper"}`}
-              aria-hidden="true"
-              size={17}
-            />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
@@ -2173,565 +2038,6 @@ function AssessmentLanding({ copy, language, onStart }) {
   );
 }
 
-function CaseStudiesPage({ copy, language }) {
-  return (
-    <section className="w-full flex-1 px-4 py-8 sm:px-8 sm:py-10 lg:px-12 xl:px-8">
-      <div className="mx-auto w-full max-w-[1400px]">
-        <CaseStudiesSection copy={copy} language={language} />
-      </div>
-    </section>
-  );
-}
-
-function ResourcesPage({ copy, language, onStartAssessment }) {
-  const page = copy.resourcesPage;
-  const footer = getFooterContent(language);
-  const sources = copy.home.evidence.sources;
-  const resourceIcons = [
-    ClipboardCheck,
-    MessageCircle,
-    ShieldCheck,
-    Scale,
-    UsersRound,
-    Landmark,
-    CalendarDays,
-    Compass,
-    Download
-  ];
-  const leadMagnetsPerPage = 3;
-  const [activeLeadPage, setActiveLeadPage] = useState(0);
-  const [selectedLeadMagnet, setSelectedLeadMagnet] = useState(null);
-  const [leadMagnetStep, setLeadMagnetStep] = useState("form");
-  const [leadMagnetLead, setLeadMagnetLead] = useState(null);
-  const leadPageCount = Math.ceil(footer.resources.length / leadMagnetsPerPage);
-  const visibleLeadMagnets = footer.resources.slice(
-    activeLeadPage * leadMagnetsPerPage,
-    activeLeadPage * leadMagnetsPerPage + leadMagnetsPerPage
-  );
-  const nextLeadPage = () => setActiveLeadPage((current) => (current + 1) % leadPageCount);
-
-  useEffect(() => {
-    if (!selectedLeadMagnet) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [selectedLeadMagnet]);
-
-  const openLeadMagnetForm = (resource) => {
-    setSelectedLeadMagnet(resource);
-    setLeadMagnetStep("form");
-    setLeadMagnetLead(null);
-  };
-  const closeLeadMagnetForm = () => {
-    setSelectedLeadMagnet(null);
-    setLeadMagnetStep("form");
-    setLeadMagnetLead(null);
-  };
-  const submitLeadMagnetForm = (event) => {
-    event.preventDefault();
-    if (!selectedLeadMagnet) return;
-
-    const formData = new FormData(event.currentTarget);
-    setLeadMagnetLead({
-      name: String(formData.get("name") ?? ""),
-      email: String(formData.get("email") ?? ""),
-      phone: String(formData.get("phone") ?? ""),
-      business: String(formData.get("business") ?? ""),
-      marketingConsent: formData.get("marketingConsent") === "on",
-      resourceTitle: selectedLeadMagnet.title,
-      createdAt: new Date().toISOString()
-    });
-    setLeadMagnetStep("ready");
-  };
-
-  const downloadSelectedLeadMagnet = () => {
-    if (!selectedLeadMagnet) return;
-
-    const downloadUrl = new URL(selectedLeadMagnet.href, window.location.origin).toString();
-    const downloadLink = document.createElement("a");
-    downloadLink.href = downloadUrl;
-    downloadLink.download = selectedLeadMagnet.href.split("/").pop() ?? "private-resource.pdf";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-    closeLeadMagnetForm();
-  };
-
-  return (
-    <section className="w-full flex-1 px-4 py-8 sm:px-8 sm:py-10 lg:px-12 xl:px-8">
-      <div className="mx-auto w-full max-w-[1400px] space-y-7">
-        <section className="overflow-hidden rounded-xl bg-forest p-6 text-white shadow-soft sm:p-8 lg:p-9">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-copper sm:text-sm">
-              {page.label}
-            </p>
-            <h1 className="mt-4 max-w-4xl font-display text-[2.45rem] font-semibold leading-[1.04] sm:text-5xl xl:text-[3.45rem]">
-              {page.title}
-            </h1>
-            <p className="mt-5 max-w-3xl text-base leading-7 text-white/78">
-              {page.intro}
-            </p>
-            <button
-              type="button"
-              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99]"
-              onClick={onStartAssessment}
-            >
-              {page.assessmentCta}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-          </div>
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[minmax(320px,0.48fr)_minmax(0,0.52fr)] lg:items-stretch">
-          <div className="flex h-full flex-col justify-center rounded-xl border border-forest/10 bg-white/55 p-6 shadow-line lg:min-h-[390px]">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {page.researchTitle}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-forest sm:text-[2.9rem]">
-              {copy.home.evidence.title}
-            </h2>
-            <p className="mt-4 text-base leading-7 text-muted">
-              {page.researchIntro}
-            </p>
-          </div>
-
-          <div className="max-h-[390px] overflow-y-auto pr-1">
-            <div className="grid gap-3">
-            {sources.map((source) => (
-              <a
-                key={source.url}
-                className="group flex min-h-16 items-center justify-between gap-4 rounded-lg border border-forest/10 bg-white p-4 text-forest shadow-line transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:shadow-soft focus:outline-none focus:ring-2 focus:ring-copper/50"
-                href={source.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <span className="text-sm font-bold leading-6">{source.label}</span>
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-parchment text-forest transition duration-200 group-hover:bg-forest group-hover:text-white">
-                  <ArrowRight aria-hidden="true" size={17} />
-                </span>
-              </a>
-            ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-t border-forest/10 pt-7">
-          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-                {page.privateTitle}
-              </p>
-              <h2 className="mt-3 font-display text-4xl font-semibold leading-tight text-forest sm:text-[2.9rem]">
-                {footer.resourcesLabel}
-              </h2>
-              <p className="mt-3 text-base leading-7 text-muted">
-                {page.privateIntro}
-              </p>
-            </div>
-            <button
-              type="button"
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-forest text-white shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.98] lg:hidden"
-              aria-label={page.nextResourceCta}
-              onClick={nextLeadPage}
-            >
-              <ArrowRight aria-hidden="true" size={20} />
-            </button>
-          </div>
-
-          <div>
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                <div className="grid gap-4 md:grid-cols-3">
-                  {visibleLeadMagnets.map((resource, index) => {
-                    const absoluteIndex = activeLeadPage * leadMagnetsPerPage + index;
-                    const Icon = resourceIcons[absoluteIndex] ?? Download;
-                    return (
-                      <article
-                        key={resource.title}
-                        className="flex min-h-full flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="grid h-11 w-11 place-items-center rounded-md bg-forest text-white">
-                            <Icon aria-hidden="true" size={20} />
-                          </div>
-                          <span className="rounded-full border border-copper/24 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-copper">
-                            {page.freeTag}
-                          </span>
-                        </div>
-                        <h3 className="mt-5 font-display text-2xl font-semibold leading-tight text-forest">
-                          {resource.title}
-                        </h3>
-                        <p className="mt-3 text-sm leading-6 text-ink/68">
-                          {resource.summary}
-                        </p>
-                        <button
-                          type="button"
-                          className="mt-auto inline-flex min-h-11 w-fit items-center gap-2 pt-5 text-left text-sm font-bold text-forest transition duration-200 hover:text-copper"
-                          onClick={() => openLeadMagnetForm(resource)}
-                        >
-                          {page.viewResourceCta}
-                          <Download aria-hidden="true" size={16} />
-                        </button>
-                      </article>
-                    );
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  className="hidden h-12 w-12 items-center justify-center justify-self-end rounded-full bg-forest text-white shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.98] lg:inline-flex"
-                  aria-label={page.nextResourceCta}
-                  onClick={nextLeadPage}
-                >
-                  <ArrowRight aria-hidden="true" size={20} />
-                </button>
-              </div>
-
-              <div className="mt-5 flex justify-center gap-2">
-                {Array.from({ length: leadPageCount }).map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    className={`h-2.5 rounded-full transition-all duration-200 ${
-                      index === activeLeadPage
-                        ? "w-8 bg-forest"
-                        : "w-2.5 bg-copper/45 hover:bg-copper/70"
-                    }`}
-                    aria-label={page.resourcePageLabel.replace("{page}", String(index + 1))}
-                    aria-current={index === activeLeadPage ? "true" : undefined}
-                    onClick={() => setActiveLeadPage(index)}
-                  />
-                ))}
-              </div>
-          </div>
-        </section>
-      </div>
-
-      {selectedLeadMagnet && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[9999] overflow-y-auto bg-forest/82 px-3 py-3 backdrop-blur-sm sm:px-4 sm:py-6">
-          <div className="flex min-h-full items-start justify-center md:items-center">
-          <div
-            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto rounded-xl border border-forest/10 bg-white p-5 shadow-soft sm:max-h-[calc(100dvh-3rem)] sm:p-6 md:p-7"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="lead-magnet-form-title"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
-                  {page.freeTag}
-                </p>
-                <h2
-                  id="lead-magnet-form-title"
-                  className="mt-2 font-display text-[2rem] font-semibold leading-tight text-forest sm:text-4xl"
-                >
-                  {page.leadFormTitle}
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  {selectedLeadMagnet.title}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-muted">
-                  {page.leadFormIntro}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-forest/12 text-forest transition duration-200 hover:border-copper hover:text-copper"
-                aria-label={page.leadFormCancel}
-                onClick={closeLeadMagnetForm}
-              >
-                <X aria-hidden="true" size={18} />
-              </button>
-            </div>
-
-            {leadMagnetStep === "ready" ? (
-              <div className="mt-6">
-                <div className="rounded-lg border border-forest/10 bg-parchment/55 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-                    {page.leadReadyLabel}
-                  </p>
-                  <h3 className="mt-2 font-display text-2xl font-semibold leading-tight text-forest">
-                    {selectedLeadMagnet.title}
-                  </h3>
-                  <p className="mt-3 text-sm leading-6 text-muted">
-                    {selectedLeadMagnet.summary}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-forest">
-                    <span className="rounded-full bg-white px-3 py-1">
-                      {page.freeTag}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-sm leading-6 text-muted">
-                  {page.leadReadyIntro.replace("{email}", leadMagnetLead?.email ?? "")}
-                </p>
-
-                <div className="mt-5 flex flex-col-reverse gap-3 md:flex-row md:justify-end">
-                  <button
-                    type="button"
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/12 px-5 text-sm font-bold text-forest transition duration-200 hover:border-copper hover:text-copper md:w-auto"
-                    onClick={() => setLeadMagnetStep("form")}
-                  >
-                    {page.leadReadyBack}
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99] md:w-auto"
-                    onClick={downloadSelectedLeadMagnet}
-                  >
-                    {page.leadReadyDownload}
-                    <Download aria-hidden="true" size={16} />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form className="mt-6 grid gap-4" onSubmit={submitLeadMagnetForm}>
-                <label className="grid gap-2 text-sm font-bold text-forest">
-                  {page.leadFormName}
-                  <input
-                    className="min-h-12 rounded-md border border-forest/12 bg-parchment/40 px-4 text-base font-medium text-ink outline-none transition duration-200 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/20"
-                    name="name"
-                    type="text"
-                    required
-                  />
-                </label>
-
-                <label className="grid gap-2 text-sm font-bold text-forest">
-                  {page.leadFormEmail}
-                  <input
-                    className="min-h-12 rounded-md border border-forest/12 bg-parchment/40 px-4 text-base font-medium text-ink outline-none transition duration-200 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/20"
-                    name="email"
-                    type="email"
-                    required
-                  />
-                </label>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="grid gap-2 text-sm font-bold text-forest">
-                    {page.leadFormPhone}
-                    <input
-                      className="min-h-12 rounded-md border border-forest/12 bg-parchment/40 px-4 text-base font-medium text-ink outline-none transition duration-200 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/20"
-                      name="phone"
-                      type="tel"
-                      required
-                    />
-                  </label>
-
-                  <label className="grid gap-2 text-sm font-bold text-forest">
-                    {page.leadFormBusiness}
-                    <input
-                      className="min-h-12 rounded-md border border-forest/12 bg-parchment/40 px-4 text-base font-medium text-ink outline-none transition duration-200 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/20"
-                      name="business"
-                      type="text"
-                      required
-                    />
-                  </label>
-                </div>
-
-                <label className="flex items-start gap-3 rounded-md border border-forest/12 bg-parchment/45 p-3 text-sm font-medium leading-6 text-muted">
-                  <input
-                    className="mt-1 h-4 w-4 shrink-0 rounded border-forest/25 text-copper accent-copper"
-                    name="marketingConsent"
-                    type="checkbox"
-                    required
-                  />
-                  <span>{page.leadFormConsent}</span>
-                </label>
-
-                <div className="mt-2 flex flex-col-reverse gap-3 md:flex-row md:justify-end">
-                  <button
-                    type="button"
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/12 px-5 text-sm font-bold text-forest transition duration-200 hover:border-copper hover:text-copper md:w-auto"
-                    onClick={closeLeadMagnetForm}
-                  >
-                    {page.leadFormCancel}
-                  </button>
-                  <button
-                    type="submit"
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99] md:w-auto"
-                  >
-                    {page.leadFormSubmit}
-                    <ArrowRight aria-hidden="true" size={16} />
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-          </div>
-        </div>,
-        document.body
-      )}
-    </section>
-  );
-}
-
-function CaseStudiesSection({ copy, language, className = "" }) {
-  const caseStudyIcons = [Landmark, Scale, Handshake];
-  const caseStudies = copy.assessmentIntro.caseStudies;
-  const sectionClassName = [
-    "space-y-6",
-    className
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return (
-    <section className={sectionClassName}>
-      <div className="overflow-hidden rounded-xl border border-forest/10 bg-forest text-white shadow-soft">
-        <div className="grid lg:grid-cols-[minmax(0,0.58fr)_minmax(360px,0.42fr)]">
-          <div className="p-6 sm:p-8 lg:p-10 xl:p-12">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-copper sm:text-sm">
-              {caseStudies.label}
-            </p>
-            <h1 className="mt-4 max-w-4xl font-display text-[2.6rem] font-semibold leading-[1.02] [text-wrap:balance] sm:text-6xl">
-              {caseStudies.title}
-            </h1>
-            <p className="mt-6 max-w-3xl text-base leading-7 text-white/78 sm:text-lg sm:leading-8">
-              {caseStudies.intro}
-            </p>
-            <p className="mt-7 max-w-2xl rounded-lg border border-white/16 bg-white/8 p-4 text-sm leading-6 text-white/72">
-              {caseStudies.note}
-            </p>
-          </div>
-
-          <div className="grid border-t border-white/10 bg-white/[0.04] sm:grid-cols-3 lg:grid-cols-1 lg:border-l lg:border-t-0">
-            {caseStudies.proof.map((item) => (
-              <article
-                key={item.label}
-                className="border-b border-white/10 p-5 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0 lg:border-b lg:border-r-0 lg:last:border-b-0"
-              >
-                <span className="block font-display text-4xl font-semibold leading-none text-white">
-                  {item.value}
-                </span>
-                <span className="mt-3 block text-sm font-semibold uppercase tracking-[0.14em] text-copper">
-                  {item.label}
-                </span>
-                <span className="mt-3 block text-sm leading-6 text-white/68">
-                  {item.detail}
-                </span>
-              </article>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-5">
-        {caseStudies.items.map((item, index) => {
-          const Icon = caseStudyIcons[index] ?? Landmark;
-          return (
-            <article
-              key={item.title}
-              className="overflow-hidden rounded-xl border border-forest/10 bg-white shadow-line"
-            >
-              <div className="grid lg:grid-cols-[minmax(300px,0.36fr)_minmax(0,0.64fr)]">
-                <div className="bg-[#fbf8f2] p-6 sm:p-8">
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-forest text-white">
-                      <Icon aria-hidden="true" size={20} />
-                    </span>
-                    <span className="rounded-full border border-copper/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-copper">
-                      {item.status}
-                    </span>
-                  </div>
-                  <h2 className="mt-6 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
-                    {item.title}
-                  </h2>
-                  <p className="mt-4 text-base leading-7 text-ink/72">
-                    {item.profile}
-                  </p>
-
-                  <div className="mt-6 grid grid-cols-3 overflow-hidden rounded-lg border border-forest/10 bg-white">
-                    {item.metrics.map((metric) => (
-                      <div key={metric.label} className="border-r border-forest/10 p-3 last:border-r-0">
-                        <span className="block font-display text-2xl font-semibold leading-none text-forest">
-                          {metric.value}
-                        </span>
-                        <span className="mt-2 block text-[0.65rem] font-semibold uppercase leading-4 tracking-[0.1em] text-muted">
-                          {metric.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <blockquote className="mt-6 border-l-2 border-copper pl-4 text-sm font-medium leading-6 text-forest/74">
-                    “{item.quote}”
-                  </blockquote>
-                </div>
-
-                <div className="grid md:grid-cols-2">
-                  <CaseDetailBlock title={caseStudies.labels.context} body={item.context} />
-                  <CaseDetailBlock title={caseStudies.labels.tension} body={item.tension} />
-                  <CaseListBlock title={caseStudies.labels.signals} items={item.signals} />
-                  <CaseListBlock
-                    title={caseStudies.labels.delivered}
-                    items={item.delivered}
-                    accent
-                  />
-                  <div className="md:col-span-2">
-                    <CaseListBlock
-                      title={caseStudies.labels.results}
-                      items={item.results}
-                      result
-                    />
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function CaseDetailBlock({ title, body }) {
-  return (
-    <section className="border-b border-forest/10 p-5 sm:p-6 md:border-r">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-copper">
-        {title}
-      </p>
-      <p className="mt-3 text-sm leading-7 text-ink/72 sm:text-base">
-        {body}
-      </p>
-    </section>
-  );
-}
-
-function CaseListBlock({ title, items, accent = false, result = false }) {
-  return (
-    <section
-      className={`border-b border-forest/10 p-5 sm:p-6 ${
-        result ? "bg-forest text-white" : accent ? "bg-parchment/60" : ""
-      }`}
-    >
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-copper">
-        {title}
-      </p>
-      <ul className="mt-4 space-y-3">
-        {items.map((item) => (
-          <li
-            key={item}
-            className={`flex gap-3 text-sm leading-6 ${
-              result ? "text-white/78" : "text-ink/72"
-            }`}
-          >
-            <Check
-              aria-hidden="true"
-              size={16}
-              className={`mt-1 shrink-0 ${result ? "text-copper" : "text-forest"}`}
-            />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function LanguageToggle({ language, setLanguage, variant = "light" }) {
   const dark = variant === "dark";
 
@@ -2771,10 +2077,8 @@ function LanguageToggle({ language, setLanguage, variant = "light" }) {
 function SiteFooter({ copy, language, onNavigate }) {
   const footer = getFooterContent(language);
   const socialLinks = [
-    { label: "Facebook", href: footer.facebookUrl, icon: Facebook },
     { label: "LinkedIn", href: footer.linkedinUrl, icon: Linkedin },
-    { label: footer.phoneLabel, href: footer.phoneHref, icon: Phone },
-    { label: footer.location, href: footer.locationUrl, icon: MapPin }
+    { label: footer.emailLabel, href: `mailto:${copy.contactEmail}`, icon: Mail }
   ];
 
   return (
@@ -2809,7 +2113,7 @@ function SiteFooter({ copy, language, onNavigate }) {
           </div>
         </div>
 
-        <div className="mx-auto mt-8 grid max-w-3xl justify-items-center gap-10 border-t border-white/12 pt-8 text-center md:grid-cols-2 md:gap-12 lg:gap-14">
+        <div className="mx-auto mt-8 grid max-w-sm justify-items-center gap-10 border-t border-white/12 pt-8 text-center">
           <div className="w-full max-w-xs">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
               {footer.credentialsLabel}
@@ -2821,34 +2125,6 @@ function SiteFooter({ copy, language, onNavigate }) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div className="w-full max-w-xs">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
-              {footer.resourcesLabel}
-            </p>
-            <ul className="mt-4 space-y-2.5 text-sm leading-7 text-white/68">
-              {footer.resources.slice(0, 3).map((resource) => (
-                <li key={resource.title}>
-                  <a
-                    className="font-normal text-white/68 transition duration-200 hover:text-copper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-copper/50"
-                    href={resource.href}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {resource.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/18 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper"
-              onClick={() => onNavigate("resources")}
-            >
-              {footer.resourcesCta}
-              <ArrowRight aria-hidden="true" size={15} />
-            </button>
           </div>
         </div>
 
@@ -3231,7 +2507,7 @@ function AssessmentFlow({
   onBack,
   onComplete
 }) {
-  const questions = mode === "full" ? FULL_QUESTIONS[language] : SHORT_QUESTIONS[language];
+  const questions = FULL_QUESTIONS[language];
   const intake = copy.intake;
   const usableDraft = initialDraft?.mode === mode ? initialDraft : null;
   const defaultProfile = {
@@ -3627,17 +2903,19 @@ function ResultsScreen({
   resultPackage,
   group,
   onRetake,
-  onViewFull,
-  onOpenBooking,
+  onRequestContact,
   onCreateInvite,
   onViewComparison
 }) {
+  const [contactRequested, setContactRequested] = useState(false);
+  const [contactRequestPending, setContactRequestPending] = useState(false);
   const resultRef = useRef(null);
-  const { result, mode } = resultPackage;
+  const { result } = resultPackage;
   const stage = result.stage;
-  const isFull = mode === "full";
   const scoreCategory = getScoreCategory(result.overall);
-  const bookingCta = copy.booking.scoreCtas[scoreCategory];
+  const bookingCta = contactRequested
+    ? copy.booking.contactRequested
+    : copy.booking.scoreCtas[scoreCategory];
   const unknownCount = result.transparency?.unknownCount ?? 0;
   const unknownPillars = (result.transparency?.unknownByPillar ?? [])
     .filter((item) => item.unknown > 0)
@@ -3666,8 +2944,14 @@ function ResultsScreen({
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  function openResultBooking() {
-    onOpenBooking({ resultPackage });
+  async function requestResultContact() {
+    setContactRequestPending(true);
+    try {
+      await onRequestContact(resultPackage);
+      setContactRequested(true);
+    } finally {
+      setContactRequestPending(false);
+    }
   }
 
   return (
@@ -3745,7 +3029,7 @@ function ResultsScreen({
         </section>
       </div>
 
-      {unknownCount >= 3 && (
+      {unknownCount > 5 && (
         <section className="mt-6 rounded-xl border border-copper/24 bg-white p-6 shadow-line sm:p-7">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
             <div>
@@ -3829,17 +3113,15 @@ function ResultsScreen({
             </div>
           </section>
 
-          {isFull && (
-            <InviteFamilyPanel
-              copy={copy}
-              language={language}
-              resultPackage={resultPackage}
-              group={group}
-              onCreateInvite={onCreateInvite}
-              onViewComparison={onViewComparison}
-              wide
-            />
-          )}
+          <InviteFamilyPanel
+            copy={copy}
+            language={language}
+            resultPackage={resultPackage}
+            group={group}
+            onCreateInvite={onCreateInvite}
+            onViewComparison={onViewComparison}
+            wide
+          />
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
@@ -3896,53 +3178,31 @@ function ResultsScreen({
             <button
               type="button"
               className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
-              onClick={openResultBooking}
+              onClick={requestResultContact}
+              disabled={contactRequestPending || contactRequested}
             >
               {bookingCta}
-              <CalendarDays aria-hidden="true" size={18} />
+              <Mail aria-hidden="true" size={18} />
             </button>
           </section>
 
           <section className="space-y-3 rounded-xl border border-forest/12 bg-white p-3 shadow-line">
-            {isFull ? (
-              <>
-                <button
-                  type="button"
-                  className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
-                  onClick={scrollToPillars}
-                >
-                  {copy.fullCtas[0]}
-                  <ArrowRight aria-hidden="true" size={18} />
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
-                  onClick={() => downloadPdfSummary(resultPackage, language)}
-                >
-                  {copy.fullCtas[2]}
-                  <Download aria-hidden="true" size={18} />
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white hover:bg-forest-2"
-                  onClick={onViewFull}
-                >
-                  {copy.viewFull}
-                  <ArrowRight aria-hidden="true" size={18} />
-                </button>
-                <button
-                  type="button"
-                  className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
-                  onClick={() => downloadPdfSummary(resultPackage, language)}
-                >
-                  {copy.downloadPdf}
-                  <Download aria-hidden="true" size={18} />
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
+              onClick={scrollToPillars}
+            >
+              {copy.fullCtas[0]}
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
+              onClick={() => downloadPdfSummary(resultPackage, language)}
+            >
+              {copy.fullCtas[2]}
+              <Download aria-hidden="true" size={18} />
+            </button>
           </section>
         </aside>
       </div>
@@ -4086,7 +3346,7 @@ function InviteFamilyPanel({
   );
 }
 
-function ComparisonScreen({ copy, language, group, onBackToResult, onOpenBooking }) {
+function ComparisonScreen({ copy, language, group, onBackToResult }) {
   const comparisonCopy = copy.comparison;
   const participants = (group.participants ?? []).slice(0, MAX_GROUP_PARTICIPANTS);
   const rows = buildComparisonRows(participants, language);
@@ -4236,14 +3496,13 @@ function ComparisonScreen({ copy, language, group, onBackToResult, onOpenBooking
             language={language}
             comparisonCopy={comparisonCopy}
           />
-          <button
-            type="button"
+          <a
+            href={`mailto:${copy.contactEmail}`}
             className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
-            onClick={() => onOpenBooking({ group })}
           >
             {comparisonCopy.groupCallCta}
-            <CalendarDays aria-hidden="true" size={18} />
-          </button>
+            <Mail aria-hidden="true" size={18} />
+          </a>
         </aside>
       </div>
     </section>
@@ -4498,281 +3757,38 @@ function pillarBandClasses(bandId) {
 function getFooterContent(language) {
   if (language === "es") {
     return {
-      trusted: "Acompañamiento confidencial para familias empresarias en México, EE. UU. y Latinoamérica",
+      trusted: "Acompañamiento confidencial para familias que navegan propiedad, sucesión y gobierno",
       credentialsLabel: "Credenciales y confianza",
       credentials: [
         "IMBA · University of Denver",
-        "FFI Family Business & Wealth Advising",
-        "iPEC Certified Professional Coach",
-        "IMD Board Director Diploma"
-      ],
-      resourcesLabel: "Recursos privados",
-      resourcesCta: "Ver todos los recursos",
-      resources: [
-        {
-          title: "Guía para consejo de familia",
-          summary: "Agenda, roles y preguntas para preparar una conversación con calma.",
-          href: "/resources/family-council-readiness-guide.pdf"
-        },
-        {
-          title: "Checklist de sucesión",
-          summary: "Señales de preparación y temas que conviene separar antes de decidir.",
-          href: "/resources/succession-conversation-checklist.pdf"
-        },
-        {
-          title: "Preguntas de protocolo",
-          summary: "Temas de propiedad, empleo familiar, información y toma de decisiones.",
-          href: "/resources/family-protocol-question-set.pdf"
-        },
-        {
-          title: "Guía de alineación de propietarios",
-          summary: "Preguntas para separar expectativas de dividendos, reinversión y derechos de información.",
-          href: "/resources/ownership-alignment-primer.pdf"
-        },
-        {
-          title: "Ruta de aprendizaje NextGen",
-          summary: "Un plan breve para preparar a la siguiente generación antes de pedirle decisiones de rol.",
-          href: "/resources/next-generation-learning-pathway.pdf"
-        },
-        {
-          title: "Inicio de conversación de consejo",
-          summary: "Temas para distinguir supervisión, estrategia, dirección ejecutiva y asuntos familiares.",
-          href: "/resources/board-conversation-starter.pdf"
-        },
-        {
-          title: "Plantilla de asamblea familiar",
-          summary: "Una agenda base para ordenar actualizaciones, acuerdos y preguntas entre ramas familiares.",
-          href: "/resources/family-assembly-agenda-template.pdf"
-        },
-        {
-          title: "Mapa de escalamiento de conflictos",
-          summary: "Un marco simple para decidir cómo se plantean desacuerdos y quién ayuda a resolverlos.",
-          href: "/resources/conflict-escalation-map.pdf"
-        },
-        {
-          title: "Ritmo de información para accionistas",
-          summary: "Una guía para definir qué información reciben los propietarios, cuándo y por qué canal.",
-          href: "/resources/shareholder-information-rhythm.pdf"
-        }
+        "FFI Family Business & Wealth Advising Certificate",
+        "Certified Professional Coach · iPEC",
+        "Board Director Diploma · IMD"
       ],
       linkedin: "linkedin.com/in/gilbert-devlyn-advisory",
       linkedinUrl: "https://www.linkedin.com/in/gilbert-devlyn-advisory",
-      facebookUrl: "https://www.facebook.com/gilbertdevlynadvisory",
       socialLabel: "Canales sociales",
-      phoneLabel: "SMS / teléfono",
-      phone: "+1 (312) 847-1928",
-      phoneHref: "sms:+13128471928",
-      location: "Coral Gables, FL · Mexico City (by appointment)",
-      locationUrl: "https://www.google.com/maps/search/?api=1&query=Coral+Gables%2C+FL",
-      trustLine: "Privacidad primero · Asesoría familiar discreta · Sin documentos sensibles antes de un acuerdo de confidencialidad"
+      emailLabel: "Email",
+      trustLine: "Asesoría discreta y confidencial. Los materiales sensibles se comparten solo después de alineación."
     };
   }
 
   return {
-    trusted: "Trusted by families navigating ownership, succession, and governance across the Americas",
+    trusted: "Trusted by families navigating ownership, succession, and governance",
     credentialsLabel: "Credentials & trust",
     credentials: [
       "IMBA · University of Denver",
-      "FFI Family Business & Wealth Advising",
-      "iPEC Certified Professional Coach",
-      "IMD Board Director Diploma"
-    ],
-    resourcesLabel: "Private resources",
-    resourcesCta: "View all resources",
-    resources: [
-      {
-        title: "Family Council Readiness Guide",
-        summary: "A concise agenda, role map, and preparation prompts for a calmer council meeting.",
-        href: "/resources/family-council-readiness-guide.pdf"
-      },
-      {
-        title: "Succession Conversation Checklist",
-        summary: "Signals, questions, and guardrails before succession becomes a single hard meeting.",
-        href: "/resources/succession-conversation-checklist.pdf"
-      },
-      {
-        title: "Family Protocol Question Set",
-        summary: "A structured set of ownership, employment, information, and decision questions.",
-        href: "/resources/family-protocol-question-set.pdf"
-      },
-      {
-        title: "Ownership Alignment Primer",
-        summary: "Questions to separate dividend expectations, reinvestment logic, and information rights.",
-        href: "/resources/ownership-alignment-primer.pdf"
-      },
-      {
-        title: "NextGen Learning Pathway",
-        summary: "A short plan for preparing younger family members before asking them to choose roles.",
-        href: "/resources/next-generation-learning-pathway.pdf"
-      },
-      {
-        title: "Board Conversation Starter",
-        summary: "Prompts for separating oversight, strategy, executive leadership, and family topics.",
-        href: "/resources/board-conversation-starter.pdf"
-      },
-      {
-        title: "Family Assembly Agenda Template",
-        summary: "A simple meeting structure for updates, agreements, and questions across family branches.",
-        href: "/resources/family-assembly-agenda-template.pdf"
-      },
-      {
-        title: "Conflict Escalation Map",
-        summary: "A practical frame for how disagreement is raised, handled, and moved to resolution.",
-        href: "/resources/conflict-escalation-map.pdf"
-      },
-      {
-        title: "Shareholder Information Rhythm",
-        summary: "A guide for deciding what owners receive, when they receive it, and through which channel.",
-        href: "/resources/shareholder-information-rhythm.pdf"
-      }
+      "FFI Family Business & Wealth Advising Certificate",
+      "Certified Professional Coach · iPEC",
+      "Board Director Diploma · IMD"
     ],
     linkedin: "linkedin.com/in/gilbert-devlyn-advisory",
     linkedinUrl: "https://www.linkedin.com/in/gilbert-devlyn-advisory",
-    facebookUrl: "https://www.facebook.com/gilbertdevlynadvisory",
     socialLabel: "Social channels",
-    phoneLabel: "SMS / phone",
-    phone: "+1 (312) 847-1928",
-    phoneHref: "sms:+13128471928",
-    location: "Coral Gables, FL · Mexico City (by appointment)",
-    locationUrl: "https://www.google.com/maps/search/?api=1&query=Coral+Gables%2C+FL",
+    emailLabel: "Email",
     trustLine:
-      "Privacy-first · Discreet family advisory · Sensitive documents only after confidentiality is agreed"
+      "Discreet, confidentiality-first advisory. Sensitive materials shared only after alignment."
   };
-}
-
-function getWeakPillarInsights(resultPackage, language) {
-  const scores = resultPackage?.result?.pillarScores ?? [];
-  return [...scores]
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 3)
-    .map((item) => {
-      const pillar = PILLARS.find((entry) => entry.id === item.id);
-      return {
-        label: pillar?.labels[language] ?? item.id,
-        score: roundedScore(item.score)
-      };
-    });
-}
-
-function buildBookingUrl(context, language) {
-  const params = new URLSearchParams({
-    source: "family_business_maturity_tool",
-    language
-  });
-
-  const resultPackage = context?.resultPackage;
-  const result = resultPackage?.result;
-
-  if (result) {
-    const score = roundedScore(result.overall);
-    const category = getScoreCategory(score);
-    params.set("assessment_score", String(score));
-    params.set("score_category", category);
-    params.set("maturity_stage", result.stage.labels[language]);
-    params.set(
-      "flagged_pillars",
-      getWeakPillarInsights(resultPackage, language)
-        .map((item) => `${item.label}: ${item.score}`)
-        .join(" | ")
-    );
-  }
-
-  if (context?.userName) {
-    params.set("name", context.userName);
-  }
-
-  return `${BOOKING_URL}?${params.toString()}`;
-}
-
-function BookingModal({ copy, language, context, onClose }) {
-  const result = context?.resultPackage?.result;
-  const scoreCategory = result ? getScoreCategory(result.overall) : null;
-  const weakPillars = getWeakPillarInsights(context?.resultPackage, language);
-  const bookingUrl = useMemo(() => buildBookingUrl(context, language), [context, language]);
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") onClose();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-stretch justify-center bg-forest/72 p-0 backdrop-blur-sm sm:items-center sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="booking-modal-title"
-    >
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label={copy.booking.close}
-        onClick={onClose}
-      />
-      <section className="relative z-10 flex h-[100dvh] max-h-[100dvh] w-full max-w-6xl animate-[modalIn_0.25s_ease] flex-col overflow-hidden rounded-none bg-white shadow-soft sm:h-auto sm:max-h-[94dvh] sm:rounded-xl">
-        <header className="relative border-b border-forest/10 bg-parchment px-5 py-4 pr-20 sm:px-6 sm:pr-20">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-copper">
-              {copy.booking.modalLabel}
-            </p>
-            <h2
-              id="booking-modal-title"
-              className="mt-1 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl"
-            >
-              {copy.booking.modalTitle}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted sm:text-base sm:leading-7">
-              {scoreCategory
-                ? copy.booking.modalIntroByCategory[scoreCategory]
-                : copy.booking.modalIntro}
-            </p>
-            {result && (
-              <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-forest sm:text-sm">
-                <span className="rounded-full bg-white px-3 py-1">
-                  {copy.overallScore}: {roundedScore(result.overall)} / 100
-                </span>
-                <span className="rounded-full bg-white px-3 py-1">
-                  {copy.booking.categoryLabel}: {copy.booking.categoryNames[scoreCategory]}
-                </span>
-                {weakPillars.length > 0 && (
-                  <span className="rounded-full bg-white px-3 py-1">
-                    {copy.booking.flaggedLabel}:{" "}
-                    {weakPillars.map((item) => item.label).join(", ")}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            className="absolute right-4 top-4 grid h-11 w-11 shrink-0 place-items-center rounded-full border border-forest/12 bg-white text-forest transition hover:border-copper"
-            aria-label={copy.booking.close}
-            onClick={onClose}
-          >
-            <X aria-hidden="true" size={20} />
-          </button>
-        </header>
-        <div className="min-h-0 flex-1 bg-white">
-          <iframe
-            title={copy.booking.schedulerTitle}
-            src={bookingUrl}
-            className="h-full min-h-[520px] w-full border-0 sm:min-h-[620px]"
-            loading="lazy"
-            allow="clipboard-write"
-          />
-        </div>
-      </section>
-    </div>
-  );
 }
 
 function pillarBarColor(score) {
@@ -4797,154 +3813,6 @@ function ScoreRing({ score }) {
   );
 }
 
-function FollowUpGenerator({ copy, language, latestResult, copied, onCopy, onBack }) {
-  const [stageId, setStageId] = useState(latestResult?.result?.stage?.id ?? "emerging");
-  const [familyName, setFamilyName] = useState("");
-  const [channel, setChannel] = useState("whatsapp");
-  const [message, setMessage] = useState("");
-  const [working, setWorking] = useState(false);
-
-  async function generateMessage() {
-    setWorking(true);
-    const payload = { language, stageId, familyName, channel };
-
-    try {
-      const response = await fetch("/api/follow-up", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error("Request failed");
-      const data = await response.json();
-      setMessage(data.message);
-    } catch {
-      setMessage(buildFollowUpMessage(payload));
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  return (
-    <section className="grid min-h-[100dvh] w-full grid-cols-1 gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[390px_minmax(0,1fr)]">
-      <aside className="rounded-lg bg-forest p-6 text-white shadow-soft sm:p-8">
-        <button
-          type="button"
-          className="mb-8 inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-white/82 hover:bg-white/10"
-          onClick={onBack}
-        >
-          <ArrowLeft aria-hidden="true" size={18} />
-          {copy.back}
-        </button>
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
-          {copy.modes.followup.title}
-        </p>
-        <h1 className="mt-4 font-display text-4xl leading-tight">{copy.followupTitle}</h1>
-        <p className="mt-5 text-lg leading-8 text-white/76">{copy.followupIntro}</p>
-        <div className="mt-8 rounded-lg border border-white/18 bg-white/8 p-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/55">
-            {copy.latestResult}
-          </p>
-          <p className="mt-2 text-base leading-7 text-white/80">
-            {latestResult
-              ? `${latestResult.result.stage.level[language]} - ${latestResult.result.stage.labels[language]}`
-              : copy.noLatest}
-          </p>
-        </div>
-      </aside>
-
-      <div className="rounded-lg border border-forest/12 bg-white p-5 shadow-soft sm:p-8">
-        <div className="grid gap-5 md:grid-cols-2">
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-forest">{copy.stage}</span>
-            <select
-              className="min-h-12 w-full rounded-lg border border-forest/18 bg-white px-3 text-sm text-ink sm:px-4 sm:text-base"
-              value={stageId}
-              onChange={(event) => setStageId(event.target.value)}
-            >
-              {STAGES.map((stage) => (
-                <option key={stage.id} value={stage.id}>
-                  {stage.level[language]} - {stage.labels[language]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-forest">
-              {copy.familyName} <span className="font-normal text-ink/55">({copy.optional})</span>
-            </span>
-            <input
-              className="min-h-12 w-full rounded-lg border border-forest/18 bg-white px-4 text-base text-ink"
-              value={familyName}
-              onChange={(event) => setFamilyName(event.target.value)}
-              placeholder={language === "es" ? "Familia Devlyn" : "Devlyn Family"}
-            />
-          </label>
-        </div>
-
-        <div className="mt-6">
-          <p className="mb-2 text-sm font-semibold text-forest">{copy.channel}</p>
-          <div className="inline-flex rounded-lg border border-forest/15 bg-parchment p-1">
-            {[
-              { id: "whatsapp", label: copy.whatsapp, icon: MessageCircle },
-              { id: "email", label: copy.email, icon: Mail }
-            ].map((item) => {
-              const Icon = item.icon;
-              const active = channel === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`inline-flex min-h-10 items-center gap-2 rounded-md px-4 text-sm font-semibold ${
-                    active ? "bg-forest text-white" : "text-forest hover:bg-white"
-                  }`}
-                  aria-pressed={active}
-                  onClick={() => setChannel(item.id)}
-                >
-                  <Icon aria-hidden="true" size={17} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="mt-7 flex flex-wrap gap-3">
-          <button
-            type="button"
-            className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-forest px-5 text-sm font-semibold text-white hover:bg-forest-2 disabled:bg-forest/40"
-            onClick={generateMessage}
-            disabled={working}
-          >
-            <Send aria-hidden="true" size={18} />
-            {copy.generate}
-          </button>
-          <button
-            type="button"
-            className="inline-flex min-h-12 items-center gap-2 rounded-lg border border-forest/15 bg-white px-5 text-sm font-semibold text-forest hover:border-teal disabled:opacity-45"
-            onClick={() => onCopy(message)}
-            disabled={!message}
-          >
-            <Copy aria-hidden="true" size={18} />
-            {copied ? copy.copied : copy.copy}
-          </button>
-        </div>
-
-        <label className="mt-7 block">
-          <span className="mb-2 block text-sm font-semibold text-forest">
-            {copy.messagePreview}
-          </span>
-          <textarea
-            className="min-h-[360px] w-full resize-y rounded-lg border border-forest/15 bg-parchment/60 p-4 text-base leading-7 text-ink"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-          />
-        </label>
-      </div>
-    </section>
-  );
-}
-
 async function persistResult(resultPackage) {
   try {
     await fetch("/api/results", {
@@ -4956,6 +3824,7 @@ async function persistResult(resultPackage) {
         profile: resultPackage.profile,
         groupId: resultPackage.groupId,
         participantId: resultPackage.participantId,
+        contactRequested: Boolean(resultPackage.contactRequested),
         overall: resultPackage.result.overall,
         stageId: resultPackage.result.stage.id,
         pillarScores: resultPackage.result.pillarScores,

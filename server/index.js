@@ -3,7 +3,6 @@ import express from "express";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildFollowUpMessage } from "../src/utils/messageGenerator.js";
 
 const app = express();
 const port = process.env.PORT || 5174;
@@ -13,11 +12,6 @@ const rootDir = path.resolve(__dirname, "..");
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "1mb" }));
 
-app.post("/api/follow-up", (req, res) => {
-  const message = buildFollowUpMessage(req.body ?? {});
-  res.json({ message });
-});
-
 app.post("/api/results", async (req, res) => {
   const entry = {
     createdAt: new Date().toISOString(),
@@ -26,6 +20,7 @@ app.post("/api/results", async (req, res) => {
     profile: req.body?.profile,
     groupId: req.body?.groupId,
     participantId: req.body?.participantId,
+    contactRequested: Boolean(req.body?.contactRequested),
     overall: req.body?.overall,
     stageId: req.body?.stageId,
     pillarScores: req.body?.pillarScores

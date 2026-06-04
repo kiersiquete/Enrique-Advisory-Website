@@ -519,44 +519,6 @@ const fullEs = {
   ]
 };
 
-const shortEn = {
-  vision:
-    "In our family business there is clarity about the purpose and long-term vision of the business.",
-  constitution:
-    "Our family has clear rules for how the family relates to the business.",
-  "family-governance":
-    "We have appropriate spaces to discuss and decide on family matters related to the business.",
-  ownership:
-    "Family shareholders clearly understand their rights and responsibilities.",
-  board:
-    "The business has formal bodies that oversee strategy and management.",
-  management:
-    "Management roles are clearly defined and operate with professional criteria.",
-  "next-generation":
-    "The next generation is being intentionally prepared for its future role.",
-  harmony:
-    "In our family we can address difficult topics without damaging relationships."
-};
-
-const shortEs = {
-  vision:
-    "En nuestra familia empresaria existe claridad sobre el propósito y la visión de largo plazo del negocio.",
-  constitution:
-    "Nuestra familia cuenta con reglas claras para relacionarse con la empresa.",
-  "family-governance":
-    "Tenemos espacios adecuados para conversar y decidir temas familiares relacionados con la empresa.",
-  ownership:
-    "Los accionistas familiares entienden claramente sus derechos y responsabilidades.",
-  board:
-    "La empresa cuenta con instancias formales que supervisan la estrategia y al equipo directivo.",
-  management:
-    "Los roles directivos están definidos y funcionan con criterios profesionales.",
-  "next-generation":
-    "La siguiente generación se está preparando de manera intencional para su futuro rol.",
-  harmony:
-    "En nuestra familia podemos abordar temas difíciles sin que se deterioren las relaciones."
-};
-
 const makeFullQuestions = (language, source) =>
   PILLARS.flatMap((pillar) =>
     source[pillar.id].map((text, index) => ({
@@ -568,23 +530,9 @@ const makeFullQuestions = (language, source) =>
     }))
   );
 
-const makeShortQuestions = (language, source) =>
-  PILLARS.map((pillar, index) => ({
-    id: `${language}-short-${pillar.id}`,
-    mode: "short",
-    pillarId: pillar.id,
-    number: index + 1,
-    text: source[pillar.id]
-  }));
-
 export const FULL_QUESTIONS = {
   en: makeFullQuestions("en", fullEn),
   es: makeFullQuestions("es", fullEs)
-};
-
-export const SHORT_QUESTIONS = {
-  en: makeShortQuestions("en", shortEn),
-  es: makeShortQuestions("es", shortEs)
 };
 
 export const STAGES = [
@@ -737,17 +685,15 @@ export const COPY = {
     nav: {
       home: "Home",
       about: "About",
-      caseStudies: "Case Studies",
-      resources: "Resources",
       assessment: "Assessment"
     },
     booking: {
       startAssessment: "Start Assessment",
       takeAssessment: "Take the Assessment",
       getGovernanceScore: "Get Your Governance Score",
-      bookStrategyCall: "Book a Strategy Call",
-      modalLabel: "Discovery Call",
-      modalTitle: "Book a Discovery Call with Gilbert Devlyn",
+      bookStrategyCall: "Request a Follow-up",
+      modalLabel: "Follow-up Request",
+      modalTitle: "Request a Follow-up with Gilbert Devlyn",
       modalIntro:
         "Choose a time to speak with Gilbert about what your result is showing and where his guidance could help the family move from insight to action.",
       modalIntroByCategory: {
@@ -765,32 +711,38 @@ export const COPY = {
         high: "High"
       },
       flaggedLabel: "Focus areas",
-      schedulerTitle: "Discovery Call with Gilbert Devlyn",
+      schedulerTitle: "Follow-up with Gilbert Devlyn",
       close: "Close booking modal",
       scoreCtas: {
-        low: "Talk with Gilbert about priorities",
-        mid: "Strengthen this with Gilbert",
-        high: "Refine the next stage with Gilbert"
-      }
+        low: "Request Gilbert to contact me",
+        mid: "Request Gilbert to contact me",
+        high: "Request Gilbert to contact me"
+      },
+      contactRequested: "Request sent"
     },
     home: {
-      title: "Guided governance reflection for family businesses",
+      title: "Clarity for the decisions that shape your family business",
       subtitle:
-        "Gilbert Devlyn works with business families at the place where ownership, leadership, and family relationships meet. Shaped by his own experience inside Grupo Devlyn, this tool helps open a clearer conversation about continuity, roles, decisions, and the structures that protect a family legacy.",
-      primaryCta: "Begin Your Assessment",
-      secondaryCta: "Learn about Gilbert",
+        "A structured reflection tool to align ownership, leadership, and continuity before tensions become decisions.",
+      body:
+        "Built from best practices around the world and lived experience inside a multigenerational family business, this tool helps surface what is often left unsaid so families can move forward with clarity and structure.",
+      gilbertTitle: "Who is Gilbert?",
+      gilbertBody:
+        "Gilbert Devlyn brings firsthand experience from within a leading third generation family business group. As a family member, owner, and board member, he has been directly involved in decisions that shape continuity across generations.",
+      primaryCta: "Start the conversation",
+      secondaryCta: "About Gilbert",
       valueTitle: "Why the advisory matters",
       valueBody:
-        "Family business decisions carry more than operational weight: they affect trust, continuity, ownership, and future roles. The advisory gives families a neutral space to name what is hard to say, align around priorities, and turn sensitive conversations into workable agreements.",
-      businessTitle: "What the advisory work does",
+        "Family business decisions carry more than operational weight: they affect trust, continuity, ownership, and future roles. Gilbert gives families a neutral space to name what is hard to say, align around priorities, and turn sensitive conversations into workable agreements.",
+      businessTitle: "What his consultancy focuses on",
       businessBody:
-        "Today, he guides other business families in professionalizing what matters most: the family itself. His work combines professional coaching, family governance consulting, and board advising for families in transition, especially when informal decision-making, unspoken tensions, or overly corporate consulting models no longer fit.",
-      helpingTitle: "Who this helps",
+        "Gilbert works with families at the intersection of ownership, leadership, and family dynamics, helping move from implicit tensions to clear agreements.",
+      helpingTitle: "Who this is for",
       helpingItems: [
         "Founders and senior generations thinking about continuity",
-        "Next generation family members preparing for future roles",
-        "Family shareholders who need clearer rights, responsibilities, and communication",
-        "Boards and leadership teams managing the overlap between family and business"
+        "Next-generation members preparing for future roles",
+        "Family shareholders seeking clarity on roles and responsibilities",
+        "Boards navigating the intersection of family and business"
       ],
       evidence: {
         label: "Research-backed value",
@@ -911,213 +863,99 @@ export const COPY = {
         "The tool is a starting point for reflection, not a judgment of the family or the business.",
       approachTitle: "How Gilbert works with families",
       approachSubtitle:
-        "Every engagement starts with a structured reflection — not advice, but better questions.",
+        "Every engagement begins with structured reflection - not advice, but better questions.",
       approachBlocks: [
         {
           title: "Structure before solutions",
           body:
-            "Most family business challenges are conversations waiting to happen. Gilbert helps families name what is already happening beneath the surface, then gives those conversations enough structure to move without damaging relationships."
+            "Most governance challenges are conversations waiting to happen. The work begins by naming what is already present and giving it structure."
         },
         {
-          title: "Lived neutrality",
+          title: "Grounded neutrality",
           body:
-            "He has sat on the other side of the table as a family member, owner, executive, and board member. That lived perspective makes his neutrality practical rather than distant, especially around succession, ownership, and family role questions."
+            "Neutrality grounded in lived experience as a family member, owner, and board member."
         },
         {
-          title: "Governance that fits the family",
+          title: "Governance built for your context",
           body:
-            "There is no single governance model that works for every family. Gilbert blends coaching, family governance, and board advisory work to build from the family's real context, not from a generic consulting template."
+            "No one-size-fits-all model - structures are built around each family's reality."
         },
         {
-          title: "Follow-through with care",
+          title: "Follow-through that sustains decisions",
           body:
-            "After the meeting, the work continues in calm, concrete steps: agreements captured clearly, responsibilities assigned, and the family rhythm protected so decisions can survive beyond one good conversation."
+            "Clear roles, responsibilities, and rhythms so decisions endure."
         }
       ],
-      ctaTitle: "Start your reflection today",
+      toolTitle: "Why this tool exists",
+      toolParagraphs: [
+        "Most business families don't know where to start - before structures, they need a shared understanding.",
+        "Not a scorecard or verdict - a structured map to start aligned conversations.",
+        "Free to use and available in English and Spanish."
+      ],
+      toolCta: "Start the assessment",
+      ctaTitle: "Start the conversation today",
       ctaBody:
-        "The Family Business Maturity Tool gives your family a shared language to talk about governance, continuity, and roles — without judgment, rankings, or pressure.",
-      ctaButton: "Check Your Family Governance Score",
+        "Create a shared language to talk about governance, continuity, and roles - without judgment or pressure.",
+      ctaButton: "Check your family enterprise governance score",
       ctaNote: "Available in English and Español. Takes 5–10 minutes."
     },
     about: {
       label: "About Gilbert",
       title: "Helping families have the conversations that shape what comes next",
       bio: [
-        "Gilbert Devlyn grew up in one of Mexico's largest business families. As a member, owner, and board member of Grupo Devlyn, he experienced firsthand what it means to manage the relationship between family and business: the tensions, difficult decisions, and responsibility of protecting a legacy that transcends generations.",
-        "He served as Chairman of the Family Council and the NextGen Council of the Devlyn Family, and as Chief Human Capital Officer for the group from 2019 to 2025. Today, he guides other business families through transitions where decisions are still made informally, tensions are felt but not always voiced, and traditional consulting models can feel too distant or corporate.",
-        "His approach combines professional coaching, family governance consulting, and board advising, always drawing on the direct experience of having been on the other side of the table. Gilbert is not a consultant who simply studied family enterprise dynamics; he lived them and chose to guide others through the same journey."
+        "Gilbert Devlyn comes from a multigenerational family business and has worked within the complexity that comes with it: a cousin consortium, a board, a family council, shareholders, and multiple decision-making spaces that do not always align.",
+        "Across that system, different generations, perspectives, and life stages coexist: founders, siblings, cousins, and next-generation members looking to step in and take a role. Each brings valid expectations, but not always the same timeline or view of the future.",
+        "As a family member, owner, and board participant, he experienced what it takes to operate in that environment, where tensions are real, alignment is often implicit, and progress depends on how conversations are handled.",
+        "He chaired the Family Council and the NextGen Committee, and spent over 12 years working inside the family business, most recently as Human Capital Director. Working across family, ownership, and leadership roles, he learned how to navigate complexity, make conflict more productive, and turn it into decisions that move things forward.",
+        "At under 40, he sits close enough to the next generation to understand their perspective and their drive to step in, while also having built experience within the system they are entering. This allows him to work across generations with credibility, helping turn tension into progress rather than friction.",
+        "Today, he works with other business families facing similar dynamics, helping them make sense of what is already happening, bring the right conversations to the surface, and move forward with clarity."
       ],
       heroCta: "Start assessment",
-      metrics: [
-        { value: "2019-2025", label: "Chief Human Capital Officer at Grupo Devlyn" },
-        { value: "2", label: "Councils chaired: Family Council and NextGen Council" },
-        { value: "Owner", label: "Family member, owner, and board member perspective" },
-        { value: "FFI", label: "Family Firm Institute advising credentials" }
-      ],
       educationTitle: "Education & Certifications",
       educationItems: [
-        "IMBA in Family Business Consulting — University of Denver",
+        "International MBA (IMBA), University of Denver — Focus in Family Business Consulting",
+        "Bachelor's degrees in Management and Marketing",
         "Certificate in Family Business Advising — Family Firm Institute",
         "Certificate in Family Wealth Advising — Family Firm Institute",
         "Certified Professional Coach — iPEC",
-        "Board Director Diploma — IMD Global Board Center"
+        "Board Director Diploma — IMD"
       ],
       focusTitle: "Areas of Focus",
       focusItems: [
         "Family governance and council facilitation",
-        "Professionalizing the family system",
-        "Ownership transition and succession planning",
-        "Next generation development and readiness",
-        "Board advisory and family-business role clarity",
-        "Coaching for difficult conversations and family harmony"
+        "Structuring and professionalizing the family system",
+        "Ownership transition and succession",
+        "Next-generation development and readiness",
+        "Board advisory and role clarity",
+        "Coaching for difficult conversations",
+        "Coaching and mentorship for next-generation members stepping into ownership and leadership roles"
       ],
-      testimonialsTitle: "What families say",
+      testimonialsTitle: "Discreet by design",
       testimonialsSubtitle:
-        "These reflections come from families who have worked with Gilbert across different stages of their governance journey.",
-      testimonials: [
-        {
-          quote:
-            "Gilbert helped us have a conversation we had been avoiding for years. He didn't push us toward a conclusion — he helped us understand why we disagreed, and that was more valuable than any solution.",
-          author: "Alejandro M.",
-          role: "Founder, 2nd generation manufacturing company, Mexico",
-          fullQuote:
-            "Gilbert helped us have a conversation we had been avoiding for years. He didn't push us toward a conclusion — he helped us understand why we disagreed, and that was more valuable than any solution. For the first time, the family could separate respect for the founder from the practical question of how decisions would be made when more people needed to carry responsibility.",
-          background:
-            "A second-generation industrial manufacturer in northern Mexico. The founder remained the emotional center of the business, three adult children held different levels of responsibility, and non-family executives were asking for clearer decision authority before the next growth phase.",
-          challenges: [
-            "Succession conversations were repeatedly postponed because they felt like a referendum on the founder rather than a continuity discussion.",
-            "Sibling roles were interpreted differently by family members, senior managers, and outside advisors.",
-            "Ownership, management, and family expectations were being discussed in the same meetings.",
-            "The family had genuine trust, but no agreed process for handling disagreement once emotions rose."
-          ],
-          approach: [
-            "Interviewed each family shareholder privately to understand what they were protecting, not only what they wanted.",
-            "Separated ownership questions from management decisions so the conversation became less personal and more actionable.",
-            "Designed a first family council agenda around decision rights, role expectations, and the founder's gradual transition of authority.",
-            "Coached the family on language that allowed disagreement without making loyalty feel questioned."
-          ],
-          outcomes: [
-            "A family council met monthly for the next two quarters with a narrower, decision-oriented agenda.",
-            "Role expectations for family members in the business were documented and separated from ownership rights.",
-            "The founder moved two recurring decisions into a shared owner forum instead of resolving them privately.",
-            "Senior executives received a clearer view of where family input was required and where management could move."
-          ]
-        },
-        {
-          quote:
-            "Our family had clear intentions but no structure. After working with Gilbert, we finally had a family council that actually met, a protocol everyone had agreed to, and a clearer sense of who owns what and why.",
-          author: "Sofía R.",
-          role: "Family shareholder, real estate group, Colombia",
-          fullQuote:
-            "Our family had clear intentions but no structure. After working with Gilbert, we finally had a family council that actually met, a protocol everyone had agreed to, and a clearer sense of who owns what and why. The work felt serious without becoming heavy; people who normally stayed quiet had room to participate without feeling exposed.",
-          background:
-            "A third-generation real estate family with operating assets, passive shareholders, and several cousins beginning to ask how they could contribute. The business was healthy, but the family system had not kept pace with a broader ownership group.",
-          challenges: [
-            "Ownership rights and information access were discussed informally, creating different expectations across branches.",
-            "Younger family members wanted visibility without creating pressure to join the company before they were ready.",
-            "Family meetings mixed dividends, projects, personal concerns, and legacy questions in one agenda.",
-            "The senior generation wanted harmony, but harmony was sometimes achieved by avoiding decisions."
-          ],
-          approach: [
-            "Mapped which topics belonged to ownership, family, board, and management spaces.",
-            "Facilitated a protocol workshop with representation from each shareholder branch.",
-            "Helped the family define what information shareholders should receive, when, and through which forum.",
-            "Created a short annual education rhythm for next-generation shareholders before asking them to choose roles."
-          ],
-          outcomes: [
-            "The family approved a first protocol draft covering meetings, information rights, family employment, and conflict escalation.",
-            "Meeting agendas became shorter, more predictable, and less reactive.",
-            "Next-generation members received a clearer path to learn before deciding whether to enter the business.",
-            "Several recurring family-business topics moved out of informal side conversations and into the right forum."
-          ]
-        },
-        {
-          quote:
-            "What Gilbert brings is neutrality. He has no agenda. That made it possible for all three generations in our family to actually speak honestly in the same room.",
-          author: "James H.",
-          role: "CEO & family member, consumer goods group, United States",
-          fullQuote:
-            "What Gilbert brings is neutrality. He has no agenda. That made it possible for all three generations in our family to actually speak honestly in the same room. The process gave us enough structure to be direct without becoming defensive, and it helped us see succession as a governance process rather than one dramatic decision.",
-          background:
-            "A U.S.-based consumer goods family with a strong operating history, an active family CEO, and a third generation preparing to become informed owners. The board had capable people around the table, but its conversations were drifting between strategy, family expectations, and day-to-day management.",
-          challenges: [
-            "Board conversations were becoming too operational, leaving little room for ownership continuity and risk oversight.",
-            "The senior generation wanted continuity, while younger owners wanted clearer information and a legitimate way to ask questions.",
-            "Family members avoided disagreement to preserve harmony, which made important topics feel permanently unfinished.",
-            "CEO succession existed as a concern, but it had not been converted into a staged plan."
-          ],
-          approach: [
-            "Clarified boundaries between board oversight, CEO authority, family ownership education, and management execution.",
-            "Used facilitated listening sessions before presenting recommendations, so quieter family members could shape the work.",
-            "Helped the board frame succession as a staged governance process with visible milestones.",
-            "Introduced a board calendar that protected time for strategy, risk, leadership, and family ownership topics."
-          ],
-          outcomes: [
-            "A board calendar separated strategy, risk, leadership, and family ownership topics.",
-            "The family agreed to a next-generation owner education track with defined sessions and expectations.",
-            "Succession discussion moved from vague concern to defined milestones and review points.",
-            "The CEO and board gained a shared language for when to involve family owners and when to let management lead."
-          ]
-        }
+        "Most of the work happens in moments that are not meant to be public: family conversations, ownership decisions, and transitions that require trust and confidentiality. For that reason, client relationships are handled privately and references are shared directly, when appropriate.",
+      situationsTitle: "Where this work helps",
+      situations: [
+        "A family preparing how next-generation members step into ownership and leadership",
+        "Siblings aligning after a founder transition",
+        "Shareholders clarifying roles, rights, and expectations",
+        "Family councils that exist but are not being fully used",
+        "Important decisions that feel stuck because the conversation hasn't happened"
       ],
-      caseStudyCta: "View Case Study",
-      caseStudyLabels: {
-        eyebrow: "Private case note",
-        background: "Family background",
-        challenges: "Challenges",
-        approach: "Gilbert's approach",
-        outcomes: "Outcomes",
-        close: "Close case study"
-      },
-      toolTitle: "Why Gilbert built this tool",
+      toolTitle: "Why this tool matters",
       toolBody:
-        "The Family Business Maturity Tool grew out of a recurring observation: most families don't know where to start. Before a protocol, before a board, before any governance structure — families need a shared picture of where they are.",
+        "This tool is grounded in best practices in family business governance, drawing on frameworks developed by organizations such as the Family Firm Institute (FFI) and leading academic research in multigenerational enterprise.",
       toolBodySecond:
-        "This tool isn't a scorecard. It doesn't compare families or produce a verdict. It gives a family a map — across eight governance pillars — so that conversations about what to improve can start from a common understanding rather than competing assumptions.",
+        "At its core, it reflects a simple reality: most business families don't know where to start. Before protocols, boards, or formal structures, families need a shared understanding of where they are.",
       toolBodyThird:
-        "The tool is free to use and available in English and Español.",
+        "This is not a scorecard. It doesn't compare families or produce a verdict. Instead, it provides a structured way to map conversations across key governance areas - so dialogue can begin from alignment rather than assumptions.",
+      toolBodyFourth:
+        "I didn't create this tool, but I believe strongly in its value as a way to help families start conversations that are often difficult to have. When used thoughtfully, it becomes a practical starting point for clarity and progress.",
       toolCta: "Start the assessment"
-    },
-    resourcesPage: {
-      label: "Resources",
-      title: "Research and practical tools for family business owners",
-      intro:
-        "A small library of public family-business research and private preparation tools that help owners start better conversations before a formal advisory engagement.",
-      researchTitle: "Research context",
-      researchIntro:
-        "These public sources inform the benchmark section of the diagnostic. They help business owners see that succession, governance, trust, and decision speed are market-wide family-enterprise challenges, not isolated family problems.",
-      privateTitle: "Private resources",
-      privateIntro:
-        "Short guides and question sets designed to help a family prepare for clearer meetings, succession conversations, and protocol work.",
-      viewResearchCta: "Open research",
-      viewResourceCta: "Download guide",
-      nextResourceCta: "Show next lead magnets",
-      resourcePageLabel: "Show lead magnet page {page}",
-      viewMoreCta: "View more resources",
-      assessmentCta: "Start assessment",
-      freeTag: "It's free",
-      leadFormTitle: "Get the private guide",
-      leadFormIntro:
-        "Share a few details so Gilbert can understand who is using the resource.",
-      leadFormName: "Name",
-      leadFormEmail: "Email",
-      leadFormPhone: "Phone number",
-      leadFormBusiness: "Business name",
-      leadFormConsent:
-        "I agree to receive email updates and marketing communications from Gilbert Devlyn Advisory. I understand I can unsubscribe later.",
-      leadFormCancel: "Cancel",
-      leadFormSubmit: "Continue",
-      leadReadyLabel: "Guide ready",
-      leadReadyIntro:
-        "The details are recorded for this demo flow. Use the button below to download the guide. Future email follow-ups can be sent to {email}.",
-      leadReadyBack: "Edit details",
-      leadReadyDownload: "Download guide"
     },
     cookieConsent: {
       title: "Cookies are required to use the diagnostic",
       body:
-        "This assessment uses cookies to keep your progress, connect your result to the comparison flow, and support follow-up analytics. Please accept cookies before starting or continuing the assessment.",
+        "This assessment uses cookies to keep your progress, connect your result to the comparison flow, and support result capture. Please accept cookies before starting or continuing the assessment.",
       accept: "Accept cookies",
       reject: "Reject"
     },
@@ -1133,9 +971,9 @@ export const COPY = {
       startOverCta: "Start over"
     },
     assessmentIntro: {
-      title: "Start the family governance diagnostic",
+      title: "Choose how you want to start the conversation",
       body:
-        "In about 10 minutes, map how your family experiences governance across ownership, leadership, succession, board, and legacy.",
+        "Begin with a complete reflection across all eight governance dimensions, ideal for family meetings and an in-depth understanding of your enterprising family.",
       introBadge: "Private, role-aware, bilingual",
       languageNote: "Available in EN and ES",
       journeyLabel: "What happens next",
@@ -1164,161 +1002,32 @@ export const COPY = {
       ],
       notAuditTitle: "Built for sensitive rooms",
       coverageLabel: "Eight governance pillars",
-      coverageTitle: "A shared map for conversations that are often hard to start",
+      coverageTitle: "A shared map for the conversations families often avoid",
       coverageBody:
-        "The diagnostic looks at the relationship between family, ownership, and business. The goal is not to produce a verdict; it is to help the family see which conversations need more clarity.",
+        "Each dimension reflects how family, ownership, and business intersect - highlighting where alignment is needed.",
       outcomesLabel: "What you receive",
       outcomesTitle: "A practical starting point",
       outcomes: [
         {
           title: "A clearer picture",
           body:
-            "See how the family currently experiences governance across vision, roles, ownership, board, succession, and legacy."
+            "A clearer picture of how your family experiences governance today."
         },
         {
           title: "Language for alignment",
           body:
-            "Use the result as neutral language for discussing what is working, what feels unclear, and where structure may help."
+            "A shared language to discuss what is unclear and what matters most."
         },
         {
           title: "Next-step guidance",
           body:
-            "Receive a maturity stage, suggested areas of focus, and practical next steps for the family conversation."
+            "Clear next steps to move the conversation forward."
         }
       ],
-      conversationTitle: "Begin with the full diagnosis",
+      conversationTitle: "Begin with the assessment",
       conversationBody:
-        "The full assessment gives the most useful view for a family meeting, ownership conversation, or advisory discussion.",
-      conversationCta: "Start full assessment",
-      caseStudies: {
-        label: "Composite case studies",
-        title: "Reputation is built in private rooms",
-        intro:
-          "Family business advisory often happens around sensitive ownership, succession, and relationship questions. These composite examples show the kind of work Gilbert helps families structure while keeping identifying details private.",
-        note:
-          "The examples below use mock, anonymized data for presentation purposes. They are designed to show advisory patterns and deliverables, not disclose client records.",
-        labels: {
-          snapshot: "Delivery snapshot",
-          context: "Family context",
-          tension: "What was at risk",
-          signals: "Diagnostic signals",
-          delivered: "What Gilbert delivered",
-          results: "Illustrative result",
-          quote: "Client-style reflection"
-        },
-        proof: [
-          {
-            value: "3",
-            label: "Composite situations",
-            detail: "Founder transition, ownership alignment, and next generation participation."
-          },
-          {
-            value: "6-10 weeks",
-            label: "Typical advisory sprint",
-            detail: "Discovery, diagnostic, facilitated conversations, and a practical governance roadmap."
-          },
-          {
-            value: "8 pillars",
-            label: "Shared language",
-            detail: "A structured way to discuss roles, board, ownership, succession, and legacy."
-          }
-        ],
-        items: [
-          {
-            title: "Founder transition",
-            status: "Composite example",
-            profile: "Founder-led operating company, second generation preparing for senior leadership.",
-            context:
-              "The founder was still the emotional and operational center of the company. The next generation was capable, but authority was informal and decisions kept returning to the founder.",
-            tension:
-              "The family wanted continuity without creating a public power struggle or making the founder feel displaced.",
-            signals: [
-              "Strong family values, but no written decision principles",
-              "Succession discussed often, but without dates or role boundaries",
-              "Key executives unsure who could approve strategic decisions"
-            ],
-            delivered: [
-              "Founder transition conversation map",
-              "Role and authority matrix for family and executives",
-              "90-day succession readiness agenda"
-            ],
-            results: [
-              "The family separated respect for the founder from day-to-day approval rights.",
-              "Second-generation roles became easier to explain to executives.",
-              "The first family governance meeting had a clear agenda instead of an open-ended debate."
-            ],
-            metrics: [
-              { value: "4", label: "family sessions" },
-              { value: "12", label: "role decisions clarified" },
-              { value: "90 days", label: "roadmap horizon" }
-            ],
-            quote:
-              "The conversation moved from who is in charge to what decisions need clarity first."
-          },
-          {
-            title: "Board and ownership alignment",
-            status: "Composite example",
-            profile: "Third-generation family enterprise with active and passive shareholders.",
-            context:
-              "Executives felt the board was too slow. Passive shareholders felt they were receiving information too late. Both sides believed they were acting responsibly, but they were measuring governance differently.",
-            tension:
-              "The risk was not one bad decision; it was the slow erosion of trust between ownership, board, and management.",
-            signals: [
-              "Board materials focused on operations, not ownership-level decisions",
-              "Shareholders wanted transparency but had no shared information rhythm",
-              "Management lacked a clear escalation path for strategic issues"
-            ],
-            delivered: [
-              "Board effectiveness diagnostic",
-              "Ownership information calendar",
-              "Decision-rights and escalation framework"
-            ],
-            results: [
-              "The board calendar separated oversight topics from management updates.",
-              "Shareholders received a clearer rhythm for financial and strategic information.",
-              "Executives gained a cleaner path for issues requiring board or ownership input."
-            ],
-            metrics: [
-              { value: "8", label: "board topics reorganized" },
-              { value: "3", label: "ownership reports defined" },
-              { value: "1", label: "decision map adopted" }
-            ],
-            quote:
-              "The board stopped feeling like a bottleneck and started acting like a governance body."
-          },
-          {
-            title: "Next generation participation",
-            status: "Composite example",
-            profile: "Family with younger members interested in ownership, employment, and legacy.",
-            context:
-              "Some next generation members wanted to be closer to the business. Others wanted distance but still expected a voice as future owners. The senior generation wanted involvement, but not entitlement.",
-            tension:
-              "Without a structure, participation could become either symbolic or disruptive.",
-            signals: [
-              "No shared definition of what responsible ownership meant",
-              "Family meetings mixed education, emotions, and business updates",
-              "Younger members had different levels of knowledge and commitment"
-            ],
-            delivered: [
-              "Next generation learning pathway",
-              "Family meeting rhythm and agenda structure",
-              "Participation criteria for internships, employment, and ownership education"
-            ],
-            results: [
-              "Younger members had a path to learn before asking for formal roles.",
-              "Senior generation could invite participation without losing standards.",
-              "The family created space for legacy conversations beyond business performance."
-            ],
-            metrics: [
-              { value: "6 months", label: "learning path" },
-              { value: "4", label: "participation tracks" },
-              { value: "2", label: "family forums launched" }
-            ],
-            quote:
-              "The next generation did not need a title first. They needed a responsible way to enter the conversation."
-          }
-        ]
-      }
+        "A complete view for family meetings, ownership conversations, and advisory discussions.",
+      conversationCta: "Start the assessment",
     },
     intro:
       "A guided self-reflection for family-owned businesses to understand governance maturity across eight pillars.",
@@ -1328,19 +1037,9 @@ export const COPY = {
     language: "Language",
     modes: {
       full: {
-        title: "Full Assessment",
-        description: "A detailed guided reflection across all eight pillars.",
+        title: "Complete Assessment",
+        description: "Complete reflection across all eight governance dimensions - ideal for family meetings and an in-depth understanding of your enterprising family. (10 mins)",
         meta: "50 questions · ~10 minutes · Radar chart + full result"
-      },
-      short: {
-        title: "Short Assessment",
-        description: "One essential question per pillar for a quick first view.",
-        meta: "8 questions · ~2 minutes · Summary result + maturity stage"
-      },
-      followup: {
-        title: "Follow-up Message",
-        description: "Create a warm, personalized message based on a maturity stage.",
-        meta: "Select a stage · Generate in seconds · Ready to send"
       }
     },
     intake: {
@@ -1422,33 +1121,33 @@ export const COPY = {
     questionOf: "Question",
     of: "of",
     pillar: "Pillar",
-    scorePrompt: "To what extent is this present today?",
+    scorePrompt: "How true is this for your family today?",
     scale: [
-      "Not present",
-      "Very limited",
-      "Occasional",
-      "Partly present",
-      "Mostly present",
-      "Consistently present"
+      "Not true for us",
+      "Rarely true",
+      "Sometimes true",
+      "Often true",
+      "Mostly true",
+      "Very true for us"
     ],
-    scaleNote: "0 = Not at all | 3 = Partially | 5 = Fully in place",
+    scaleNote: "Choose Not sure / I don't know when you do not have enough visibility. It will not count against the score.",
     scaleAnchors: [
-      "Not at all",
-      "Very limited",
-      "Early signs",
-      "Partially",
-      "Mostly in place",
-      "Fully in place"
+      "Not true for us",
+      "Rarely true",
+      "Sometimes true",
+      "Often true",
+      "Mostly true",
+      "Very true for us"
     ],
     unknownOption: {
-      label: "I don't know",
-      body: "I don't have enough information to answer this."
+      label: "Not sure / I don't know",
+      body: "This does not count in the numeric score."
     },
     transparencyInsight: {
       label: "Transparency signal",
-      title: "Some information may not be reaching everyone",
+      title: "Several areas were marked as Not sure",
       body:
-        "Several answers were marked as unknown. That does not lower the score, but it does suggest areas where governance information may not be visible to every family member or stakeholder.",
+        "This often indicates that information is not fully shared across the family, or that roles and expectations are not clearly defined. It is a signal about clarity and visibility, not low maturity.",
       countLabel: "Unknown responses",
       pillarLabel: "Most affected pillars"
     },
@@ -1510,27 +1209,12 @@ export const COPY = {
       transparencyBody:
         "Pillars where one perspective has limited information while another sees the practice more clearly.",
       noTransparency: "No major transparency gap appeared.",
-      groupCallCta: "Book a group conversation with Gilbert",
+      groupCallCta: "Contact Gilbert about this comparison",
       scoreGap: "Gap",
       unknownResponses: "Unknown"
     },
     footerRights: "© 2026 Gilbert Devlyn Advisory. All rights reserved.",
-    contactEmail: "partner@gilbertdevlyn.com",
-    followupTitle: "Follow-up message generator",
-    followupIntro:
-      "Select a maturity stage and prepare a message for WhatsApp or email.",
-    stage: "Stage",
-    familyName: "Family or business name",
-    optional: "Optional",
-    channel: "Format",
-    whatsapp: "WhatsApp",
-    email: "Email",
-    generate: "Generate message",
-    copy: "Copy",
-    copied: "Copied",
-    latestResult: "Latest result",
-    noLatest: "Choose a stage to begin.",
-    messagePreview: "Message preview"
+    contactEmail: "partner@gilbertdevlyn.com"
   },
   es: {
     appName: "Herramienta de Madurez para Empresas Familiares",
@@ -1541,19 +1225,17 @@ export const COPY = {
     nav: {
       home: "Inicio",
       about: "Acerca de",
-      caseStudies: "Casos",
-      resources: "Recursos",
       assessment: "Diagnóstico"
     },
     booking: {
       startAssessment: "Iniciar Diagnóstico",
       takeAssessment: "Tomar el Diagnóstico",
       getGovernanceScore: "Obtener Puntaje de Gobierno",
-      bookStrategyCall: "Agendar Llamada Estratégica",
-      modalLabel: "Llamada de Descubrimiento",
-      modalTitle: "Agenda una llamada de descubrimiento con Gilbert Devlyn",
+      bookStrategyCall: "Solicitar seguimiento",
+      modalLabel: "Solicitud de seguimiento",
+      modalTitle: "Solicita seguimiento con Gilbert Devlyn",
       modalIntro:
-        "Elige un horario para hablar con Gilbert sobre lo que muestra tu resultado y dónde su acompañamiento puede ayudar a pasar del diagnóstico a la acción.",
+        "Comparte tu resultado y datos de contacto para que Gilbert pueda buscarte personalmente.",
       modalIntroByCategory: {
         low:
           "Tu resultado señala áreas donde mayor claridad y estructura pueden ayudar. Gilbert puede ayudar a definir qué atender primero, quién debe participar y cómo empezar sin crear tensión innecesaria.",
@@ -1569,13 +1251,14 @@ export const COPY = {
         high: "Alta"
       },
       flaggedLabel: "Áreas de enfoque",
-      schedulerTitle: "Llamada de descubrimiento con Gilbert Devlyn",
-      close: "Cerrar modal de agenda",
+      schedulerTitle: "Seguimiento con Gilbert Devlyn",
+      close: "Cerrar",
       scoreCtas: {
-        low: "Hablar prioridades con Gilbert",
-        mid: "Fortalecer esto con Gilbert",
-        high: "Refinar la siguiente etapa con Gilbert"
-      }
+        low: "Solicitar que Gilbert me contacte",
+        mid: "Solicitar que Gilbert me contacte",
+        high: "Solicitar que Gilbert me contacte"
+      },
+      contactRequested: "Solicitud enviada"
     },
     home: {
       title: "Reflexión guiada sobre gobierno para empresas familiares",
@@ -1753,12 +1436,6 @@ export const COPY = {
         "Su enfoque combina coaching profesional, consultoría en gobierno familiar y asesoría de consejo, siempre desde la experiencia directa de haber estado del otro lado de la mesa. Gilbert no es un consultor que solo estudió el tema; lo vivió y decidió acompañar a otros en el mismo camino."
       ],
       heroCta: "Iniciar diagnóstico",
-      metrics: [
-        { value: "2019-2025", label: "Chief Human Capital Officer en Grupo Devlyn" },
-        { value: "2", label: "Consejos presididos: Familia y NextGen" },
-        { value: "Propietario", label: "Perspectiva como familiar, propietario y consejero" },
-        { value: "FFI", label: "Credenciales del Family Firm Institute" }
-      ],
       educationTitle: "Educación y Certificaciones",
       educationItems: [
         "IMBA in Family Business Consulting — University of Denver",
@@ -1779,101 +1456,6 @@ export const COPY = {
       testimonialsTitle: "Lo que dicen las familias",
       testimonialsSubtitle:
         "Estas reflexiones provienen de familias que han trabajado con Gilbert en distintas etapas de su camino de gobierno.",
-      testimonials: [
-        {
-          quote:
-            "Gilbert nos ayudó a tener una conversación que llevábamos años evitando. No nos empujó hacia una conclusión; nos ayudó a entender por qué no estábamos de acuerdo, y eso fue más valioso que cualquier solución.",
-          author: "Alejandro M.",
-          role: "Fundador, empresa manufacturera de segunda generación, México",
-          fullQuote:
-            "Gilbert nos ayudó a tener una conversación que llevábamos años evitando. No nos empujó hacia una conclusión; nos ayudó a entender por qué no estábamos de acuerdo, y eso fue más valioso que cualquier solución. Por primera vez pudimos separar el respeto por el fundador de la pregunta práctica de cómo se tomarían decisiones cuando más personas tuvieran que asumir responsabilidad.",
-          background:
-            "Una familia industrial de segunda generación en el norte de México. El fundador seguía siendo el centro emocional del negocio, tres hijos adultos tenían distintos niveles de responsabilidad y los ejecutivos no familiares pedían mayor claridad antes de la siguiente etapa de crecimiento.",
-          challenges: [
-            "Las conversaciones de sucesión se posponían porque se sentían como un juicio sobre el fundador, no como una conversación de continuidad.",
-            "Los roles de los hermanos se interpretaban de forma distinta por la familia, la dirección y asesores externos.",
-            "Propiedad, gestión y expectativas familiares se estaban discutiendo en las mismas reuniones.",
-            "Existía confianza real, pero no un proceso acordado para manejar desacuerdos cuando subía la tensión."
-          ],
-          approach: [
-            "Entrevistó en privado a cada accionista familiar para entender qué estaba protegiendo, no solo qué quería.",
-            "Separó preguntas de propiedad de decisiones de gestión para volver la conversación menos personal y más accionable.",
-            "Diseñó una primera agenda de consejo familiar centrada en derechos de decisión, expectativas de rol y transición gradual de autoridad.",
-            "Acompañó a la familia en el uso de un lenguaje que permitiera disentir sin que la lealtad se sintiera cuestionada."
-          ],
-          outcomes: [
-            "El consejo familiar se reunió mensualmente durante los dos trimestres siguientes con una agenda más clara y orientada a decisiones.",
-            "Las expectativas de rol para familiares en la empresa quedaron documentadas y separadas de los derechos de propiedad.",
-            "El fundador trasladó dos decisiones recurrentes a un foro compartido de propietarios.",
-            "Los ejecutivos recibieron mayor claridad sobre cuándo se requería participación familiar y cuándo podía avanzar la gestión."
-          ]
-        },
-        {
-          quote:
-            "Nuestra familia tenía buenas intenciones pero poca estructura. Después de trabajar con Gilbert, finalmente tuvimos un consejo de familia que se reunía, un protocolo acordado por todos y mayor claridad sobre quién posee qué y por qué.",
-          author: "Sofía R.",
-          role: "Accionista familiar, grupo inmobiliario, Colombia",
-          fullQuote:
-            "Nuestra familia tenía buenas intenciones pero poca estructura. Después de trabajar con Gilbert, finalmente tuvimos un consejo de familia que se reunía, un protocolo acordado por todos y mayor claridad sobre quién posee qué y por qué. El trabajo se sintió serio sin volverse pesado; personas que normalmente no hablaban tuvieron espacio para participar sin sentirse expuestas.",
-          background:
-            "Una familia inmobiliaria de tercera generación con activos operativos, accionistas pasivos y varios primos empezando a preguntar cómo podían contribuir. El negocio estaba sano, pero el sistema familiar no había evolucionado al ritmo de una base accionaria más amplia.",
-          challenges: [
-            "Los derechos de propiedad y acceso a información se conversaban de forma informal, creando expectativas distintas entre ramas.",
-            "Los jóvenes querían visibilidad sin sentir presión de incorporarse a la empresa antes de estar listos.",
-            "Las reuniones mezclaban dividendos, proyectos, preocupaciones personales y preguntas de legado en una sola agenda.",
-            "La generación senior buscaba armonía, pero a veces la armonía se lograba evitando decisiones."
-          ],
-          approach: [
-            "Mapeó qué temas correspondían a espacios de propiedad, familia, consejo y gestión.",
-            "Facilitó un taller de protocolo con representación de cada rama accionaria.",
-            "Ayudó a definir qué información debían recibir los accionistas, cuándo y a través de qué foro.",
-            "Creó un ritmo anual breve de educación para accionistas de siguiente generación antes de pedirles elegir roles."
-          ],
-          outcomes: [
-            "La familia aprobó un primer borrador de protocolo sobre reuniones, derechos de información, empleo familiar y escalamiento de conflictos.",
-            "Las agendas se volvieron más breves, predecibles y menos reactivas.",
-            "La siguiente generación obtuvo una ruta más clara para aprender antes de decidir si entrar al negocio.",
-            "Varios temas recurrentes salieron de conversaciones informales y pasaron al foro adecuado."
-          ]
-        },
-        {
-          quote:
-            "Lo que Gilbert aporta es neutralidad. No tiene agenda. Eso hizo posible que tres generaciones de nuestra familia hablaran con honestidad en la misma sala.",
-          author: "James H.",
-          role: "CEO y familiar, grupo de consumo, Estados Unidos",
-          fullQuote:
-            "Lo que Gilbert aporta es neutralidad. No tiene agenda. Eso hizo posible que tres generaciones de nuestra familia hablaran con honestidad en la misma sala. El proceso nos dio estructura suficiente para ser directos sin ponernos defensivos y nos ayudó a ver la sucesión como un proceso de gobierno, no como una decisión dramática.",
-          background:
-            "Una familia estadounidense de consumo con una historia operativa sólida, un CEO familiar activo y una tercera generación preparándose para convertirse en propietarios informados. El consejo tenía personas capaces, pero sus conversaciones mezclaban estrategia, expectativas familiares y gestión diaria.",
-          challenges: [
-            "Las conversaciones del consejo se estaban volviendo demasiado operativas, dejando poco espacio para continuidad de propiedad y supervisión de riesgos.",
-            "La generación senior buscaba continuidad, mientras los jóvenes querían información más clara y una forma legítima de hacer preguntas.",
-            "Los familiares evitaban desacuerdos para preservar la armonía, lo que dejaba temas importantes permanentemente inconclusos.",
-            "La sucesión del CEO existía como preocupación, pero no se había convertido en un plan por etapas."
-          ],
-          approach: [
-            "Clarificó límites entre supervisión del consejo, autoridad del CEO, educación de propietarios familiares y ejecución de la gestión.",
-            "Usó sesiones facilitadas de escucha antes de presentar recomendaciones, para que los familiares más reservados también moldearan el trabajo.",
-            "Ayudó al consejo a plantear la sucesión como un proceso de gobierno por etapas con hitos visibles.",
-            "Introdujo un calendario de consejo que protegía tiempo para estrategia, riesgo, liderazgo y temas de propiedad familiar."
-          ],
-          outcomes: [
-            "El calendario del consejo separó estrategia, riesgo, liderazgo y temas de propiedad familiar.",
-            "La familia acordó una ruta de educación para propietarios de siguiente generación con sesiones y expectativas definidas.",
-            "La sucesión pasó de preocupación vaga a hitos y puntos de revisión concretos.",
-            "El CEO y el consejo ganaron un lenguaje compartido para decidir cuándo involucrar a propietarios familiares y cuándo dejar avanzar a la gestión."
-          ]
-        }
-      ],
-      caseStudyCta: "Ver Caso",
-      caseStudyLabels: {
-        eyebrow: "Nota privada de caso",
-        background: "Contexto familiar",
-        challenges: "Desafíos",
-        approach: "Enfoque de Gilbert",
-        outcomes: "Resultados",
-        close: "Cerrar caso"
-      },
       toolTitle: "Por qué Gilbert creó esta herramienta",
       toolBody:
         "La Herramienta de Madurez para Empresas Familiares surgió de una observación recurrente: muchas familias no saben por dónde empezar. Antes de un protocolo, antes de un consejo, antes de cualquier estructura de gobierno — las familias necesitan una imagen compartida de dónde están.",
@@ -1883,45 +1465,10 @@ export const COPY = {
         "La herramienta es gratuita y está disponible en English y Español.",
       toolCta: "Iniciar diagnóstico"
     },
-    resourcesPage: {
-      label: "Recursos",
-      title: "Investigación y herramientas prácticas para familias empresarias",
-      intro:
-        "Una biblioteca breve con investigación pública sobre empresas familiares y herramientas privadas de preparación para iniciar mejores conversaciones antes de un acompañamiento formal.",
-      researchTitle: "Contexto de investigación",
-      researchIntro:
-        "Estas fuentes públicas respaldan la sección de referencias del diagnóstico. Ayudan a los dueños a ver que sucesión, gobierno, confianza y velocidad de decisión son retos comunes en empresas familiares, no problemas aislados de una sola familia.",
-      privateTitle: "Recursos privados",
-      privateIntro:
-        "Guías breves y sets de preguntas para preparar reuniones, conversaciones de sucesión y trabajo de protocolo familiar con mayor claridad.",
-      viewResearchCta: "Abrir investigación",
-      viewResourceCta: "Descargar guía",
-      nextResourceCta: "Mostrar siguientes lead magnets",
-      resourcePageLabel: "Mostrar página {page} de lead magnets",
-      viewMoreCta: "Ver más recursos",
-      assessmentCta: "Iniciar diagnóstico",
-      freeTag: "Gratis",
-      leadFormTitle: "Recibe la guía privada",
-      leadFormIntro:
-        "Comparte algunos datos para que Gilbert pueda entender quién usa el recurso.",
-      leadFormName: "Nombre",
-      leadFormEmail: "Email",
-      leadFormPhone: "Teléfono",
-      leadFormBusiness: "Nombre de la empresa",
-      leadFormConsent:
-        "Acepto recibir correos y comunicaciones de marketing de Gilbert Devlyn Advisory. Entiendo que puedo darme de baja después.",
-      leadFormCancel: "Cancelar",
-      leadFormSubmit: "Continuar",
-      leadReadyLabel: "Guía lista",
-      leadReadyIntro:
-        "Los datos quedan registrados para este flujo demo. Usa el botón de abajo para descargar la guía. Los seguimientos futuros podrán enviarse a {email}.",
-      leadReadyBack: "Editar datos",
-      leadReadyDownload: "Descargar guía"
-    },
     cookieConsent: {
       title: "Las cookies son necesarias para usar el diagnóstico",
       body:
-        "Este diagnóstico usa cookies para guardar tu avance, conectar tu resultado con el flujo de comparación y apoyar analítica de seguimiento. Acepta las cookies antes de iniciar o continuar el diagnóstico.",
+        "Este diagnóstico usa cookies para guardar tu avance, conectar tu resultado con el flujo de comparación y apoyar la captura de resultados. Acepta las cookies antes de iniciar o continuar el diagnóstico.",
       accept: "Aceptar cookies",
       reject: "Rechazar"
     },
@@ -1994,135 +1541,6 @@ export const COPY = {
       conversationBody:
         "El diagnóstico completo ofrece la vista más útil para una reunión familiar, conversación de propiedad o discusión con un asesor.",
       conversationCta: "Iniciar diagnóstico completo",
-      caseStudies: {
-        label: "Casos compuestos",
-        title: "La reputación se construye en conversaciones privadas",
-        intro:
-          "La asesoría a familias empresarias suele ocurrir alrededor de temas sensibles de propiedad, sucesión y relación familiar. Estos ejemplos compuestos muestran el tipo de trabajo que Gilbert ayuda a estructurar sin revelar detalles identificables.",
-        note:
-          "Los ejemplos usan datos simulados y anonimizados para fines de presentación. Buscan mostrar patrones de asesoría y entregables, no revelar expedientes de clientes.",
-        labels: {
-          snapshot: "Resumen de entrega",
-          context: "Contexto familiar",
-          tension: "Qué estaba en riesgo",
-          signals: "Señales del diagnóstico",
-          delivered: "Qué entregó Gilbert",
-          results: "Resultado ilustrativo",
-          quote: "Reflexión tipo cliente"
-        },
-        proof: [
-          {
-            value: "3",
-            label: "Situaciones compuestas",
-            detail: "Transición del fundador, alineación de propiedad y participación de la siguiente generación."
-          },
-          {
-            value: "6-10 semanas",
-            label: "Sprint típico de asesoría",
-            detail: "Descubrimiento, diagnóstico, conversaciones facilitadas y una hoja de ruta práctica."
-          },
-          {
-            value: "8 pilares",
-            label: "Lenguaje compartido",
-            detail: "Una forma estructurada de hablar sobre roles, consejo, propiedad, sucesión y legado."
-          }
-        ],
-        items: [
-          {
-            title: "Transición del fundador",
-            status: "Ejemplo compuesto",
-            profile: "Empresa operativa liderada por su fundador, con segunda generación preparándose para liderazgo senior.",
-            context:
-              "El fundador seguía siendo el centro emocional y operativo de la empresa. La siguiente generación tenía capacidad, pero la autoridad era informal y las decisiones volvían al fundador.",
-            tension:
-              "La familia quería continuidad sin crear una lucha pública de poder ni hacer sentir desplazado al fundador.",
-            signals: [
-              "Valores familiares fuertes, pero sin principios de decisión escritos",
-              "La sucesión se hablaba con frecuencia, pero sin fechas ni límites de rol",
-              "Ejecutivos clave no sabían quién podía aprobar decisiones estratégicas"
-            ],
-            delivered: [
-              "Mapa de conversación para transición del fundador",
-              "Matriz de roles y autoridad para familia y ejecutivos",
-              "Agenda de preparación sucesoria a 90 días"
-            ],
-            results: [
-              "La familia separó el respeto por el fundador de los derechos de aprobación del día a día.",
-              "Los roles de segunda generación fueron más fáciles de explicar a los ejecutivos.",
-              "La primera reunión de gobierno familiar tuvo agenda clara en lugar de debate abierto."
-            ],
-            metrics: [
-              { value: "4", label: "sesiones familiares" },
-              { value: "12", label: "decisiones de rol aclaradas" },
-              { value: "90 días", label: "horizonte de ruta" }
-            ],
-            quote:
-              "La conversación pasó de quién manda a qué decisiones necesitan claridad primero."
-          },
-          {
-            title: "Alineación entre consejo y propiedad",
-            status: "Ejemplo compuesto",
-            profile: "Empresa familiar de tercera generación con accionistas activos y pasivos.",
-            context:
-              "Los ejecutivos sentían que el consejo era lento. Los accionistas pasivos sentían que recibían información demasiado tarde. Ambos lados creían actuar responsablemente, pero medían el gobierno de forma distinta.",
-            tension:
-              "El riesgo no era una mala decisión aislada, sino el desgaste gradual de confianza entre propiedad, consejo y dirección.",
-            signals: [
-              "Los materiales del consejo se centraban en operación, no en decisiones de propiedad",
-              "Accionistas querían transparencia, pero no había ritmo compartido de información",
-              "La dirección no tenía una ruta clara para escalar temas estratégicos"
-            ],
-            delivered: [
-              "Diagnóstico de efectividad del consejo",
-              "Calendario de información para propietarios",
-              "Marco de derechos de decisión y escalamiento"
-            ],
-            results: [
-              "El calendario del consejo separó temas de supervisión de actualizaciones operativas.",
-              "Los accionistas recibieron un ritmo más claro de información financiera y estratégica.",
-              "Los ejecutivos ganaron una ruta más limpia para temas que requerían consejo o propiedad."
-            ],
-            metrics: [
-              { value: "8", label: "temas de consejo reorganizados" },
-              { value: "3", label: "reportes de propiedad definidos" },
-              { value: "1", label: "mapa de decisión adoptado" }
-            ],
-            quote:
-              "El consejo dejó de sentirse como cuello de botella y empezó a operar como órgano de gobierno."
-          },
-          {
-            title: "Participación de la siguiente generación",
-            status: "Ejemplo compuesto",
-            profile: "Familia con miembros jóvenes interesados en propiedad, empleo y legado.",
-            context:
-              "Algunos miembros de la siguiente generación querían acercarse al negocio. Otros preferían distancia, pero esperaban voz como futuros propietarios. La generación senior quería involucramiento, pero no entitlement.",
-            tension:
-              "Sin estructura, la participación podía volverse simbólica o disruptiva.",
-            signals: [
-              "No había definición compartida de propiedad responsable",
-              "Las reuniones familiares mezclaban educación, emociones y reportes de negocio",
-              "Los jóvenes tenían distintos niveles de conocimiento y compromiso"
-            ],
-            delivered: [
-              "Ruta de aprendizaje para siguiente generación",
-              "Ritmo y agenda para reuniones familiares",
-              "Criterios de participación para prácticas, empleo y educación de propietarios"
-            ],
-            results: [
-              "Los jóvenes tuvieron una ruta para aprender antes de pedir roles formales.",
-              "La generación senior pudo invitar participación sin perder estándares.",
-              "La familia creó espacio para conversaciones de legado más allá del desempeño del negocio."
-            ],
-            metrics: [
-              { value: "6 meses", label: "ruta de aprendizaje" },
-              { value: "4", label: "vías de participación" },
-              { value: "2", label: "foros familiares lanzados" }
-            ],
-            quote:
-              "La siguiente generación no necesitaba primero un título. Necesitaba una forma responsable de entrar a la conversación."
-          }
-        ]
-      }
     },
     intro:
       "Una autorreflexión guiada para que familias empresarias comprendan su madurez de gobierno en ocho pilares.",
@@ -2135,16 +1553,6 @@ export const COPY = {
         title: "Diagnóstico Completo",
         description: "Una reflexión guiada y detallada en los ocho pilares.",
         meta: "50 preguntas · ~10 minutos · Radar + resultado completo"
-      },
-      short: {
-        title: "Diagnóstico Corto",
-        description: "Una pregunta esencial por pilar para una primera lectura.",
-        meta: "8 preguntas · ~2 minutos · Resumen + etapa de madurez"
-      },
-      followup: {
-        title: "Mensaje de Seguimiento",
-        description: "Crea un mensaje cálido y personalizado según la etapa de madurez.",
-        meta: "Selecciona una etapa · Genera en segundos · Listo para enviar"
       }
     },
     intake: {
@@ -2314,26 +1722,11 @@ export const COPY = {
       transparencyBody:
         "Pilares donde una perspectiva tiene información limitada mientras otra ve la práctica con mayor claridad.",
       noTransparency: "No apareció una brecha importante de transparencia.",
-      groupCallCta: "Agendar conversación grupal con Gilbert",
+      groupCallCta: "Contactar a Gilbert sobre esta comparación",
       scoreGap: "Brecha",
       unknownResponses: "Sin información"
     },
     footerRights: "© 2026 Gilbert Devlyn Advisory. Todos los derechos reservados.",
-    contactEmail: "partner@gilbertdevlyn.com",
-    followupTitle: "Generador de mensaje de seguimiento",
-    followupIntro:
-      "Selecciona una etapa de madurez y prepara un mensaje para WhatsApp o email.",
-    stage: "Etapa",
-    familyName: "Nombre de la familia o empresa",
-    optional: "Opcional",
-    channel: "Formato",
-    whatsapp: "WhatsApp",
-    email: "Email",
-    generate: "Generar mensaje",
-    copy: "Copiar",
-    copied: "Copiado",
-    latestResult: "Resultado más reciente",
-    noLatest: "Elige una etapa para empezar.",
-    messagePreview: "Vista previa del mensaje"
+    contactEmail: "partner@gilbertdevlyn.com"
   }
 };

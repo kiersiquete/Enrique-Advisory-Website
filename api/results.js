@@ -24,6 +24,7 @@ export default function handler(req, res) {
     profile: body.profile,
     groupId: body.groupId,
     participantId: body.participantId,
+    contactRequested: Boolean(body.contactRequested),
     overall: body.overall,
     stageId: body.stageId,
     pillarScores: body.pillarScores,
