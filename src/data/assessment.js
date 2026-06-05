@@ -1261,11 +1261,16 @@ export const COPY = {
       contactRequested: "Solicitud enviada"
     },
     home: {
-      title: "Reflexión guiada sobre gobierno para empresas familiares",
+      title: "Claridad para las decisiones que definen tu empresa familiar",
       subtitle:
-        "Gilbert Devlyn trabaja con familias empresarias en el punto donde se cruzan propiedad, liderazgo y relaciones familiares. Desde su propia experiencia dentro de Grupo Devlyn, esta herramienta ayuda a abrir una conversación más clara sobre continuidad, roles, decisiones y estructuras para proteger el legado familiar.",
-      primaryCta: "Iniciar Tu Diagnóstico",
-      secondaryCta: "Conocer a Gilbert",
+        "Una herramienta de reflexión estructurada para alinear propiedad, liderazgo y continuidad antes de que las tensiones se conviertan en decisiones.",
+      body:
+        "Construida a partir de buenas prácticas internacionales y experiencia vivida dentro de una empresa familiar multigeneracional, esta herramienta ayuda a poner sobre la mesa lo que muchas veces no se dice para que las familias puedan avanzar con claridad y estructura.",
+      gilbertTitle: "¿Quién es Gilbert?",
+      gilbertBody:
+        "Gilbert Devlyn aporta experiencia directa desde dentro de un grupo empresarial familiar de tercera generación. Como miembro de familia, propietario y consejero, ha participado directamente en decisiones que dan forma a la continuidad entre generaciones.",
+      primaryCta: "Iniciar la conversación",
+      secondaryCta: "Acerca de Gilbert",
       valueTitle: "Por qué importa la asesoría",
       valueBody:
         "Las decisiones de una empresa familiar tienen más peso que lo operativo: afectan la confianza, la continuidad, la propiedad y los roles futuros. La asesoría ofrece un espacio neutral para nombrar lo difícil, alinear prioridades y convertir conversaciones sensibles en acuerdos posibles.",
@@ -1421,6 +1426,13 @@ export const COPY = {
             "Después de la reunión, el trabajo continúa con pasos concretos: acuerdos claros, responsables definidos y un ritmo familiar protegido para que las decisiones sobrevivan más allá de una buena conversación."
         }
       ],
+      toolTitle: "Por qué existe esta herramienta",
+      toolParagraphs: [
+        "La mayoría de las familias empresarias no saben por dónde empezar: antes de las estructuras, necesitan un entendimiento compartido.",
+        "No es un scorecard ni un veredicto: es un mapa estructurado para iniciar conversaciones alineadas.",
+        "Es gratuita y está disponible en inglés y español."
+      ],
+      toolCta: "Iniciar diagnóstico",
       ctaTitle: "Empieza tu reflexión hoy",
       ctaBody:
         "La Herramienta de Madurez para Empresas Familiares le da a tu familia un lenguaje compartido para hablar de gobierno, continuidad y roles — sin juicios, rankings ni presión.",
@@ -1438,31 +1450,43 @@ export const COPY = {
       heroCta: "Iniciar diagnóstico",
       educationTitle: "Educación y Certificaciones",
       educationItems: [
-        "IMBA in Family Business Consulting — University of Denver",
+        "International MBA (IMBA), University of Denver — Enfoque en consultoría para empresas familiares",
+        "Licenciaturas en Administración y Mercadotecnia",
         "Certificate in Family Business Advising — Family Firm Institute",
         "Certificate in Family Wealth Advising — Family Firm Institute",
         "Certified Professional Coach — iPEC",
-        "Board Director Diploma — IMD Global Board Center"
+        "Board Director Diploma — IMD"
       ],
       focusTitle: "Áreas de Enfoque",
       focusItems: [
         "Gobierno familiar y facilitación de consejos de familia",
-        "Profesionalización del sistema familiar",
-        "Transición de propiedad y planeación de sucesión",
+        "Estructuración y profesionalización del sistema familiar",
+        "Transición de propiedad y sucesión",
         "Desarrollo y preparación de la siguiente generación",
-        "Asesoría de consejo y claridad de roles familia-empresa",
-        "Coaching para conversaciones difíciles y armonía familiar"
+        "Asesoría de consejo y claridad de roles",
+        "Coaching para conversaciones difíciles",
+        "Coaching y mentoría para miembros de la siguiente generación que asumen roles de propiedad y liderazgo"
       ],
-      testimonialsTitle: "Lo que dicen las familias",
+      testimonialsTitle: "Discreto por diseño",
       testimonialsSubtitle:
-        "Estas reflexiones provienen de familias que han trabajado con Gilbert en distintas etapas de su camino de gobierno.",
-      toolTitle: "Por qué Gilbert creó esta herramienta",
+        "La mayor parte del trabajo ocurre en momentos que no están pensados para hacerse públicos: conversaciones familiares, decisiones de propiedad y transiciones que requieren confianza y confidencialidad. Por eso, las relaciones con clientes se manejan de forma privada y las referencias se comparten directamente, cuando corresponde.",
+      situationsTitle: "Dónde ayuda este trabajo",
+      situations: [
+        "Una familia preparando cómo la siguiente generación entra en la propiedad y el liderazgo",
+        "Hermanos alineándose después de una transición del fundador",
+        "Accionistas aclarando roles, derechos y expectativas",
+        "Consejos de familia que existen pero no se aprovechan plenamente",
+        "Decisiones importantes que se sienten estancadas porque la conversación no ha ocurrido"
+      ],
+      toolTitle: "Por qué importa esta herramienta",
       toolBody:
-        "La Herramienta de Madurez para Empresas Familiares surgió de una observación recurrente: muchas familias no saben por dónde empezar. Antes de un protocolo, antes de un consejo, antes de cualquier estructura de gobierno — las familias necesitan una imagen compartida de dónde están.",
+        "Esta herramienta está basada en buenas prácticas de gobierno para empresas familiares, tomando como referencia marcos desarrollados por organizaciones como Family Firm Institute (FFI) e investigación académica sobre empresas multigeneracionales.",
       toolBodySecond:
-        "Esta herramienta no es un scorecard. No compara familias ni produce un veredicto. Le da a la familia un mapa — en ocho pilares de gobierno — para que las conversaciones sobre qué mejorar partan de un entendimiento común y no de supuestos en competencia.",
+        "En el fondo, refleja una realidad simple: la mayoría de las familias empresarias no saben por dónde empezar. Antes de protocolos, consejos o estructuras formales, las familias necesitan un entendimiento compartido de dónde están.",
       toolBodyThird:
-        "La herramienta es gratuita y está disponible en English y Español.",
+        "Esto no es un scorecard. No compara familias ni produce un veredicto. En cambio, ofrece una forma estructurada de mapear conversaciones en áreas clave de gobierno, para que el diálogo pueda empezar desde la alineación y no desde supuestos.",
+      toolBodyFourth:
+        "Yo no creé esta herramienta, pero creo firmemente en su valor como una forma de ayudar a las familias a iniciar conversaciones que muchas veces son difíciles de tener. Cuando se usa con cuidado, se convierte en un punto de partida práctico para lograr claridad y avanzar.",
       toolCta: "Iniciar diagnóstico"
     },
     cookieConsent: {
