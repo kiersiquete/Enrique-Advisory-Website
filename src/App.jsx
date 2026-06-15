@@ -104,7 +104,7 @@ const RESULT_DETAIL_COPY = {
       "Use this report as the starting point for a focused family governance conversation. Share your result and contact details so Gilbert can follow up personally.",
     bookingCtaButton: "Request follow-up",
     reportNote:
-      "This report is a reflection tool. It is not an audit, legal opinion, or valuation. It is designed to help the family decide what to discuss next.",
+      "This report comes from a self-assessment. It is not an audit, legal opinion, or valuation. It is designed to help the family decide what to discuss next.",
     scoreBands: {
       priority: {
         label: "Priority",
@@ -165,7 +165,7 @@ const RESULT_DETAIL_COPY = {
       "Usa este reporte como punto de partida para una conversación enfocada de gobierno familiar. Comparte tu resultado y datos de contacto para que Gilbert te busque personalmente.",
     bookingCtaButton: "Solicitar seguimiento",
     reportNote:
-      "Este reporte es una herramienta de reflexión. No es una auditoría, opinión legal ni valuación. Está diseñado para ayudar a la familia a decidir qué conversar después.",
+      "Este reporte viene de una autoevaluación. No es una auditoría, opinión legal ni valuación. Está diseñado para ayudar a la familia a decidir qué conversar después.",
     scoreBands: {
       priority: {
         label: "Prioridad",
@@ -1292,15 +1292,15 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
   const heroStats = [
     {
       value: "8",
-      label: language === "es" ? "pilares de gobierno" : "governance pillars"
+      label: language === "es" ? "dimensiones familiares" : "family dimensions"
     },
     {
-      value: "EN/ES",
-      label: language === "es" ? "reflexión bilingüe" : "bilingual reflection"
+      value: "~10",
+      label: language === "es" ? "minutos para empezar" : "minutes to begin"
     },
     {
-      value: language === "es" ? "5-10" : "5-10",
-      label: language === "es" ? "minutos para iniciar" : "minutes to begin"
+      value: "50",
+      label: language === "es" ? "preguntas simples" : "simple questions"
     }
   ];
 
@@ -1559,8 +1559,8 @@ function AdvisorPortrait({ language }) {
     >
       <div className="portrait-frame absolute inset-0 overflow-hidden rounded-lg border border-forest/12 bg-forest shadow-soft">
         <img
-          className="h-full w-full object-cover object-[58%_center] lg:object-[76%_center]"
-          src="/GILBERT.jpg"
+          className="h-full w-full object-cover object-[50%_center] lg:object-[52%_center]"
+          src="/gilbert-home.jpg"
           alt={language === "es" ? "Retrato de Gilbert Devlyn" : "Portrait of Gilbert Devlyn"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-forest/84 via-forest/12 to-transparent" />
@@ -1694,7 +1694,7 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
             <div className="portrait-frame relative h-[420px] overflow-hidden rounded-lg bg-forest shadow-soft sm:h-[520px] lg:h-auto lg:min-h-[520px] lg:flex-1">
               <img
                 className="absolute inset-0 h-full w-full object-cover object-[58%_center]"
-                src="/GILBERT.jpg"
+                src="/gilbert-about.jpg"
                 alt={
                   language === "es"
                     ? "Retrato profesional de Gilbert Devlyn"
@@ -1826,15 +1826,15 @@ function AssessmentLanding({ copy, language, onStart }) {
     language === "es"
       ? [
           { value: "50", label: "preguntas" },
-          { value: "8", label: "pilares" },
+          { value: "8", label: "dimensiones" },
           { value: "~10", label: "minutos" },
-          { value: "EN/ES", label: "idiomas" }
+          { value: "0", label: "preparación" }
         ]
       : [
           { value: "50", label: "questions" },
-          { value: "8", label: "pillars" },
+          { value: "8", label: "dimensions" },
           { value: "~10", label: "minutes" },
-          { value: "EN/ES", label: "languages" }
+          { value: "0", label: "prep needed" }
         ];
   const deliverables =
     language === "es"
