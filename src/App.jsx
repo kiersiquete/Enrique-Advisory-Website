@@ -1691,7 +1691,7 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
       <section className="px-5 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-16 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-stretch">
           <div className="flex flex-col gap-4 lg:h-full">
-            <div className="portrait-frame relative h-[420px] overflow-hidden rounded-lg bg-forest shadow-soft sm:h-[520px] lg:h-auto lg:min-h-[520px] lg:flex-1">
+            <div className="portrait-frame relative h-[420px] overflow-hidden rounded-lg bg-forest shadow-soft sm:h-[520px] lg:h-[640px] xl:h-[720px]">
               <img
                 className="absolute inset-0 h-full w-full object-cover object-[58%_center]"
                 src="/gilbert-about.jpg"
