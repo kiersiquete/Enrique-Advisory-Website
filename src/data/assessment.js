@@ -717,8 +717,7 @@ export const COPY = {
         low: "Request Gilbert to contact me",
         mid: "Request Gilbert to contact me",
         high: "Request Gilbert to contact me"
-      },
-      contactRequested: "Request sent"
+      }
     },
     home: {
       title: "When family decisions start to feel more complex",
@@ -1257,8 +1256,7 @@ export const COPY = {
         low: "Solicitar que Gilbert me contacte",
         mid: "Solicitar que Gilbert me contacte",
         high: "Solicitar que Gilbert me contacte"
-      },
-      contactRequested: "Solicitud enviada"
+      }
     },
     home: {
       title: "Cuando las decisiones familiares empiezan a sentirse más complejas",

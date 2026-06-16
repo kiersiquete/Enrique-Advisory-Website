@@ -873,19 +873,10 @@ export default function App() {
         const { group, participantId } = upsertResultInGroup(pendingGroupId, resultPackage);
         resultPackage = { ...resultPackage, participantId, groupId: group.id };
         setGroupRefresh((value) => value + 1);
-
-        if (group.participants.length >= 2) {
-          setLatestResult(resultPackage);
-          persistResult(resultPackage);
-          setActiveComparisonGroup(group);
-          setPendingGroupId(null);
-          setScreen("comparison");
-          return;
-        }
       }
 
       setLatestResult(resultPackage);
-      persistResult(resultPackage);
+      setPendingGroupId(null);
       setScreen("results");
     }, 850);
   }
@@ -928,23 +919,29 @@ export default function App() {
     startMode("full");
   }
 
-  async function requestContact(resultPackage) {
-    await persistResult({ ...resultPackage, contactRequested: true });
+  async function submitFinalResult(resultPackage) {
+    return persistResult(resultPackage);
   }
 
   function handleCreateInvite(resultPackage, inviteEmail) {
     const groupId = resultPackage.groupId ?? createGroupId();
     const withGroup = { ...resultPackage, groupId };
     const { group, participantId } = upsertResultInGroup(groupId, withGroup, inviteEmail);
-    const updatedResult = { ...withGroup, participantId };
+    const inviteLink = getInviteUrl(group.id, language);
+    const updatedResult = {
+      ...withGroup,
+      participantId,
+      inviteEmail: inviteEmail.trim(),
+      inviteLink,
+      groupParticipantCount: group.participants.length
+    };
 
     setLatestResult(updatedResult);
     setGroupRefresh((value) => value + 1);
-    persistResult(updatedResult);
 
     return {
       group,
-      inviteLink: getInviteUrl(group.id, language)
+      inviteLink
     };
   }
 
@@ -1019,7 +1016,7 @@ export default function App() {
           resultPackage={latestResult}
           group={latestGroup}
           onRetake={restart}
-          onRequestContact={requestContact}
+          onSubmitFinal={submitFinalResult}
           onCreateInvite={handleCreateInvite}
           onViewComparison={handleViewComparison}
         />
@@ -2903,19 +2900,17 @@ function ResultsScreen({
   resultPackage,
   group,
   onRetake,
-  onRequestContact,
+  onSubmitFinal,
   onCreateInvite,
   onViewComparison
 }) {
-  const [contactRequested, setContactRequested] = useState(false);
-  const [contactRequestPending, setContactRequestPending] = useState(false);
+  const [invitePromptOpen, setInvitePromptOpen] = useState(false);
+  const [submitPending, setSubmitPending] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const resultRef = useRef(null);
+  const invitePanelRef = useRef(null);
   const { result } = resultPackage;
   const stage = result.stage;
-  const scoreCategory = getScoreCategory(result.overall);
-  const bookingCta = contactRequested
-    ? copy.booking.contactRequested
-    : copy.booking.scoreCtas[scoreCategory];
   const unknownCount = result.transparency?.unknownCount ?? 0;
   const unknownPillars = (result.transparency?.unknownByPillar ?? [])
     .filter((item) => item.unknown > 0)
@@ -2939,18 +2934,51 @@ function ResultsScreen({
     () => getStrongBreakdowns(pillarBreakdowns),
     [pillarBreakdowns]
   );
+  const finalCopy = getFinalActionCopy(language);
+  const hasInvite = Boolean(resultPackage.groupId && (resultPackage.inviteLink || group?.invitations?.length));
 
   function scrollToPillars() {
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  async function requestResultContact() {
-    setContactRequestPending(true);
+  function emailSummary() {
+    const email = resultPackage.profile?.email;
+    if (!email) return;
+
+    const subject =
+      language === "es"
+        ? "Resumen de tu diagnostico de empresa familiar"
+        : "Your family enterprise assessment summary";
+    const priorityText =
+      priorityBreakdowns.map((item) => item.label).join(", ") ||
+      (language === "es" ? "ninguna prioridad urgente" : "no urgent priority areas");
+    const body =
+      language === "es"
+        ? `Hola ${resultPackage.profile?.name || ""},\n\nTu puntaje general fue ${roundedScore(
+            result.overall
+          )}/100 (${stage.labels[language]}). Areas prioritarias: ${priorityText}.\n\n`
+        : `Hi ${resultPackage.profile?.name || ""},\n\nYour overall score was ${roundedScore(
+            result.overall
+          )}/100 (${stage.labels[language]}). Priority areas: ${priorityText}.\n\n`;
+
+    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+      body
+    )}`;
+  }
+
+  async function submitResult({ allowWithoutInvite = false } = {}) {
+    if (!hasInvite && !allowWithoutInvite) {
+      setInvitePromptOpen(true);
+      return;
+    }
+
+    setSubmitPending(true);
     try {
-      await onRequestContact(resultPackage);
-      setContactRequested(true);
+      await onSubmitFinal({ ...resultPackage, finalizedAt: new Date().toISOString() });
+      setSubmitted(true);
+      setInvitePromptOpen(false);
     } finally {
-      setContactRequestPending(false);
+      setSubmitPending(false);
     }
   }
 
@@ -3120,6 +3148,7 @@ function ResultsScreen({
             group={group}
             onCreateInvite={onCreateInvite}
             onViewComparison={onViewComparison}
+            panelRef={invitePanelRef}
             wide
           />
         </div>
@@ -3136,10 +3165,10 @@ function ResultsScreen({
 
           <section className="rounded-xl border border-copper/25 bg-white p-6 shadow-line">
             <h2 className="font-display text-3xl font-semibold leading-tight text-forest">
-              {copy.consultantSupport}
+              {finalCopy.title}
             </h2>
             <p className="mt-4 text-base leading-7 text-ink/72">
-              {SUPPORT_MESSAGE[language]}
+              {finalCopy.body}
             </p>
             <div className="mt-5 space-y-2">
               {priorityBreakdowns.length > 0 ? (
@@ -3175,15 +3204,33 @@ function ResultsScreen({
                 </div>
               </div>
             )}
-            <button
-              type="button"
-              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
-              onClick={requestResultContact}
-              disabled={contactRequestPending || contactRequested}
-            >
-              {bookingCta}
-              <Mail aria-hidden="true" size={18} />
-            </button>
+            <div className="mt-5 space-y-3">
+              <button
+                type="button"
+                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
+                onClick={emailSummary}
+              >
+                {finalCopy.emailSummary}
+                <Mail aria-hidden="true" size={18} />
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
+                onClick={() => downloadPdfSummary(resultPackage, language)}
+              >
+                {copy.downloadPdf}
+                <Download aria-hidden="true" size={18} />
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
+                onClick={() => submitResult()}
+                disabled={submitPending || submitted}
+              >
+                {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
+                <ArrowRight aria-hidden="true" size={18} />
+              </button>
+            </div>
           </section>
 
           <section className="space-y-3 rounded-xl border border-forest/12 bg-white p-3 shadow-line">
@@ -3206,6 +3253,53 @@ function ResultsScreen({
           </section>
         </aside>
       </div>
+      {invitePromptOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-forest/45 px-5 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
+                  {copy.comparison.inviteTitle}
+                </p>
+                <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest">
+                  {finalCopy.inviteTitle}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/12 text-forest hover:border-copper"
+                onClick={() => setInvitePromptOpen(false)}
+                aria-label={finalCopy.close}
+              >
+                <X aria-hidden="true" size={18} />
+              </button>
+            </div>
+            <p className="mt-4 text-base leading-7 text-ink/72">{finalCopy.inviteBody}</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
+                onClick={() => {
+                  setInvitePromptOpen(false);
+                  invitePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                {finalCopy.inviteFirst}
+                <UsersRound aria-hidden="true" size={18} />
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md border border-forest/18 px-4 text-left text-sm font-semibold text-forest transition hover:border-copper disabled:cursor-not-allowed disabled:opacity-70"
+                onClick={() => submitResult({ allowWithoutInvite: true })}
+                disabled={submitPending}
+              >
+                {submitPending ? finalCopy.saving : finalCopy.continueAnyway}
+                <ArrowRight aria-hidden="true" size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -3217,6 +3311,7 @@ function InviteFamilyPanel({
   group,
   onCreateInvite,
   onViewComparison,
+  panelRef,
   wide = false
 }) {
   const [inviteEmail, setInviteEmail] = useState("");
@@ -3243,7 +3338,7 @@ function InviteFamilyPanel({
   }
 
   return (
-    <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
+    <section ref={panelRef} className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
       <div
         className={
           wide
@@ -3655,15 +3750,43 @@ function ReportListBlock({ title, items }) {
   );
 }
 
-function getScoreCategory(score) {
-  const rounded = roundedScore(score);
-  if (rounded < 60) return "low";
-  if (rounded < 85) return "mid";
-  return "high";
-}
-
 function getResultDetailCopy(language) {
   return RESULT_DETAIL_COPY[language] ?? RESULT_DETAIL_COPY.en;
+}
+
+function getFinalActionCopy(language) {
+  if (language === "es") {
+    return {
+      title: "Guardar y continuar",
+      body:
+        "Descarga tu reporte, comparte un resumen por email o continúa para guardar el diagnóstico.",
+      emailSummary: "Enviar resumen por email",
+      continue: "Continuar",
+      saving: "Guardando...",
+      saved: "Diagnóstico guardado",
+      inviteTitle: "Invita a otro familiar antes de continuar",
+      inviteBody:
+        "La comparación funciona mejor cuando otra persona de la familia completa el diagnóstico con la misma liga.",
+      inviteFirst: "Invitar primero",
+      continueAnyway: "Continuar sin invitar",
+      close: "Cerrar"
+    };
+  }
+
+  return {
+    title: "Save and continue",
+    body: "Download your report, share a summary by email, or continue to save the assessment.",
+    emailSummary: "Send summary by email",
+    continue: "Continue",
+    saving: "Saving...",
+    saved: "Assessment saved",
+    inviteTitle: "Invite another family member before continuing",
+    inviteBody:
+      "The comparison is most useful when another family member completes the assessment from the same link.",
+    inviteFirst: "Invite first",
+    continueAnyway: "Continue without inviting",
+    close: "Close"
+  };
 }
 
 function getPillarBand(item, language) {
@@ -3819,12 +3942,18 @@ async function persistResult(resultPackage) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        createdAt: resultPackage.createdAt,
         mode: resultPackage.mode,
         language: resultPackage.language,
         profile: resultPackage.profile,
+        answers: resultPackage.answers,
+        result: resultPackage.result,
         groupId: resultPackage.groupId,
         participantId: resultPackage.participantId,
-        contactRequested: Boolean(resultPackage.contactRequested),
+        inviteEmail: resultPackage.inviteEmail,
+        inviteLink: resultPackage.inviteLink,
+        groupParticipantCount: resultPackage.groupParticipantCount,
+        finalizedAt: resultPackage.finalizedAt,
         overall: resultPackage.result.overall,
         stageId: resultPackage.result.stage.id,
         pillarScores: resultPackage.result.pillarScores,
