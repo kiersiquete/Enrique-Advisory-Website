@@ -658,6 +658,18 @@ function getParticipantRoleLabel(participant, language, index = 0) {
   return role || generation || fallback;
 }
 
+function getParticipantRoleParts(participant, language, index = 0) {
+  const role = getRelationshipLabel(participant.role, language);
+  const generation = getGenerationLabel(participant.generation, language);
+  const fallback =
+    language === "es" ? `Participante ${index + 1}` : `Participant ${index + 1}`;
+
+  return {
+    primary: role || generation || fallback,
+    secondary: role && generation ? generation : ""
+  };
+}
+
 function createParticipantSummary(resultPackage, participantId = createParticipantId()) {
   const profile = resultPackage.profile ?? {};
   const result = resultPackage.result;
@@ -669,6 +681,7 @@ function createParticipantSummary(resultPackage, participantId = createParticipa
     generation: profile.generation,
     country: profile.country,
     completedAt: resultPackage.createdAt ?? new Date().toISOString(),
+    answers: resultPackage.answers ?? {},
     result: {
       overall: result.overall,
       stageId: result.stage.id,
@@ -777,6 +790,103 @@ function createMockResultPackage(language = "en") {
   };
 }
 
+function createMockComparisonGroup(language = "en", participantCount = 2) {
+  const questions = FULL_QUESTIONS[language] ?? FULL_QUESTIONS.en;
+  const groupId = "DEMO-COMPARE";
+  const firstAnswers = Object.fromEntries(
+    questions.map((question, index) => [
+      question.id,
+      index % 13 === 0 ? UNKNOWN_ANSWER : [4, 4, 3, 3, 5, 4, 3, 4][index % 8]
+    ])
+  );
+  const secondAnswers = Object.fromEntries(
+    questions.map((question, index) => [
+      question.id,
+      index % 9 === 0 ? UNKNOWN_ANSWER : [2, 3, 2, 4, 3, 2, 5, 3][index % 8]
+    ])
+  );
+  const thirdAnswers = Object.fromEntries(
+    questions.map((question, index) => [
+      question.id,
+      index % 11 === 0 ? UNKNOWN_ANSWER : [3, 4, 3, 5, 4, 3, 4, 5][index % 8]
+    ])
+  );
+  const demoAlignedPillars = new Set(["constitution", "ownership", "management", "harmony"]);
+  questions.forEach((question, index) => {
+    if (!demoAlignedPillars.has(question.pillarId)) return;
+
+    const alignedValue = [4, 4, 3, 4, 4, 3][index % 6];
+    firstAnswers[question.id] = alignedValue;
+    secondAnswers[question.id] = alignedValue;
+    thirdAnswers[question.id] = alignedValue;
+  });
+  const base = createMockResultPackage(language);
+  const firstPackage = {
+    ...base,
+    groupId,
+    participantId: "demo-founder",
+    profile: {
+      ...base.profile,
+      name: language === "es" ? "Fundador demo" : "Demo Founder",
+      email: "founder@example.com",
+      relationship: "founder",
+      generation: "first"
+    },
+    answers: firstAnswers,
+    result: calculateResults(questions, firstAnswers)
+  };
+  const secondPackage = {
+    ...base,
+    groupId,
+    participantId: "demo-nextgen",
+    profile: {
+      ...base.profile,
+      name: language === "es" ? "NextGen demo" : "Demo NextGen",
+      email: "nextgen@example.com",
+      relationship: "family-working",
+      generation: "third-plus"
+    },
+    answers: secondAnswers,
+    result: calculateResults(questions, secondAnswers)
+  };
+  const thirdPackage = {
+    ...base,
+    groupId,
+    participantId: "demo-owner",
+    profile: {
+      ...base.profile,
+      name: language === "es" ? "Propietario demo" : "Demo Owner",
+      email: "owner@example.com",
+      relationship: "family-working",
+      generation: "second"
+    },
+    answers: thirdAnswers,
+    result: calculateResults(questions, thirdAnswers)
+  };
+
+  const first = createParticipantSummary(firstPackage, firstPackage.participantId);
+  const second = createParticipantSummary(secondPackage, secondPackage.participantId);
+  const third = createParticipantSummary(thirdPackage, thirdPackage.participantId);
+  const participants = participantCount >= 3 ? [first, second, third] : [first, second];
+
+  return {
+    latestResult: firstPackage,
+    group: {
+      id: groupId,
+      maxParticipants: MAX_GROUP_PARTICIPANTS,
+      createdAt: new Date().toISOString(),
+      invitations: [{ email: secondPackage.profile.email, createdAt: new Date().toISOString() }],
+      participants
+    }
+  };
+}
+
+function loadMockComparisonDemo(language, participantCount = 2) {
+  const demo = createMockComparisonGroup(language, participantCount);
+  saveStoredGroup(demo.group);
+  return demo;
+}
+
 export default function App() {
   const [language, setLanguage] = useState("en");
   const [screen, setScreen] = useState("home");
@@ -789,22 +899,47 @@ export default function App() {
   const [groupRefresh, setGroupRefresh] = useState(0);
 
   const copy = COPY[language];
+  const isMockDemoRoute =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("mock-comparison");
+  const isMockResultRoute =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("mock-results");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.has("mock-comparison")) {
+      const mockLanguage = params.get("lang") === "es" ? "es" : "en";
+      const mockParticipantCount = params.get("participants") === "3" ? 3 : 2;
+      const demo = loadMockComparisonDemo(mockLanguage, mockParticipantCount);
+      setCookieConsent("accepted");
+      setLanguage(mockLanguage);
+      setActiveMode("full");
+      setLatestResult(demo.latestResult);
+      setActiveComparisonGroup(demo.group);
+      setScreen("comparison");
+      return;
+    }
+
     if (!params.has("mock-results")) return;
 
     const mockLanguage = params.get("lang") === "es" ? "es" : "en";
-    const mockPackage = createMockResultPackage(mockLanguage);
+    const mockParticipantCount = params.get("participants") === "3" ? 3 : 2;
+    const demo = params.has("with-comparison")
+      ? loadMockComparisonDemo(mockLanguage, mockParticipantCount)
+      : null;
+    const mockPackage = demo?.latestResult ?? createMockResultPackage(mockLanguage);
+    setCookieConsent("accepted");
     setLanguage(mockLanguage);
     setActiveMode("full");
     setLatestResult(mockPackage);
+    if (demo) setGroupRefresh((value) => value + 1);
     setScreen("results");
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has("mock-results")) return;
+    if (params.has("mock-results") || params.has("mock-comparison")) return;
 
     const groupId = params.get("group")?.trim();
     if (!groupId) return;
@@ -834,7 +969,7 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has("mock-results") || params.has("group")) return;
+    if (params.has("mock-results") || params.has("mock-comparison") || params.has("group")) return;
 
     const draft = loadAssessmentDraft();
     if (!draft) return;
@@ -907,6 +1042,12 @@ export default function App() {
       setLatestResult(resultPackage);
       setPendingGroupId(null);
       setScreen("results");
+
+      void submitFinalResult({ ...resultPackage, finalizedAt: new Date().toISOString() }).catch(
+        (error) => {
+          console.error("Automatic assessment save failed", error);
+        }
+      );
     }, 850);
   }
 
@@ -962,7 +1103,7 @@ export default function App() {
     return response;
   }
 
-  function handleCreateInvite(resultPackage, inviteEmail) {
+  async function handleCreateInvite(resultPackage, inviteEmail) {
     const groupId = resultPackage.groupId ?? createGroupId();
     const withGroup = { ...resultPackage, groupId };
     const { group, participantId } = upsertResultInGroup(groupId, withGroup, inviteEmail);
@@ -978,14 +1119,22 @@ export default function App() {
     setLatestResult(updatedResult);
     setGroupRefresh((value) => value + 1);
 
+    try {
+      await submitFinalResult({ ...updatedResult, finalizedAt: new Date().toISOString() });
+    } catch (error) {
+      console.error("Invite group save failed", error);
+    }
+
+    const savedGroup = getStoredGroup(group.id) ?? group;
+
     return {
-      group,
+      group: savedGroup,
       inviteLink
     };
   }
 
-  function handleViewComparison(groupId) {
-    const group = getStoredGroup(groupId);
+  async function handleViewComparison(groupId) {
+    const group = (await refreshGroupFromServer(groupId)) ?? getStoredGroup(groupId);
     if (!group) return;
     setActiveComparisonGroup(group);
     setScreen("comparison");
@@ -1079,7 +1228,7 @@ export default function App() {
         />
       )}
 
-      <CookieConsentBanner copy={copy.cookieConsent} />
+      {!isMockDemoRoute && !isMockResultRoute && <CookieConsentBanner copy={copy.cookieConsent} />}
 
       {screen === "home" && showResumePrompt && assessmentDraft && (
         <ResumeAssessmentPrompt
@@ -3391,6 +3540,7 @@ function InviteFamilyPanel({
     resultPackage.groupId ? getInviteUrl(resultPackage.groupId, language) : ""
   );
   const [linkCopied, setLinkCopied] = useState(false);
+  const [invitePending, setInvitePending] = useState(false);
   const comparisonCopy = copy.comparison;
   const participantCount = group?.participants?.length ?? 1;
   const canCompare = Boolean(group?.participants?.length >= 2);
@@ -3405,10 +3555,15 @@ function InviteFamilyPanel({
     return () => window.clearInterval(interval);
   }, [canCompare, resultPackage.groupId]);
 
-  function createInvite() {
-    const next = onCreateInvite(resultPackage, inviteEmail);
-    setInviteLink(next.inviteLink);
-    setInviteEmail("");
+  async function createInvite() {
+    setInvitePending(true);
+    try {
+      const next = await onCreateInvite(resultPackage, inviteEmail);
+      setInviteLink(next.inviteLink);
+      setInviteEmail("");
+    } finally {
+      setInvitePending(false);
+    }
   }
 
   async function copyInviteLink() {
@@ -3481,9 +3636,10 @@ function InviteFamilyPanel({
                 type="button"
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
                 onClick={createInvite}
+                disabled={invitePending}
               >
                 <Send aria-hidden="true" size={17} />
-                {comparisonCopy.generateInvite}
+                {invitePending ? copy.saving : comparisonCopy.generateInvite}
               </button>
             </>
           )}
@@ -3524,15 +3680,17 @@ function InviteFamilyPanel({
 
 function ComparisonScreen({ copy, language, group, onBackToResult }) {
   const comparisonCopy = copy.comparison;
+  const visualCopy = getComparisonVisualCopy(language);
   const participants = (group.participants ?? []).slice(0, MAX_GROUP_PARTICIPANTS);
   const rows = buildComparisonRows(participants, language);
   const convergence = rows.filter((row) => row.numericCount >= 2 && row.gap <= 10);
-  const divergence = rows.filter((row) => row.numericCount >= 2 && row.gap > 20);
   const transparency = rows.filter((row) => row.hasTransparencyGap);
+  const stats = buildComparisonStats(rows, participants);
+  const inputComparison = buildInputComparison(participants, language);
 
   return (
     <section className="w-full px-5 py-8 sm:px-8 lg:px-16 xl:px-24">
-      <header className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <header className="mb-6">
         <div>
           <button
             type="button"
@@ -3552,96 +3710,81 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
             {comparisonCopy.intro}
           </p>
         </div>
-        <div className="rounded-xl border border-forest/12 bg-white p-4 shadow-line lg:w-[340px]">
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
-            {comparisonCopy.privacyNote}
-          </p>
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="font-semibold text-forest">{comparisonCopy.participants}</span>
-            <span className="font-bold text-copper">
-              {participants.length} / {MAX_GROUP_PARTICIPANTS}
-            </span>
-          </div>
-        </div>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {participants.map((participant, index) => {
-          const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
-          return (
-            <article
-              key={participant.id}
-              className="rounded-xl border border-forest/12 bg-white p-5 shadow-line"
-            >
-              <div className="flex items-start gap-3">
-                <span
-                  className="mt-1 h-3 w-3 shrink-0 rounded-full"
-                  style={{ backgroundColor: color.line }}
-                />
-                <div>
-                  <p className="font-display text-2xl font-semibold leading-tight text-forest">
-                    {getParticipantRoleLabel(participant, language, index)}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-muted">
-                    {comparisonCopy.overall}: {roundedScore(participant.result.overall)} / 100
-                  </p>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-4">
+          <div
+            className={`grid items-stretch gap-4 ${
+              participants.length >= 3 ? "lg:grid-cols-3" : "md:grid-cols-2"
+            }`}
+          >
+            {participants.map((participant, index) => (
+              <ParticipantScoreCard
+                key={participant.id}
+                participant={participant}
+                participantIndex={index}
+                language={language}
+                comparisonCopy={comparisonCopy}
+                visualCopy={visualCopy}
+                compact={participants.length >= 3}
+              />
+            ))}
+          </div>
+          <LargestGapSpotlight
+            row={stats.biggestGap}
+            participants={participants}
+            language={language}
+            copy={copy}
+            visualCopy={visualCopy}
+            comparisonCopy={comparisonCopy}
+          />
+        </div>
+        <QuickReadRail
+          stats={stats}
+          rows={rows}
+          visualCopy={visualCopy}
+        />
+      </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
-        <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-7">
-          <h2 className="font-display text-3xl font-semibold text-forest">
-            {comparisonCopy.pillarComparison}
-          </h2>
-          <div className="mt-6 space-y-6">
-            {rows.map((row) => (
-              <article key={row.id} className="border-b border-forest/8 pb-5 last:border-b-0">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="text-lg font-semibold text-forest">{row.label}</h3>
-                  <span className="text-sm font-semibold text-muted">
-                    {comparisonCopy.scoreGap}: {row.gap}
+      <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <section className="rounded-xl border border-forest/12 bg-white p-4 shadow-line sm:p-5">
+          <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-end 2xl:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
+                {visualCopy.mapLabel}
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-semibold text-forest">
+                {comparisonCopy.pillarComparison}
+              </h2>
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs font-semibold text-muted">
+              {participants.map((participant, index) => {
+                const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
+                return (
+                  <span key={participant.id} className="inline-flex items-center gap-2">
+                    <span
+                      className="inline-flex h-5 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ backgroundColor: color.line }}
+                    >
+                      P{index + 1}
+                    </span>
+                    {getParticipantRoleLabel(participant, language, index)}
                   </span>
-                </div>
-                <div className="mt-4 space-y-3">
-                  {row.scores.map((score, index) => {
-                    const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
-                    const width = score.score === null ? 100 : score.score;
-                    return (
-                      <div key={`${row.id}-${score.participant.id}`}>
-                        <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                          <span className="font-semibold text-ink/74">
-                            {getParticipantRoleLabel(score.participant, language, index)}
-                          </span>
-                          <span className="font-bold text-forest">
-                            {score.score === null ? copy.noScore : `${score.score} / 100`}
-                            {score.unknown > 0 && (
-                              <span className="ml-2 font-semibold text-copper">
-                                {comparisonCopy.unknownResponses}: {score.unknown}
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                        <div
-                          className="h-3 overflow-hidden rounded-full"
-                          style={{ backgroundColor: color.soft }}
-                        >
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${width}%`,
-                              backgroundColor: score.score === null ? "rgba(28, 61, 46, 0.18)" : color.line
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </article>
+                );
+              })}
+            </div>
+          </div>
+          <div className="report-scroll mt-5 max-h-[526px] space-y-3 overflow-y-auto pr-1 sm:pr-3 2xl:max-h-[562px]">
+            {rows.map((row) => (
+              <ComparisonMapRow
+                key={row.id}
+                row={row}
+                language={language}
+                copy={copy}
+                visualCopy={visualCopy}
+                comparisonCopy={comparisonCopy}
+              />
             ))}
           </div>
         </section>
@@ -3654,15 +3797,8 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
             items={convergence}
             language={language}
             comparisonCopy={comparisonCopy}
-          />
-          <ComparisonInsightCard
-            title={comparisonCopy.divergenceTitle}
-            body={comparisonCopy.divergenceBody}
-            empty={comparisonCopy.noDivergence}
-            items={divergence}
-            language={language}
-            comparisonCopy={comparisonCopy}
-            accent
+            scrollable
+            scrollMaxClassName="max-h-[132px]"
           />
           <ComparisonInsightCard
             title={comparisonCopy.transparencyTitle}
@@ -3671,17 +3807,453 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
             items={transparency}
             language={language}
             comparisonCopy={comparisonCopy}
+            scrollable
           />
-          <a
-            href={`mailto:${copy.contactEmail}`}
-            className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
-          >
-            {comparisonCopy.groupCallCta}
-            <Mail aria-hidden="true" size={18} />
-          </a>
         </aside>
       </div>
+
+      <DetailedInputComparison
+        participants={participants}
+        language={language}
+        inputComparison={inputComparison}
+        visualCopy={visualCopy}
+        comparisonCopy={comparisonCopy}
+        copy={copy}
+        transparency={transparency}
+      />
     </section>
+  );
+}
+
+function LargestGapSpotlight({ row, participants, language, copy, visualCopy, comparisonCopy }) {
+  if (!row) return null;
+
+  const primaryScores = row.scores.slice(0, participants.length);
+
+  return (
+    <section className="rounded-xl border border-copper/20 bg-white p-5 shadow-line">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
+            {visualCopy.largestGapLabel}
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-semibold leading-tight text-forest">
+            {visualCopy.largestGapTitle(row.shortLabel, row.gap)}
+          </h2>
+        </div>
+        <span className="w-fit rounded-full bg-[#A64B3C]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-[#76362D]">
+          {comparisonCopy.scoreGap}: {row.gap}
+        </span>
+      </div>
+      <div className="mt-4 space-y-3">
+        {primaryScores.map((score, index) => {
+          const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
+          const width = Math.max(0, Math.min(100, score.score ?? 0));
+
+          return (
+            <div key={`${row.id}-spotlight-${score.participant.id}`}>
+              <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate font-semibold text-forest">
+                  {getParticipantRoleLabel(score.participant, language, index)}
+                </span>
+                <span className="shrink-0 font-bold text-forest">
+                  {score.score === null ? copy.noScore : `${score.score} / 100`}
+                </span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-forest/8">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${width}%`, backgroundColor: color.line }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-sm leading-6 text-ink/68">{visualCopy.largestGapBody(row.shortLabel)}</p>
+    </section>
+  );
+}
+
+function ComparisonMetricCard({ icon: Icon, label, value, suffix, featured = false }) {
+  return (
+    <div className={`rounded-lg bg-white/8 ${featured ? "p-5" : "p-4"}`}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/62">{label}</p>
+        {Icon && <Icon aria-hidden="true" size={18} className="text-copper" />}
+      </div>
+      <p className={`font-display font-semibold leading-none ${featured ? "text-4xl" : "text-3xl"}`}>
+        {value}
+        <span className="ml-1 text-base font-bold text-white/58">{suffix}</span>
+      </p>
+    </div>
+  );
+}
+
+function QuickReadRail({ stats, rows, visualCopy }) {
+  return (
+    <aside className="rounded-xl bg-forest p-4 text-white shadow-soft">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">
+        {visualCopy.snapshotLabel}
+      </p>
+      <h2 className="mt-3 font-display text-2xl font-semibold leading-tight">
+        {stats.biggestGap
+          ? visualCopy.snapshotTitle(stats.biggestGap.shortLabel, stats.biggestGap.gap)
+          : visualCopy.snapshotFallback}
+      </h2>
+      <p className="mt-3 text-sm leading-6 text-white/72">{visualCopy.snapshotBody}</p>
+      <div className="mt-4 grid gap-3">
+        <ComparisonMetricCard
+          icon={Scale}
+          label={visualCopy.averageGap}
+          value={stats.averageGap}
+          suffix={visualCopy.points}
+          featured
+        />
+        <ComparisonMetricCard
+          icon={Compass}
+          label={visualCopy.alignedAreas}
+          value={stats.alignedCount}
+          suffix={visualCopy.ofTotal(rows.length)}
+        />
+        <ComparisonMetricCard
+          icon={Search}
+          label={visualCopy.priorityArea}
+          value={stats.biggestGap?.shortLabel ?? "-"}
+          suffix={stats.biggestGap ? ` · ${stats.biggestGap.gap} ${visualCopy.points}` : ""}
+        />
+      </div>
+    </aside>
+  );
+}
+
+function ParticipantScoreCard({
+  participant,
+  participantIndex,
+  language,
+  comparisonCopy,
+  visualCopy,
+  compact = false
+}) {
+  const color = COMPARISON_COLORS[participantIndex % COMPARISON_COLORS.length];
+  const score = roundedScore(participant.result.overall);
+  const roleParts = getParticipantRoleParts(participant, language, participantIndex);
+
+  return (
+    <article className="h-full overflow-hidden rounded-xl border border-forest/12 bg-white shadow-line">
+      <div className="h-1.5" style={{ backgroundColor: color.line }} />
+      <div
+        className={`grid h-full gap-4 p-5 ${
+          compact ? "sm:grid-rows-[1fr_auto]" : "sm:grid-cols-[minmax(0,1fr)_132px] sm:items-center"
+        }`}
+      >
+        <div>
+          <div className="flex items-start gap-3">
+            <span
+              className="mt-1.5 h-3 w-3 shrink-0 rounded-full"
+              style={{ backgroundColor: color.line }}
+            />
+            <div>
+              <p
+                className={`font-display font-semibold leading-tight text-forest ${
+                  compact ? "text-xl" : "text-2xl"
+                }`}
+              >
+                {roleParts.primary}
+              </p>
+              {roleParts.secondary && (
+                <p className="mt-1 text-sm font-semibold leading-5 text-muted">
+                  {roleParts.secondary}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className={`flex flex-col pl-6 sm:pl-0 ${compact ? "" : "sm:items-end"}`}>
+          <p className="mb-1 whitespace-nowrap text-sm font-semibold text-muted">
+            {visualCopy.overallScore}
+          </p>
+          <div
+            className={`flex items-baseline justify-start gap-1 ${
+              compact ? "w-full" : "w-[132px] sm:justify-end"
+            }`}
+          >
+            <span className="font-display text-5xl font-semibold leading-none text-forest">
+              {score}
+            </span>
+            <span className="pb-1 text-sm font-bold text-muted">/100</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ComparisonMapRow({ row, language, copy, visualCopy, comparisonCopy }) {
+  const band = getComparisonGapBand(row.gap, visualCopy);
+  const unknownTotal = row.scores.reduce((total, score) => total + score.unknown, 0);
+
+  return (
+    <article className="rounded-lg border border-forest/10 bg-parchment/30 p-4">
+      <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)_112px] lg:items-center">
+        <div>
+          <h3 className="text-base font-bold leading-tight text-forest">{row.label}</h3>
+          <p className="mt-2 text-xs font-bold uppercase tracking-[0.1em] text-muted">
+            {comparisonCopy.scoreGap}: {row.gap}
+          </p>
+          {unknownTotal > 0 && (
+            <p className="mt-2 text-xs font-semibold text-copper">
+              {comparisonCopy.unknownResponses}: {unknownTotal}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2.5">
+          {row.scores.map((score, index) => {
+            const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
+            const width = Math.max(0, Math.min(100, score.score ?? 0));
+
+            return (
+              <div
+                key={`${row.id}-${score.participant.id}`}
+                className="grid grid-cols-[34px_minmax(0,1fr)_48px] items-center gap-3"
+                title={`${getParticipantRoleLabel(score.participant, language, index)}: ${
+                  score.score === null ? copy.noScore : score.score
+                }`}
+              >
+                <span
+                  className="inline-flex h-6 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                  style={{ backgroundColor: color.line }}
+                >
+                  P{index + 1}
+                </span>
+                <div className="h-2.5 overflow-hidden rounded-full bg-forest/8">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: score.score === null ? "100%" : `${width}%`,
+                      backgroundColor:
+                        score.score === null ? "rgba(28, 61, 46, 0.18)" : color.line
+                    }}
+                  />
+                </div>
+                <span className="text-right text-sm font-bold text-forest">
+                  {score.score === null ? copy.noScore : score.score}
+                </span>
+              </div>
+            );
+          })}
+          <div className="grid grid-cols-[34px_minmax(0,1fr)_48px] items-center gap-3 text-[11px] font-semibold text-muted">
+            <span />
+            <div className="flex justify-between">
+              <span>0</span>
+              <span>50</span>
+              <span>100</span>
+            </div>
+            <span />
+          </div>
+        </div>
+        <div
+          className={`rounded-lg border px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.1em] ${band.className}`}
+        >
+          {band.label}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function DetailedInputComparison({
+  participants,
+  language,
+  inputComparison,
+  visualCopy,
+  comparisonCopy,
+  copy,
+  transparency
+}) {
+  const narrative = buildComparisonNarrative(inputComparison, visualCopy);
+  const topPillars = inputComparison.pillars
+    .filter((pillar) => pillar.stats.maxGap > 0 || pillar.stats.unknownCount > 0)
+    .sort((a, b) => b.stats.maxGap - a.stats.maxGap)
+    .slice(0, 8);
+
+  return (
+    <section className="mt-6 rounded-xl border border-forest/12 bg-white p-4 shadow-line sm:p-5">
+      <div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
+            {visualCopy.inputLabel}
+          </p>
+          <h2 className="mt-2 max-w-3xl font-display text-3xl font-semibold leading-tight text-forest">
+            {visualCopy.inputTitle}
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-ink/68">
+            {visualCopy.inputBody}
+          </p>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <InputPatternCard
+            label={visualCopy.sameAnswers}
+            value={inputComparison.stats.same}
+            total={inputComparison.stats.comparable}
+            tone="forest"
+          />
+          <InputPatternCard
+            label={visualCopy.closeAnswers}
+            value={inputComparison.stats.close}
+            total={inputComparison.stats.comparable}
+            tone="copper"
+          />
+          <InputPatternCard
+            label={visualCopy.farAnswers}
+            value={inputComparison.stats.far}
+            total={inputComparison.stats.comparable}
+            tone="red"
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 grid items-stretch gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.55fr)]">
+        <section className="flex h-full flex-col rounded-xl border border-forest/10 bg-parchment/30 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
+                {visualCopy.narrativeLabel}
+              </p>
+              <h3 className="mt-2 font-display text-2xl font-semibold leading-tight text-forest">
+                {visualCopy.narrativeTitle}
+              </h3>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-[0.1em] text-muted">
+              {visualCopy.scrollHint}
+            </span>
+          </div>
+          <div className="report-scroll mt-4 max-h-[604px] flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-3">
+            {narrative.map((item) => (
+              <NarrativeInsightCard key={item.id} item={item} />
+            ))}
+            <div className="rounded-lg border border-forest/8 bg-white p-4">
+              <h4 className="text-base font-bold text-forest">{visualCopy.howToReadTitle}</h4>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-ink/70">
+                {visualCopy.howToReadItems.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={15} />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <section className="flex h-full flex-col rounded-xl border border-copper/24 bg-copper/8 p-5">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
+                  {visualCopy.dimensionSummaryTitle}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-ink/68">
+                  {visualCopy.dimensionSummaryBody}
+                </p>
+              </div>
+              <span className="shrink-0 text-xs font-bold uppercase tracking-[0.1em] text-muted">
+                {visualCopy.scrollHint}
+              </span>
+            </div>
+            <div className="report-scroll mt-4 max-h-[544px] flex-1 space-y-3 overflow-y-auto pr-1 sm:pr-2">
+              {topPillars.map((pillar) => (
+                <DimensionNarrativeRow
+                  key={pillar.id}
+                  pillar={pillar}
+                  visualCopy={visualCopy}
+                  comparisonCopy={comparisonCopy}
+                />
+              ))}
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <div className="mt-5 max-w-[440px]">
+        <a
+          href={`mailto:${copy.contactEmail}`}
+          className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
+        >
+          {comparisonCopy.groupCallCta}
+          <Mail aria-hidden="true" size={18} />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function InputPatternCard({ label, value, total, tone }) {
+  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
+  const color =
+    tone === "red" ? "#A64B3C" : tone === "copper" ? "#C4713A" : "#1C3D2E";
+
+  return (
+    <div className="grid grid-cols-[58px_1fr] items-center gap-3 rounded-lg border border-forest/10 bg-white p-3 shadow-line">
+      <div
+        className="grid h-[58px] w-[58px] place-items-center rounded-full"
+        style={{
+          background: `conic-gradient(${color} ${percent * 3.6}deg, rgba(28, 61, 46, 0.1) 0deg)`
+        }}
+      >
+        <div className="grid h-[44px] w-[44px] place-items-center rounded-full bg-white">
+          <span className="text-xs font-bold text-forest">{percent}%</span>
+        </div>
+      </div>
+      <div>
+        <p className="text-sm font-bold leading-5 text-forest">{label}</p>
+        <p className="mt-1 text-xs font-semibold text-muted">
+          {value} / {total}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function NarrativeInsightCard({ item }) {
+  return (
+    <article className="rounded-lg border border-forest/8 bg-white p-4 shadow-line">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">{item.label}</p>
+          <h4 className="mt-2 text-lg font-bold leading-tight text-forest">{item.title}</h4>
+        </div>
+        <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] ${item.className}`}>
+          {item.badge}
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-ink/72">{item.body}</p>
+      {item.detail && <p className="mt-2 text-sm font-semibold leading-6 text-forest">{item.detail}</p>}
+    </article>
+  );
+}
+
+function DimensionNarrativeRow({ pillar, visualCopy, comparisonCopy }) {
+  const band = getInputGapBand(pillar.stats.maxGap, visualCopy);
+
+  return (
+    <div className="rounded-lg bg-white p-3 shadow-line">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold leading-5 text-forest">{pillar.shortLabel}</p>
+          <p className="mt-1 text-xs font-semibold leading-5 text-muted">
+            {visualCopy.dimensionSummaryLine(
+              pillar.stats.highGap,
+              pillar.stats.closeGap,
+              pillar.stats.unknownCount
+            )}
+          </p>
+        </div>
+        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${band.className}`}>
+          {comparisonCopy.scoreGap}: {pillar.stats.maxGap}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -3692,8 +4264,12 @@ function ComparisonInsightCard({
   items,
   language,
   comparisonCopy,
-  accent = false
+  accent = false,
+  scrollable = false,
+  scrollMaxClassName = "max-h-[236px]"
 }) {
+  const visibleItems = scrollable ? items : items.slice(0, 5);
+
   return (
     <section
       className={`rounded-xl border p-5 shadow-line ${
@@ -3702,9 +4278,13 @@ function ComparisonInsightCard({
     >
       <h2 className="font-display text-2xl font-semibold leading-tight text-forest">{title}</h2>
       <p className="mt-2 text-sm leading-6 text-ink/68">{body}</p>
-      <div className="mt-4 space-y-2">
+      <div
+        className={`mt-4 space-y-2 ${
+          scrollable ? `report-scroll ${scrollMaxClassName} overflow-y-auto pr-1` : ""
+        }`}
+      >
         {items.length > 0 ? (
-          items.slice(0, 5).map((item) => (
+          visibleItems.map((item) => (
             <div
               key={item.id}
               className="flex items-center justify-between gap-3 rounded-lg bg-parchment/70 px-3 py-2 text-sm"
@@ -3723,6 +4303,326 @@ function ComparisonInsightCard({
       </div>
     </section>
   );
+}
+
+function getComparisonVisualCopy(language) {
+  if (language === "es") {
+    return {
+      snapshotLabel: "Lectura rápida",
+      snapshotTitle: (pillar, gap) => `${pillar} muestra la mayor diferencia: ${gap} puntos`,
+      snapshotFallback: "Las perspectivas ya están listas para compararse",
+      snapshotBody:
+        "La vista muestra dónde la familia ve lo mismo, dónde hay distancia y qué conversación conviene priorizar.",
+      largestGapLabel: "Mayor diferencia",
+      largestGapTitle: (pillar, gap) => `${pillar}: diferencia de ${gap} puntos`,
+      largestGapBody: (pillar) =>
+        `${pillar} debería ser la primera conversación porque muestra la distancia más visible entre perspectivas.`,
+      overallScore: "Puntaje general",
+      averageGap: "Brecha promedio",
+      alignedAreas: "Áreas alineadas",
+      discussionAreas: "Para conversar",
+      priorityArea: "Área prioritaria",
+      ofTotal: (total) => `de ${total}`,
+      points: "pts",
+      mapLabel: "Mapa de brechas",
+      aligned: "Alineado",
+      watch: "Revisar",
+      discuss: "Conversar",
+      inputLabel: "Evidencia de respuestas",
+      inputTitle: "Interpretación breve de la comparación",
+      inputBody:
+        "Esta lectura resume qué puede significar la distancia entre perspectivas sin convertir el resultado en una tabla larga de respuestas.",
+      sameAnswers: "Misma respuesta",
+      closeAnswers: "Diferencia pequeña",
+      farAnswers: "Diferencia alta",
+      howToReadTitle: "Cómo leerlo",
+      howToReadItems: [
+        "Una diferencia alta no significa que alguien esté equivocado.",
+        "Puede señalar distinta información, rol o experiencia dentro del sistema familiar.",
+        "Las respuestas sin información también son una señal de transparencia."
+      ],
+      narrativeLabel: "Lectura comparativa",
+      narrativeTitle: "Qué significa esta comparación",
+      scrollHint: "Desplazar dentro del recuadro",
+      dimensionSummaryTitle: "Resumen por dimensión",
+      dimensionSummaryBody:
+        "Una lectura compacta de dónde las respuestas se acercan, se separan o muestran falta de información.",
+      dimensionSummaryLine: (high, close, unknown) =>
+        `${high} altas · ${close} cercanas${unknown ? ` · ${unknown} sin información` : ""}`,
+      overallPatternLabel: "Patrón general",
+      overallPatternTitle: "Las respuestas muestran una diferencia real de percepción",
+      overallPatternBody: (far, comparable) =>
+        `${far} de ${comparable} respuestas comparables tienen una diferencia alta. Esto sugiere que las personas no solo asignan puntajes distintos; pueden estar viendo momentos, responsabilidades o información diferente del mismo sistema familiar.`,
+      strongestAgreementLabel: "Mayor acuerdo",
+      strongestAgreementTitle: (pillar) => `Mayor alineación en ${pillar}`,
+      strongestAgreementBody: (gap) =>
+        `La brecha más baja en esta dimensión es de ${gap} punto(s). Puede ser un buen punto de partida porque hay más base compartida para conversar.`,
+      strongestDifferenceLabel: "Mayor diferencia",
+      strongestDifferenceTitle: (pillar) => `Mayor distancia en ${pillar}`,
+      strongestDifferenceBody: (gap) =>
+        `La brecha máxima llega a ${gap} punto(s). Conviene explorar qué información, experiencia o expectativa explica esta diferencia antes de decidir una solución.`,
+      transparencyPatternLabel: "Transparencia",
+      transparencyPatternTitle: "Hay señales de información desigual",
+      transparencyPatternBody: (unknown) =>
+        `${unknown} respuestas fueron marcadas como sin información. Eso no baja el puntaje por sí solo, pero indica que algunos temas no son igualmente visibles para todos.`,
+      same: "Igual",
+      close: "Cerca",
+      far: "Alta diferencia"
+    };
+  }
+
+  return {
+    snapshotLabel: "Quick read",
+    snapshotTitle: (pillar, gap) => `${pillar} has the widest difference: ${gap} points`,
+    snapshotFallback: "The perspectives are ready to compare",
+    snapshotBody:
+      "This view shows where the family sees the same picture, where distance appears, and which conversation should come first.",
+    largestGapLabel: "Largest gap",
+    largestGapTitle: (pillar, gap) => `${pillar}: ${gap}-point gap`,
+    largestGapBody: (pillar) =>
+      `${pillar} should be the first conversation because it shows the clearest distance between perspectives.`,
+    overallScore: "Overall score",
+    averageGap: "Average gap",
+    alignedAreas: "Aligned areas",
+    discussionAreas: "Discuss first",
+    priorityArea: "Priority area",
+    ofTotal: (total) => `of ${total}`,
+    points: "pts",
+    mapLabel: "Gap map",
+    aligned: "Aligned",
+    watch: "Watch",
+    discuss: "Discuss",
+    inputLabel: "Response evidence",
+      inputTitle: "Short interpretation of the comparison",
+      inputBody:
+      "This readout explains what the distance between perspectives may mean without turning the result into a long answer-by-answer table.",
+    sameAnswers: "Same answer",
+    closeAnswers: "Small difference",
+    farAnswers: "High difference",
+    howToReadTitle: "How to read this",
+      howToReadItems: [
+        "A high gap does not mean one person is wrong.",
+        "It may show different information, roles, or lived experience inside the family system.",
+        "Unknown answers are also a transparency signal."
+      ],
+      narrativeLabel: "Comparison readout",
+      narrativeTitle: "What this comparison suggests",
+      scrollHint: "Scroll inside this tile",
+      dimensionSummaryTitle: "Dimension summary",
+      dimensionSummaryBody:
+        "A compact read of where answers are close, where they separate, and where information may be uneven.",
+      dimensionSummaryLine: (high, close, unknown) =>
+        `${high} high · ${close} close${unknown ? ` · ${unknown} unknown` : ""}`,
+      overallPatternLabel: "Overall pattern",
+      overallPatternTitle: "The answers show a real difference in perception",
+      overallPatternBody: (far, comparable) =>
+        `${far} of ${comparable} comparable answers have a high difference. This suggests the participants may not just be scoring differently; they may be seeing different responsibilities, information, or moments inside the same family system.`,
+      strongestAgreementLabel: "Strongest agreement",
+      strongestAgreementTitle: (pillar) => `Most alignment appears in ${pillar}`,
+      strongestAgreementBody: (gap) =>
+        `The lowest gap in this dimension is ${gap} point(s). This can be a useful place to start because there is more shared ground for the conversation.`,
+      strongestDifferenceLabel: "Strongest difference",
+      strongestDifferenceTitle: (pillar) => `The widest distance appears in ${pillar}`,
+      strongestDifferenceBody: (gap) =>
+        `The largest answer-level gap reaches ${gap} point(s). This is worth discussing before jumping to a solution, because the difference may come from role, information access, or lived experience.`,
+      transparencyPatternLabel: "Transparency",
+      transparencyPatternTitle: "Some information may not be equally visible",
+      transparencyPatternBody: (unknown) =>
+        `${unknown} answers were marked as unknown. That does not lower the score by itself, but it does show which topics may not be equally visible to everyone.`,
+    same: "Same",
+    close: "Close",
+    far: "High gap"
+  };
+}
+
+function buildComparisonStats(rows) {
+  const comparableRows = rows.filter((row) => row.numericCount >= 2);
+  const totalGap = comparableRows.reduce((sum, row) => sum + row.gap, 0);
+  const biggestGap = comparableRows.reduce(
+    (current, row) => (!current || row.gap > current.gap ? row : current),
+    null
+  );
+
+  return {
+    averageGap: comparableRows.length ? Math.round(totalGap / comparableRows.length) : 0,
+    alignedCount: comparableRows.filter((row) => row.gap <= 10).length,
+    discussionCount: comparableRows.filter((row) => row.gap > 20).length,
+    biggestGap
+  };
+}
+
+function getComparisonGapBand(gap, visualCopy) {
+  if (gap <= 10) {
+    return {
+      label: visualCopy.aligned,
+      className: "border-forest/15 bg-forest/8 text-forest"
+    };
+  }
+
+  if (gap <= 20) {
+    return {
+      label: visualCopy.watch,
+      className: "border-copper/20 bg-copper/10 text-[#8A4F2F]"
+    };
+  }
+
+  return {
+    label: visualCopy.discuss,
+    className: "border-[#A64B3C]/25 bg-[#A64B3C]/10 text-[#76362D]"
+  };
+}
+
+function buildInputComparison(participants, language) {
+  const questions = FULL_QUESTIONS[language] ?? FULL_QUESTIONS.en;
+  const questionItems = questions.map((question, index) => {
+    const answers = participants.map((participant) => ({
+      participant,
+      value: participant.answers?.[question.id]
+    }));
+    const numericValues = answers
+      .map((answer) => answer.value)
+      .filter((value) => Number.isFinite(value));
+    const gap =
+      numericValues.length >= 2 ? Math.max(...numericValues) - Math.min(...numericValues) : 0;
+    const unknownCount = answers.filter((answer) => answer.value === UNKNOWN_ANSWER).length;
+
+    return {
+      id: question.id,
+      text: question.text,
+      pillarId: question.pillarId,
+      pillarShortLabel:
+        PILLARS.find((pillar) => pillar.id === question.pillarId)?.shortLabels[language] ?? "",
+      index,
+      shortLabel: `Q${String(index + 1).padStart(2, "0")}`,
+      answers,
+      numericCount: numericValues.length,
+      unknownCount,
+      gap
+    };
+  });
+
+  const comparable = questionItems.filter((item) => item.numericCount >= 2);
+  const same = comparable.filter((item) => item.gap === 0).length;
+  const close = comparable.filter((item) => item.gap > 0 && item.gap <= 1).length;
+  const far = comparable.filter((item) => item.gap >= 2).length;
+
+  return {
+    stats: {
+      comparable: comparable.length,
+      same,
+      close,
+      far
+    },
+    questions: questionItems,
+    pillars: PILLARS.map((pillar) => {
+      const pillarQuestions = questionItems.filter((item) => item.pillarId === pillar.id);
+      const pillarComparable = pillarQuestions.filter((item) => item.numericCount >= 2);
+      const maxGap = pillarComparable.length
+        ? Math.max(...pillarComparable.map((item) => item.gap))
+        : 0;
+      const highGap = pillarComparable.filter((item) => item.gap >= 2).length;
+      const closeGap = pillarComparable.filter((item) => item.gap > 0 && item.gap <= 1).length;
+      const unknownCount = pillarQuestions.reduce((total, item) => total + item.unknownCount, 0);
+
+      return {
+        id: pillar.id,
+        label: pillar.labels[language],
+        shortLabel: pillar.shortLabels[language],
+        questions: pillarQuestions,
+        stats: {
+          comparable: pillarComparable.length,
+          maxGap,
+          highGap,
+          closeGap,
+          unknownCount
+        }
+      };
+    })
+  };
+}
+
+function buildComparisonNarrative(inputComparison, visualCopy) {
+  const comparable = inputComparison.stats.comparable;
+  const far = inputComparison.stats.far;
+  const topDifference = inputComparison.pillars
+    .filter((pillar) => pillar.stats.maxGap > 0)
+    .sort((a, b) => b.stats.maxGap - a.stats.maxGap)[0];
+  const topAgreement = inputComparison.pillars
+    .filter((pillar) => pillar.stats.comparable > 0)
+    .sort((a, b) => a.stats.maxGap - b.stats.maxGap)[0];
+  const unknownTotal = inputComparison.questions.reduce((total, question) => total + question.unknownCount, 0);
+  const items = [
+    {
+      id: "overall",
+      label: visualCopy.overallPatternLabel,
+      title: visualCopy.overallPatternTitle,
+      body: visualCopy.overallPatternBody(far, comparable),
+      badge: `${far} / ${comparable}`,
+      className: "bg-copper/10 text-[#8A4F2F]"
+    }
+  ];
+
+  if (topDifference) {
+    items.push({
+      id: "difference",
+      label: visualCopy.strongestDifferenceLabel,
+      title: visualCopy.strongestDifferenceTitle(topDifference.label),
+      body: visualCopy.strongestDifferenceBody(topDifference.stats.maxGap),
+      detail: topDifference.questions
+        .filter((question) => question.numericCount >= 2)
+        .sort((a, b) => b.gap - a.gap)[0]?.text,
+      badge: `${topDifference.stats.maxGap}`,
+      className: "bg-[#A64B3C]/10 text-[#76362D]"
+    });
+  }
+
+  if (topAgreement) {
+    items.push({
+      id: "agreement",
+      label: visualCopy.strongestAgreementLabel,
+      title: visualCopy.strongestAgreementTitle(topAgreement.label),
+      body: visualCopy.strongestAgreementBody(topAgreement.stats.maxGap),
+      detail: topAgreement.questions
+        .filter((question) => question.numericCount >= 2)
+        .sort((a, b) => a.gap - b.gap)[0]?.text,
+      badge: `${topAgreement.stats.maxGap}`,
+      className: "bg-forest/8 text-forest"
+    });
+  }
+
+  if (unknownTotal > 0) {
+    items.push({
+      id: "transparency",
+      label: visualCopy.transparencyPatternLabel,
+      title: visualCopy.transparencyPatternTitle,
+      body: visualCopy.transparencyPatternBody(unknownTotal),
+      badge: `${unknownTotal}`,
+      className: "bg-copper/10 text-[#8A4F2F]"
+    });
+  }
+
+  return items;
+}
+
+function getInputGapBand(gap, visualCopy) {
+  if (gap === 0) {
+    return {
+      label: visualCopy.same,
+      className: "bg-forest/8 text-forest"
+    };
+  }
+
+  if (gap <= 1) {
+    return {
+      label: visualCopy.close,
+      className: "bg-copper/10 text-[#8A4F2F]"
+    };
+  }
+
+  return {
+    label: visualCopy.far,
+    className: "bg-[#A64B3C]/10 text-[#76362D]"
+  };
 }
 
 function buildComparisonRows(participants, language) {

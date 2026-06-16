@@ -415,6 +415,7 @@ export async function getComparisonGroupFromAirtable(groupId) {
         generation: profile.generation,
         country: profile.country,
         completedAt: fields["Completed At"] || raw.createdAt || new Date().toISOString(),
+        answers: raw.answers ?? {},
         result: {
           overall: Number(result.overall ?? fields["Overall Score"] ?? 0),
           stageId: result.stage?.id || raw.stageId || "",
