@@ -327,7 +327,7 @@ function getQuestionOrder(questionId) {
 
 export async function persistAssessmentToAirtable(body) {
   if (!getConfig()) {
-    return { ok: true, persistence: "skipped-missing-airtable-config" };
+    throw new Error("Missing Airtable configuration");
   }
 
   const now = new Date().toISOString();

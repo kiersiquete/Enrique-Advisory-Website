@@ -2956,6 +2956,7 @@ function ResultsScreen({
   );
   const finalCopy = getFinalActionCopy(language);
   const hasInvite = Boolean(resultPackage.groupId && (resultPackage.inviteLink || group?.invitations?.length));
+  const [submitError, setSubmitError] = useState("");
 
   function scrollToPillars() {
     resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2992,11 +2993,14 @@ function ResultsScreen({
       return;
     }
 
+    setSubmitError("");
     setSubmitPending(true);
     try {
       await onSubmitFinal({ ...resultPackage, finalizedAt: new Date().toISOString() });
       setSubmitted(true);
       setInvitePromptOpen(false);
+    } catch {
+      setSubmitError(finalCopy.error);
     } finally {
       setSubmitPending(false);
     }
@@ -3250,6 +3254,11 @@ function ResultsScreen({
                 {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
                 <ArrowRight aria-hidden="true" size={18} />
               </button>
+              {submitError && (
+                <p className="rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
+                  {submitError}
+                </p>
+              )}
             </div>
           </section>
 
@@ -3789,6 +3798,7 @@ function getFinalActionCopy(language) {
         "La comparación funciona mejor cuando otra persona de la familia completa el diagnóstico con la misma liga.",
       inviteFirst: "Invitar primero",
       continueAnyway: "Continuar sin invitar",
+      error: "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
       close: "Cerrar"
     };
   }
@@ -3805,6 +3815,7 @@ function getFinalActionCopy(language) {
       "The comparison is most useful when another family member completes the assessment from the same link.",
     inviteFirst: "Invite first",
     continueAnyway: "Continue without inviting",
+    error: "We could not save the assessment. Check the Airtable settings in Vercel and try again.",
     close: "Close"
   };
 }
@@ -3957,31 +3968,33 @@ function ScoreRing({ score }) {
 }
 
 async function persistResult(resultPackage) {
-  try {
-    await fetch("/api/results", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        createdAt: resultPackage.createdAt,
-        mode: resultPackage.mode,
-        language: resultPackage.language,
-        profile: resultPackage.profile,
-        answers: resultPackage.answers,
-        result: resultPackage.result,
-        groupId: resultPackage.groupId,
-        participantId: resultPackage.participantId,
-        inviteEmail: resultPackage.inviteEmail,
-        inviteLink: resultPackage.inviteLink,
-        groupParticipantCount: resultPackage.groupParticipantCount,
-        finalizedAt: resultPackage.finalizedAt,
-        overall: resultPackage.result.overall,
-        stageId: resultPackage.result.stage.id,
-        pillarScores: resultPackage.result.pillarScores,
-        transparency: resultPackage.result.transparency
-      })
-    });
-  } catch {
-    // The app remains useful without server-side result capture.
+  const response = await fetch("/api/results", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      createdAt: resultPackage.createdAt,
+      mode: resultPackage.mode,
+      language: resultPackage.language,
+      profile: resultPackage.profile,
+      answers: resultPackage.answers,
+      result: resultPackage.result,
+      groupId: resultPackage.groupId,
+      participantId: resultPackage.participantId,
+      inviteEmail: resultPackage.inviteEmail,
+      inviteLink: resultPackage.inviteLink,
+      groupParticipantCount: resultPackage.groupParticipantCount,
+      finalizedAt: resultPackage.finalizedAt,
+      overall: resultPackage.result.overall,
+      stageId: resultPackage.result.stage.id,
+      pillarScores: resultPackage.result.pillarScores,
+      transparency: resultPackage.result.transparency
+    })
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.persistence !== "airtable") {
+    throw new Error(data.error || "Unable to save assessment result");
   }
 }
 
