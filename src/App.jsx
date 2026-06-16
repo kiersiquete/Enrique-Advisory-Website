@@ -718,6 +718,27 @@ function getStoredGroup(groupId) {
   return loadGroups()[groupId] ?? null;
 }
 
+function saveStoredGroup(group) {
+  if (!group?.id) return null;
+  const groups = loadGroups();
+  groups[group.id] = {
+    ...(groups[group.id] ?? {}),
+    ...group,
+    participants: group.participants ?? groups[group.id]?.participants ?? [],
+    invitations: group.invitations ?? groups[group.id]?.invitations ?? []
+  };
+  saveGroups(groups);
+  return groups[group.id];
+}
+
+async function fetchComparisonGroup(groupId) {
+  if (!groupId) return null;
+  const response = await fetch(`/api/groups?group=${encodeURIComponent(groupId)}`);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.group) return null;
+  return saveStoredGroup(data.group);
+}
+
 function createMockResultPackage(language = "en") {
   const questions = FULL_QUESTIONS[language] ?? FULL_QUESTIONS.en;
   const mockScores = [4, 3, 3, 2, 4, 3, 4, 2, 3, 4];
@@ -801,6 +822,14 @@ export default function App() {
     }
 
     setScreen("assessment");
+    fetchComparisonGroup(groupId).then((group) => {
+      if (!group?.participants?.length) return;
+      setGroupRefresh((value) => value + 1);
+      if (group.participants.length >= MAX_GROUP_PARTICIPANTS) {
+        setActiveComparisonGroup(group);
+        setScreen("comparison");
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -919,8 +948,18 @@ export default function App() {
     startMode("full");
   }
 
+  async function refreshGroupFromServer(groupId) {
+    const group = await fetchComparisonGroup(groupId);
+    if (group) setGroupRefresh((value) => value + 1);
+    return group;
+  }
+
   async function submitFinalResult(resultPackage) {
-    return persistResult(resultPackage);
+    const response = await persistResult(resultPackage);
+    if (resultPackage.groupId) {
+      await refreshGroupFromServer(resultPackage.groupId);
+    }
+    return response;
   }
 
   function handleCreateInvite(resultPackage, inviteEmail) {
@@ -1019,6 +1058,7 @@ export default function App() {
           onSubmitFinal={submitFinalResult}
           onCreateInvite={handleCreateInvite}
           onViewComparison={handleViewComparison}
+          onRefreshGroup={refreshGroupFromServer}
         />
       )}
 
@@ -2922,7 +2962,8 @@ function ResultsScreen({
   onRetake,
   onSubmitFinal,
   onCreateInvite,
-  onViewComparison
+  onViewComparison,
+  onRefreshGroup
 }) {
   const [invitePromptOpen, setInvitePromptOpen] = useState(false);
   const [submitPending, setSubmitPending] = useState(false);
@@ -2955,7 +2996,7 @@ function ResultsScreen({
     [pillarBreakdowns]
   );
   const finalCopy = getFinalActionCopy(language);
-  const hasInvite = Boolean(resultPackage.groupId && (resultPackage.inviteLink || group?.invitations?.length));
+  const hasInvite = Boolean(resultPackage.groupId);
   const [submitError, setSubmitError] = useState("");
 
   function scrollToPillars() {
@@ -3172,6 +3213,7 @@ function ResultsScreen({
             group={group}
             onCreateInvite={onCreateInvite}
             onViewComparison={onViewComparison}
+            onRefreshGroup={onRefreshGroup}
             panelRef={invitePanelRef}
             wide
           />
@@ -3340,6 +3382,7 @@ function InviteFamilyPanel({
   group,
   onCreateInvite,
   onViewComparison,
+  onRefreshGroup,
   panelRef,
   wide = false
 }) {
@@ -3352,6 +3395,15 @@ function InviteFamilyPanel({
   const participantCount = group?.participants?.length ?? 1;
   const canCompare = Boolean(group?.participants?.length >= 2);
   const isFull = participantCount >= MAX_GROUP_PARTICIPANTS;
+
+  useEffect(() => {
+    if (!resultPackage.groupId || canCompare || !onRefreshGroup) return undefined;
+
+    const refresh = () => onRefreshGroup(resultPackage.groupId);
+    refresh();
+    const interval = window.setInterval(refresh, 5000);
+    return () => window.clearInterval(interval);
+  }, [canCompare, resultPackage.groupId]);
 
   function createInvite() {
     const next = onCreateInvite(resultPackage, inviteEmail);
@@ -3996,6 +4048,8 @@ async function persistResult(resultPackage) {
   if (!response.ok || data.persistence !== "airtable") {
     throw new Error(data.error || "Unable to save assessment result");
   }
+
+  return data;
 }
 
 async function downloadPdfSummary(resultPackage, language) {

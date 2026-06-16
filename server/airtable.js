@@ -206,6 +206,15 @@ function safeJson(value) {
   return JSON.stringify(value ?? null);
 }
 
+function parseJson(value, fallback = null) {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
 function respondentFields(body, now) {
   const profile = body.profile ?? {};
 
@@ -367,4 +376,62 @@ export async function persistAssessmentToAirtable(body) {
   );
 
   return { ok: true, persistence: "airtable", sessionKey };
+}
+
+export async function getComparisonGroupFromAirtable(groupId) {
+  if (!getConfig()) {
+    throw new Error("Missing Airtable configuration");
+  }
+
+  const groupKey = String(groupId ?? "").trim();
+  if (!groupKey) {
+    throw new Error("Missing group key");
+  }
+
+  const groupRecord = await findRecordByFormula(
+    "groups",
+    `{Group Key} = '${escapeFormulaValue(groupKey)}'`
+  );
+  const sessionRecords = await findRecordsByFormula(
+    "sessions",
+    `{Group Key} = '${escapeFormulaValue(groupKey)}'`,
+    100
+  );
+
+  const participants = sessionRecords
+    .map((record, index) => {
+      const fields = record.fields ?? {};
+      const raw = parseJson(fields["Raw Result JSON"], {});
+      const result = raw.result ?? {};
+      const profile = raw.profile ?? parseJson(fields["Profile JSON"], {});
+      const pillarScores = result.pillarScores ?? parseJson(fields["Dimension Scores JSON"], []);
+
+      if (!result.overall && !fields["Overall Score"]) return null;
+
+      return {
+        id: fields["Participant ID"] || record.id,
+        language: raw.language || (fields.Language === "Spanish" ? "es" : "en"),
+        role: profile.relationship,
+        generation: profile.generation,
+        country: profile.country,
+        completedAt: fields["Completed At"] || raw.createdAt || new Date().toISOString(),
+        result: {
+          overall: Number(result.overall ?? fields["Overall Score"] ?? 0),
+          stageId: result.stage?.id || raw.stageId || "",
+          pillarScores,
+          transparency: result.transparency ?? raw.transparency ?? { unknownCount: 0 }
+        },
+        sortIndex: index
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 3);
+
+  return {
+    id: groupKey,
+    maxParticipants: 3,
+    createdAt: groupRecord?.fields?.["Created At"] || new Date().toISOString(),
+    invitations: [],
+    participants
+  };
 }

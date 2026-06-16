@@ -2,7 +2,7 @@ import cors from "cors";
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { persistAssessmentToAirtable } from "./airtable.js";
+import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./airtable.js";
 
 const app = express();
 const port = process.env.PORT || 5174;
@@ -38,6 +38,16 @@ app.post("/api/results", async (req, res) => {
   } catch (error) {
     console.error("Airtable persistence failed", error);
     res.status(500).json({ error: "Unable to save assessment result" });
+  }
+});
+
+app.get("/api/groups", async (req, res) => {
+  try {
+    const group = await getComparisonGroupFromAirtable(req.query.group);
+    res.json({ ok: true, group });
+  } catch (error) {
+    console.error("Airtable group lookup failed", error);
+    res.status(500).json({ error: "Unable to load comparison group" });
   }
 });
 
