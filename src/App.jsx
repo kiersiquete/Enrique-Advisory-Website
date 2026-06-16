@@ -2648,6 +2648,26 @@ function AssessmentFlow({
     setAnswers((current) => ({ ...current, [question.id]: score }));
   }
 
+  useEffect(() => {
+    if (!profileStepComplete || transition) return undefined;
+
+    function handleScoreKey(event) {
+      const target = event.target;
+      const isTypingTarget =
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
+
+      if (isTypingTarget || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (!/^[0-5]$/.test(event.key)) return;
+
+      event.preventDefault();
+      selectScore(Number(event.key));
+    }
+
+    window.addEventListener("keydown", handleScoreKey);
+    return () => window.removeEventListener("keydown", handleScoreKey);
+  }, [profileStepComplete, question.id, transition]);
+
   function goNext() {
     if (!isAssessmentAnswered(currentAnswer)) return;
     if (isLast) {

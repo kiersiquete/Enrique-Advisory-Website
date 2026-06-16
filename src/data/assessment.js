@@ -1129,7 +1129,8 @@ export const COPY = {
       "Mostly true",
       "Very true for us"
     ],
-    scaleNote: "Choose Not sure / I don't know when you do not have enough visibility. It will not count against the score.",
+    scaleNote:
+      "Tip: You can press 0-5 on your keyboard to choose an answer, then click Next to continue. Choose Not sure / I don't know when you do not have enough visibility. It will not count against the score.",
     scaleAnchors: [
       "Not true for us",
       "Rarely true",
@@ -1665,7 +1666,8 @@ export const COPY = {
       "Mayormente presente",
       "Presente de forma consistente"
     ],
-    scaleNote: "0 = Para nada | 3 = Parcialmente | 5 = Completamente instalado",
+    scaleNote:
+      "Consejo: Puedes presionar 0-5 en tu teclado para elegir una respuesta y luego hacer clic en Siguiente para continuar. 0 = Para nada | 3 = Parcialmente | 5 = Completamente instalado",
     scaleAnchors: [
       "Para nada",
       "Muy limitado",
