@@ -3912,18 +3912,18 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
         />
       </section>
 
-      <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
+      <div className="mt-5 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className="rounded-xl border border-forest/12 bg-white p-4 shadow-line sm:p-5">
           <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-end 2xl:justify-between">
-            <div>
+            <div className="shrink-0 2xl:min-w-[190px]">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
                 {visualCopy.mapLabel}
               </p>
-              <h2 className="mt-2 font-display text-3xl font-semibold text-forest">
+              <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest">
                 {comparisonCopy.pillarComparison}
               </h2>
             </div>
-            <div className="flex flex-wrap gap-3 text-xs font-semibold text-muted">
+            <div className="flex min-w-0 flex-wrap gap-3 text-xs font-semibold text-muted">
               {participants.map((participant, index) => {
                 const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
                 return (
