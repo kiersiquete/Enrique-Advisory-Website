@@ -9,9 +9,9 @@ import {
   ClipboardCheck,
   Compass,
   Copy,
-  Download,
   Handshake,
   Landmark,
+  Link,
   Linkedin,
   Mail,
   Menu,
@@ -3115,9 +3115,15 @@ function ResultsScreen({
   onRefreshGroup
 }) {
   const [invitePromptOpen, setInvitePromptOpen] = useState(false);
+  const [inviteLinkModalOpen, setInviteLinkModalOpen] = useState(false);
+  const [inviteLinkModalLink, setInviteLinkModalLink] = useState(
+    resultPackage.groupId ? getInviteUrl(resultPackage.groupId, language) : ""
+  );
+  const [inviteLinkPending, setInviteLinkPending] = useState(false);
+  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
+  const [inviteLinkError, setInviteLinkError] = useState("");
   const [submitPending, setSubmitPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const resultRef = useRef(null);
   const invitePanelRef = useRef(null);
   const { result } = resultPackage;
   const stage = result.stage;
@@ -3148,35 +3154,6 @@ function ResultsScreen({
   const hasInvite = Boolean(resultPackage.groupId);
   const [submitError, setSubmitError] = useState("");
 
-  function scrollToPillars() {
-    resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function emailSummary() {
-    const email = resultPackage.profile?.email;
-    if (!email) return;
-
-    const subject =
-      language === "es"
-        ? "Resumen de tu diagnostico de empresa familiar"
-        : "Your family enterprise assessment summary";
-    const priorityText =
-      priorityBreakdowns.map((item) => item.label).join(", ") ||
-      (language === "es" ? "ninguna prioridad urgente" : "no urgent priority areas");
-    const body =
-      language === "es"
-        ? `Hola ${resultPackage.profile?.name || ""},\n\nTu puntaje general fue ${roundedScore(
-            result.overall
-          )}/100 (${stage.labels[language]}). Areas prioritarias: ${priorityText}.\n\n`
-        : `Hi ${resultPackage.profile?.name || ""},\n\nYour overall score was ${roundedScore(
-            result.overall
-          )}/100 (${stage.labels[language]}). Priority areas: ${priorityText}.\n\n`;
-
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-      body
-    )}`;
-  }
-
   async function submitResult({ allowWithoutInvite = false } = {}) {
     if (!hasInvite && !allowWithoutInvite) {
       setInvitePromptOpen(true);
@@ -3194,6 +3171,27 @@ function ResultsScreen({
     } finally {
       setSubmitPending(false);
     }
+  }
+
+  async function createInviteLinkFromModal() {
+    setInviteLinkPending(true);
+    setInviteLinkError("");
+    try {
+      const next = await onCreateInvite(resultPackage, "");
+      setInviteLinkModalLink(next.inviteLink);
+      setSubmitted(true);
+    } catch {
+      setInviteLinkError(finalCopy.inviteLinkError);
+    } finally {
+      setInviteLinkPending(false);
+    }
+  }
+
+  async function copyModalInviteLink() {
+    if (!inviteLinkModalLink) return;
+    await navigator.clipboard.writeText(inviteLinkModalLink);
+    setInviteLinkCopied(true);
+    window.setTimeout(() => setInviteLinkCopied(false), 1600);
   }
 
   return (
@@ -3327,7 +3325,7 @@ function ResultsScreen({
               </p>
             </div>
 
-            <div ref={resultRef} className="p-6 sm:p-8">
+            <div id="diagnostic-breakdown" className="p-6 sm:p-8">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                   <h2 className="font-display text-4xl font-semibold leading-tight text-forest">
@@ -3342,7 +3340,7 @@ function ResultsScreen({
                 </span>
               </div>
 
-              <div className="report-scroll mt-6 max-h-[680px] space-y-4 overflow-y-auto pr-1 sm:pr-3">
+              <div className="report-scroll mt-6 max-h-[1120px] space-y-4 overflow-y-auto pr-1 sm:pr-3 xl:max-h-[1280px]">
                 {pillarBreakdowns.map((breakdown) => (
                   <PillarBreakdownCard
                     key={breakdown.id}
@@ -3355,17 +3353,6 @@ function ResultsScreen({
             </div>
           </section>
 
-          <InviteFamilyPanel
-            copy={copy}
-            language={language}
-            resultPackage={resultPackage}
-            group={group}
-            onCreateInvite={onCreateInvite}
-            onViewComparison={onViewComparison}
-            onRefreshGroup={onRefreshGroup}
-            panelRef={invitePanelRef}
-            wide
-          />
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
@@ -3377,6 +3364,17 @@ function ResultsScreen({
               {detailCopy.implementationGapBody}
             </p>
           </section>
+
+          <InviteFamilyPanel
+            copy={copy}
+            language={language}
+            resultPackage={resultPackage}
+            group={group}
+            onCreateInvite={onCreateInvite}
+            onViewComparison={onViewComparison}
+            onRefreshGroup={onRefreshGroup}
+            panelRef={invitePanelRef}
+          />
 
           <section className="rounded-xl border border-copper/25 bg-white p-6 shadow-line">
             <h2 className="font-display text-3xl font-semibold leading-tight text-forest">
@@ -3422,19 +3420,15 @@ function ResultsScreen({
             <div className="mt-5 space-y-3">
               <button
                 type="button"
-                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
-                onClick={emailSummary}
+                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
+                onClick={() => {
+                  document
+                    .getElementById("diagnostic-breakdown")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
               >
-                {finalCopy.emailSummary}
-                <Mail aria-hidden="true" size={18} />
-              </button>
-              <button
-                type="button"
-                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
-                onClick={() => downloadPdfSummary(resultPackage, language)}
-              >
-                {copy.downloadPdf}
-                <Download aria-hidden="true" size={18} />
+                {copy.fullCtas[0]}
+                <ArrowRight aria-hidden="true" size={18} />
               </button>
               <button
                 type="button"
@@ -3453,24 +3447,6 @@ function ResultsScreen({
             </div>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-forest/12 bg-white p-3 shadow-line">
-            <button
-              type="button"
-              className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
-              onClick={scrollToPillars}
-            >
-              {copy.fullCtas[0]}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-            <button
-              type="button"
-              className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md border border-forest/18 bg-white px-4 text-left text-sm font-semibold text-forest transition hover:border-copper"
-              onClick={() => downloadPdfSummary(resultPackage, language)}
-            >
-              {copy.fullCtas[2]}
-              <Download aria-hidden="true" size={18} />
-            </button>
-          </section>
         </aside>
       </div>
       {invitePromptOpen && (
@@ -3501,7 +3477,7 @@ function ResultsScreen({
                 className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
                 onClick={() => {
                   setInvitePromptOpen(false);
-                  invitePanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  setInviteLinkModalOpen(true);
                 }}
               >
                 {finalCopy.inviteFirst}
@@ -3517,6 +3493,74 @@ function ResultsScreen({
                 <ArrowRight aria-hidden="true" size={18} />
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {inviteLinkModalOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-forest/45 px-5 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
+            <div className="flex items-start justify-between gap-5">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
+                  {finalCopy.inviteLinkLabel}
+                </p>
+                <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest">
+                  {finalCopy.inviteLinkTitle}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/12 text-forest hover:border-copper"
+                onClick={() => setInviteLinkModalOpen(false)}
+                aria-label={finalCopy.close}
+              >
+                <X aria-hidden="true" size={18} />
+              </button>
+            </div>
+            <p className="mt-4 text-base leading-7 text-ink/72">{finalCopy.inviteLinkBody}</p>
+
+            {inviteLinkModalLink ? (
+              <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
+                  {copy.comparison.inviteReady}
+                </p>
+                <p className="mt-3 break-all rounded-md bg-white px-3 py-3 text-sm leading-6 text-ink/78">
+                  {inviteLinkModalLink}
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
+                  onClick={copyModalInviteLink}
+                >
+                  <Copy aria-hidden="true" size={16} />
+                  {inviteLinkCopied ? copy.comparison.copied : copy.comparison.copyInvite}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/60"
+                onClick={createInviteLinkFromModal}
+                disabled={inviteLinkPending}
+              >
+                {inviteLinkPending ? finalCopy.saving : finalCopy.createInviteLink}
+                <Link aria-hidden="true" size={18} />
+              </button>
+            )}
+
+            {inviteLinkError && (
+              <p className="mt-4 rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
+                {inviteLinkError}
+              </p>
+            )}
+
+            <button
+              type="button"
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/16 bg-white px-4 text-sm font-semibold text-forest transition hover:border-copper"
+              onClick={() => setInviteLinkModalOpen(false)}
+            >
+              {finalCopy.done}
+            </button>
           </div>
         </div>
       )}
@@ -3828,7 +3872,10 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
 function LargestGapSpotlight({ row, participants, language, copy, visualCopy, comparisonCopy }) {
   if (!row) return null;
 
-  const primaryScores = row.scores.slice(0, participants.length);
+  const spotlightScores = Array.from(
+    { length: MAX_GROUP_PARTICIPANTS },
+    (_, index) => row.scores[index] ?? null
+  );
 
   return (
     <section className="rounded-xl border border-copper/20 bg-white p-5 shadow-line">
@@ -3846,7 +3893,16 @@ function LargestGapSpotlight({ row, participants, language, copy, visualCopy, co
         </span>
       </div>
       <div className="mt-4 space-y-3">
-        {primaryScores.map((score, index) => {
+        {spotlightScores.map((score, index) => {
+          if (!score) {
+            return (
+              <div key={`${row.id}-spotlight-empty-${index}`} aria-hidden="true">
+                <div className="mb-1.5 h-5" />
+                <div className="h-3 rounded-full bg-forest/[0.04]" />
+              </div>
+            );
+          }
+
           const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
           const width = Math.max(0, Math.min(100, score.score ?? 0));
 
@@ -4740,9 +4796,8 @@ function getFinalActionCopy(language) {
     return {
       title: "Guardar y continuar",
       body:
-        "Descarga tu reporte, comparte un resumen por email o continúa para guardar el diagnóstico.",
-      emailSummary: "Enviar resumen por email",
-      continue: "Continuar",
+        "Al continuar, guardaremos el diagnóstico y enviaremos el resumen al email que registraste. También podrás seguir explorando los temas clave en esta página.",
+      continue: "Enviarme el reporte resumen",
       saving: "Guardando...",
       saved: "Diagnóstico guardado",
       inviteTitle: "Invita a otro familiar antes de continuar",
@@ -4750,16 +4805,23 @@ function getFinalActionCopy(language) {
         "La comparación funciona mejor cuando otra persona de la familia completa el diagnóstico con la misma liga.",
       inviteFirst: "Invitar primero",
       continueAnyway: "Continuar sin invitar",
+      inviteLinkLabel: "Crear liga de invitación",
+      inviteLinkTitle: "Crea una liga para compartir",
+      inviteLinkBody:
+        "Por ahora, genera una liga privada y compártela manualmente con la persona que quieres invitar.",
+      createInviteLink: "Crear liga de invitación",
+      inviteLinkError: "No se pudo crear la liga de invitación. Inténtalo de nuevo.",
       error: "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
-      close: "Cerrar"
+      close: "Cerrar",
+      done: "Listo"
     };
   }
 
   return {
     title: "Save and continue",
-    body: "Download your report, share a summary by email, or continue to save the assessment.",
-    emailSummary: "Send summary by email",
-    continue: "Continue",
+    body:
+      "When you continue, we will save this assessment and send the summary report to the email you provided. You can still explore the key topics on this page.",
+    continue: "Send me the summary report",
     saving: "Saving...",
     saved: "Assessment saved",
     inviteTitle: "Invite another family member before continuing",
@@ -4767,8 +4829,15 @@ function getFinalActionCopy(language) {
       "The comparison is most useful when another family member completes the assessment from the same link.",
     inviteFirst: "Invite first",
     continueAnyway: "Continue without inviting",
+    inviteLinkLabel: "Create invitation link",
+    inviteLinkTitle: "Create a link to share",
+    inviteLinkBody:
+      "For now, generate a private invitation link and share it manually with the person you want to invite.",
+    createInviteLink: "Create invitation link",
+    inviteLinkError: "We could not create the invitation link. Please try again.",
     error: "We could not save the assessment. Check the Airtable settings in Vercel and try again.",
-    close: "Close"
+    close: "Close",
+    done: "Done"
   };
 }
 
