@@ -184,7 +184,7 @@ export const PHONE_COUNTRY_OPTIONS = [
   { id: "pg", countryCode: "PG", dialCode: "+675" },
   { id: "py", countryCode: "PY", dialCode: "+595" },
   { id: "pe", countryCode: "PE", dialCode: "+51" },
-  { id: "ph", countryCode: "PH", dialCode: "+63" },
+  { id: "ph", countryCode: "PH", dialCode: "+63", phonePlaceholder: "999 123 4567", minDigits: 10, maxDigits: 10, localPrefixes: ["9"] },
   { id: "pl", countryCode: "PL", dialCode: "+48" },
   { id: "pt", countryCode: "PT", dialCode: "+351" },
   { id: "pr", countryCode: "PR", dialCode: "+1-787" },

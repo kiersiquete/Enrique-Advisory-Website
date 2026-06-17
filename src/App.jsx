@@ -1,6 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  AsYouType,
+  parsePhoneNumberFromString,
+  validatePhoneNumberLength
+} from "libphonenumber-js/min";
+import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
@@ -27,6 +32,7 @@ import {
   COPY,
   FULL_QUESTIONS,
   LANGUAGES,
+  PHONE_COUNTRY_OPTIONS,
   PILLARS,
   SUPPORT_MESSAGE,
   UNKNOWN_ANSWER
@@ -40,6 +46,7 @@ const GROUP_STORAGE_KEY = "family-business-maturity-groups";
 const ASSESSMENT_DRAFT_STORAGE_KEY = "family-business-maturity-draft";
 const COOKIE_CONSENT_KEY = "gilbert_devlyn_cookie_consent";
 const MAX_GROUP_PARTICIPANTS = 3;
+const PHONE_COUNTRY_LOOKUP = new Map(PHONE_COUNTRY_OPTIONS.map((option) => [option.id, option]));
 const COMPARISON_COLORS = [
   { line: "#1C3D2E", soft: "rgba(28, 61, 46, 0.1)" },
   { line: "#C4713A", soft: "rgba(196, 113, 58, 0.12)" },
@@ -366,6 +373,62 @@ function phoneDigits(value) {
   return value.replace(/\D/g, "");
 }
 
+function maxPhoneDigitsForCountry(countryOption) {
+  if (countryOption?.maxDigits) return countryOption.maxDigits;
+
+  const countryCode = countryOption?.countryCode;
+  if (!countryCode) return 14;
+
+  for (let length = 1; length <= 18; length += 1) {
+    const candidate = "9".repeat(length);
+    if (validatePhoneNumberLength(candidate, countryCode) === "TOO_LONG") {
+      return length - 1;
+    }
+  }
+
+  return 14;
+}
+
+function trimPhoneNumberToCountryLimit(countryOption, value) {
+  const maxDigits = maxPhoneDigitsForCountry(countryOption);
+  const dialDigits = phoneDigits(countryOption?.dialCode ?? "");
+  let digits = phoneDigits(value);
+
+  if (dialDigits && digits.length > maxDigits && digits.startsWith(dialDigits)) {
+    digits = digits.slice(dialDigits.length);
+  }
+
+  return digits.slice(0, maxDigits);
+}
+
+function isPhoneNumberValid(countryOption, value) {
+  const trimmedValue = value.trim();
+  const digits = phoneDigits(trimmedValue);
+  const minDigits = countryOption?.minDigits ?? 7;
+  const maxDigits = maxPhoneDigitsForCountry(countryOption);
+  const dialDigits = phoneDigits(countryOption?.dialCode ?? "");
+  const countryCode = countryOption?.countryCode;
+
+  if (dialDigits && digits.startsWith(dialDigits) && digits.length > minDigits) return false;
+
+  if (countryCode) {
+    try {
+      const phoneNumber = parsePhoneNumberFromString(trimmedValue, countryCode);
+      if (phoneNumber) return phoneNumber.country === countryCode && phoneNumber.isValid();
+    } catch {
+      // Fall through to the local digit checks for unsupported country metadata.
+    }
+  }
+
+  if (digits.length < minDigits || digits.length > maxDigits) return false;
+
+  if (countryOption?.localPrefixes?.length) {
+    return countryOption.localPrefixes.some((prefix) => digits.startsWith(prefix));
+  }
+
+  return true;
+}
+
 function normalizeSearchText(value = "") {
   return value
     .normalize("NFD")
@@ -545,35 +608,16 @@ function CountrySearchSelect({
   );
 }
 
-function formatPhoneNumber(countryId, value) {
-  const digits = phoneDigits(value).slice(0, 14);
+function formatPhoneNumber(countryId, value, countryOption = PHONE_COUNTRY_LOOKUP.get(countryId)) {
+  const digits = trimPhoneNumberToCountryLimit(countryOption, value);
+  const countryCode = countryOption?.countryCode;
 
-  if (countryId === "us" || countryId === "ca") {
-    const local = digits.slice(0, 10);
-    if (local.length <= 3) return local;
-    if (local.length <= 6) return `(${local.slice(0, 3)}) ${local.slice(3)}`;
-    return `(${local.slice(0, 3)}) ${local.slice(3, 6)}-${local.slice(6)}`;
-  }
-
-  if (countryId === "mx") {
-    const local = digits.slice(0, 10);
-    return [local.slice(0, 2), local.slice(2, 6), local.slice(6, 10)]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  if (countryId === "co") {
-    const local = digits.slice(0, 10);
-    return [local.slice(0, 3), local.slice(3, 6), local.slice(6, 10)]
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  if (countryId === "es") {
-    const local = digits.slice(0, 9);
-    return [local.slice(0, 3), local.slice(3, 6), local.slice(6, 9)]
-      .filter(Boolean)
-      .join(" ");
+  if (countryCode) {
+    try {
+      return new AsYouType(countryCode).input(digits);
+    } catch {
+      // Fall through to simple grouping for unsupported country metadata.
+    }
   }
 
   return digits.replace(/(.{1,4})/g, "$1 ").trim();
@@ -2358,6 +2402,24 @@ function AssessmentProfileIntake({
     intake.phoneCountryOptions[0];
   const phoneCountryMenuRef = useRef(null);
   const [phoneCountryOpen, setPhoneCountryOpen] = useState(false);
+  const [phoneCountrySearch, setPhoneCountrySearch] = useState("");
+  const phoneCountryLabels = useMemo(
+    () => new Map(countryOptions.map((option) => [option.id, option.label])),
+    [countryOptions]
+  );
+  const selectedPhoneCountryLabel =
+    phoneCountryLabels.get(selectedPhoneCountry.id) ?? selectedPhoneCountry.countryCode;
+  const filteredPhoneCountryOptions = useMemo(() => {
+    const searchTerm = phoneCountrySearch.trim().toLowerCase();
+
+    if (!searchTerm) return intake.phoneCountryOptions;
+
+    return intake.phoneCountryOptions.filter((option) => {
+      const countryName = phoneCountryLabels.get(option.id) ?? option.countryCode;
+      const searchableText = `${countryName} ${option.countryCode} ${option.dialCode}`.toLowerCase();
+      return searchableText.includes(searchTerm);
+    });
+  }, [intake.phoneCountryOptions, phoneCountryLabels, phoneCountrySearch]);
   const showProfileError = profileTouched && !profileIsComplete;
   const showEmailError = profileTouched && profile.email.trim() && !emailIsValid;
   const showPhoneError = profileTouched && profile.phoneNumber.trim() && !phoneIsValid;
@@ -2376,6 +2438,7 @@ function AssessmentProfileIntake({
     function closePhoneCountryMenu(event) {
       if (!phoneCountryMenuRef.current?.contains(event.target)) {
         setPhoneCountryOpen(false);
+        setPhoneCountrySearch("");
       }
     }
 
@@ -2521,9 +2584,16 @@ function AssessmentProfileIntake({
                   <button
                     type="button"
                     className="flex h-full min-h-12 w-full items-center justify-center gap-1.5 bg-white px-2 text-forest outline-none transition hover:bg-parchment/70"
-                    aria-label={`${intake.phoneCountry} ${selectedPhoneCountry.countryCode} ${selectedPhoneCountry.dialCode}`}
+                    aria-label={`${intake.phoneCountry} ${selectedPhoneCountryLabel} ${selectedPhoneCountry.dialCode}`}
                     aria-expanded={phoneCountryOpen}
-                    onClick={() => setPhoneCountryOpen((value) => !value)}
+                    onClick={() => {
+                      setPhoneCountryOpen((value) => {
+                        if (value) {
+                          setPhoneCountrySearch("");
+                        }
+                        return !value;
+                      });
+                    }}
                   >
                     <CountryFlag countryCode={selectedPhoneCountry.countryCode} />
                     <span className="text-sm font-semibold leading-none tabular-nums">
@@ -2536,30 +2606,54 @@ function AssessmentProfileIntake({
                   </button>
 
                   {phoneCountryOpen && (
-                    <div className="absolute left-0 top-[calc(100%+6px)] z-40 max-h-64 w-32 overflow-y-auto rounded-lg border border-forest/14 bg-white py-1 shadow-soft">
-                      {intake.phoneCountryOptions.map((option) => {
+                    <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-72 rounded-lg border border-forest/14 bg-white p-2 shadow-soft">
+                      <label className="relative block">
+                        <Search
+                          aria-hidden="true"
+                          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-forest/45"
+                          size={15}
+                        />
+                        <input
+                          className="min-h-9 w-full rounded-md border border-forest/14 bg-parchment/45 py-2 pl-9 pr-3 text-sm font-semibold text-forest outline-none transition placeholder:text-ink/40 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/15"
+                          value={phoneCountrySearch}
+                          onChange={(event) => setPhoneCountrySearch(event.target.value)}
+                          placeholder={intake.countrySearchPlaceholder}
+                          autoComplete="off"
+                        />
+                      </label>
+
+                      <div className="mt-2 max-h-56 overflow-y-auto pr-1">
+                      {filteredPhoneCountryOptions.map((option) => {
                         const active = option.id === profile.phoneCountry;
+                        const countryName = phoneCountryLabels.get(option.id) ?? option.countryCode;
                         return (
                           <button
                             key={option.id}
                             type="button"
-                            className={`flex min-h-10 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition ${
+                            className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition ${
                               active
                                 ? "bg-forest text-white"
                                 : "text-forest hover:bg-parchment"
                             }`}
                             aria-pressed={active}
-                            aria-label={`${intake.phoneCountry} ${option.countryCode} ${option.dialCode}`}
+                            aria-label={`${intake.phoneCountry} ${countryName} ${option.dialCode}`}
                             onClick={() => {
                               onChange("phoneCountry", option.id);
                               setPhoneCountryOpen(false);
+                              setPhoneCountrySearch("");
                             }}
                           >
                             <CountryFlag countryCode={option.countryCode} />
-                            <span className="tabular-nums">{option.dialCode}</span>
+                            <span className="min-w-0 flex-1 truncate">{countryName}</span>
                           </button>
                         );
                       })}
+                      {filteredPhoneCountryOptions.length === 0 && (
+                        <p className="px-3 py-4 text-sm font-semibold text-muted">
+                          {intake.countryNoResults}
+                        </p>
+                      )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2739,8 +2833,7 @@ function AssessmentFlow({
   const phoneCountryOption = intake.phoneCountryOptions.find(
     (option) => option.id === profile.phoneCountry
   );
-  const phoneDigitCount = phoneDigits(profile.phoneNumber).length;
-  const phoneIsValid = phoneDigitCount >= (phoneCountryOption?.minDigits ?? 7);
+  const phoneIsValid = isPhoneNumberValid(phoneCountryOption, profile.phoneNumber);
   const profileIsComplete = Boolean(
     profile.name.trim() &&
       emailIsValid &&
