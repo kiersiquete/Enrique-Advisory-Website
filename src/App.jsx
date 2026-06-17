@@ -4054,14 +4054,14 @@ function LargestGapSpotlight({ row, participants, language, copy, visualCopy, co
 
 function ComparisonMetricCard({ icon: Icon, label, value, suffix, featured = false }) {
   return (
-    <div className={`rounded-lg bg-white/8 ${featured ? "p-5" : "p-4"}`}>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-white/62">{label}</p>
-        {Icon && <Icon aria-hidden="true" size={18} className="text-copper" />}
+    <div className={`rounded-md bg-white/8 ${featured ? "p-4" : "p-3.5"}`}>
+      <div className="mb-1.5 flex items-center justify-between gap-3">
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.11em] text-white/62">{label}</p>
+        {Icon && <Icon aria-hidden="true" size={16} className="text-copper" />}
       </div>
-      <p className={`font-display font-semibold leading-none ${featured ? "text-4xl" : "text-3xl"}`}>
+      <p className={`font-display font-semibold leading-none ${featured ? "text-3xl" : "text-2xl"}`}>
         {value}
-        <span className="ml-1 text-base font-bold text-white/58">{suffix}</span>
+        <span className="ml-1 text-sm font-bold text-white/58">{suffix}</span>
       </p>
     </div>
   );
@@ -4069,17 +4069,17 @@ function ComparisonMetricCard({ icon: Icon, label, value, suffix, featured = fal
 
 function QuickReadRail({ stats, rows, visualCopy }) {
   return (
-    <aside className="rounded-xl bg-forest p-4 text-white shadow-soft">
+    <aside className="rounded-xl bg-forest p-4 text-white shadow-soft lg:p-5">
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">
         {visualCopy.snapshotLabel}
       </p>
-      <h2 className="mt-3 font-display text-2xl font-semibold leading-tight">
+      <h2 className="mt-2.5 font-display text-xl font-semibold leading-tight">
         {stats.biggestGap
           ? visualCopy.snapshotTitle(stats.biggestGap.shortLabel, stats.biggestGap.gap)
           : visualCopy.snapshotFallback}
       </h2>
-      <p className="mt-3 text-sm leading-6 text-white/72">{visualCopy.snapshotBody}</p>
-      <div className="mt-4 grid gap-3">
+      <p className="mt-2.5 text-sm leading-6 text-white/70">{visualCopy.snapshotBody}</p>
+      <div className="mt-4 grid gap-2.5">
         <ComparisonMetricCard
           icon={Scale}
           label={visualCopy.averageGap}
