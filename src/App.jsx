@@ -625,7 +625,27 @@ function formatPhoneNumber(countryId, value, countryOption = PHONE_COUNTRY_LOOKU
 
 function loadLatestResult() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const result = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!result) return null;
+
+    const params =
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const routeGroupId = params?.get("group")?.trim();
+
+    if (routeGroupId || params?.has("mock-results") || params?.has("mock-comparison")) {
+      return result;
+    }
+
+    const {
+      groupId,
+      participantId,
+      inviteEmail,
+      inviteLink,
+      groupParticipantCount,
+      ...standaloneResult
+    } = result;
+
+    return standaloneResult;
   } catch {
     return null;
   }
@@ -635,6 +655,15 @@ function loadAssessmentDraft() {
   try {
     const draft = JSON.parse(localStorage.getItem(ASSESSMENT_DRAFT_STORAGE_KEY));
     if (!draft?.mode || !draft?.language) return null;
+
+    const params =
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const routeGroupId = params?.get("group")?.trim();
+
+    if (!routeGroupId && draft.pendingGroupId) {
+      return { ...draft, pendingGroupId: null };
+    }
+
     return draft;
   } catch {
     return null;
@@ -1162,12 +1191,6 @@ export default function App() {
 
     setLatestResult(updatedResult);
     setGroupRefresh((value) => value + 1);
-
-    try {
-      await submitFinalResult({ ...updatedResult, finalizedAt: new Date().toISOString() });
-    } catch (error) {
-      console.error("Invite group save failed", error);
-    }
 
     const savedGroup = getStoredGroup(group.id) ?? group;
 
@@ -3272,7 +3295,6 @@ function ResultsScreen({
     try {
       const next = await onCreateInvite(resultPackage, "");
       setInviteLinkModalLink(next.inviteLink);
-      setSubmitted(true);
     } catch {
       setInviteLinkError(finalCopy.inviteLinkError);
     } finally {
@@ -3285,6 +3307,11 @@ function ResultsScreen({
     await navigator.clipboard.writeText(inviteLinkModalLink);
     setInviteLinkCopied(true);
     window.setTimeout(() => setInviteLinkCopied(false), 1600);
+  }
+
+  async function finishAfterInviteLink() {
+    setInviteLinkModalOpen(false);
+    await submitResult({ allowWithoutInvite: true });
   }
 
   return (
@@ -3526,7 +3553,7 @@ function ResultsScreen({
               <button
                 type="button"
                 className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
-                onClick={() => submitResult()}
+                onClick={() => setInvitePromptOpen(true)}
                 disabled={submitPending || submitted}
               >
                 {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
@@ -3636,7 +3663,7 @@ function ResultsScreen({
                 onClick={createInviteLinkFromModal}
                 disabled={inviteLinkPending}
               >
-                {inviteLinkPending ? finalCopy.saving : finalCopy.createInviteLink}
+                {inviteLinkPending ? finalCopy.creatingInviteLink : finalCopy.createInviteLink}
                 <Link aria-hidden="true" size={18} />
               </button>
             )}
@@ -3650,9 +3677,10 @@ function ResultsScreen({
             <button
               type="button"
               className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/16 bg-white px-4 text-sm font-semibold text-forest transition hover:border-copper"
-              onClick={() => setInviteLinkModalOpen(false)}
+              onClick={finishAfterInviteLink}
+              disabled={submitPending}
             >
-              {finalCopy.done}
+              {submitPending ? finalCopy.saving : finalCopy.done}
             </button>
           </div>
         </div>
@@ -4903,6 +4931,7 @@ function getFinalActionCopy(language) {
       inviteLinkBody:
         "Por ahora, genera una liga privada y compártela manualmente con la persona que quieres invitar.",
       createInviteLink: "Crear liga de invitación",
+      creatingInviteLink: "Creando liga...",
       inviteLinkError: "No se pudo crear la liga de invitación. Inténtalo de nuevo.",
       error: "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
       close: "Cerrar",
@@ -4927,6 +4956,7 @@ function getFinalActionCopy(language) {
     inviteLinkBody:
       "For now, generate a private invitation link and share it manually with the person you want to invite.",
     createInviteLink: "Create invitation link",
+    creatingInviteLink: "Creating link...",
     inviteLinkError: "We could not create the invitation link. Please try again.",
     error: "We could not save the assessment. Check the Airtable settings in Vercel and try again.",
     close: "Close",
