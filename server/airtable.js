@@ -346,13 +346,13 @@ export async function persistAssessmentToAirtable(body) {
   const now = new Date().toISOString();
   const email = normalizedEmail(body);
   const sessionKey = sessionKeyFor(body);
+  const existingSession = await findRecordByFormula(
+    "sessions",
+    `{Session Key} = '${escapeFormulaValue(sessionKey)}'`
+  );
 
-  if (email) {
-    await upsertByFormula(
-      "respondents",
-      `{Email} = '${escapeFormulaValue(email)}'`,
-      respondentFields(body, now)
-    );
+  if (email && !existingSession) {
+    await createRecord("respondents", respondentFields(body, now));
   }
 
   await upsertByFormula(
