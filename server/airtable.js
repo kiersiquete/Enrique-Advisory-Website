@@ -285,6 +285,10 @@ async function groupFields(body, now, existingRecord) {
   const createdByEmail = existing["Created By Email"] || body.profile?.email || body.inviteEmail || "";
   const createdByName = existing["Created By Name"] || body.profile?.name || "";
   const inviteLink = body.inviteLink || existing["Invite Link"] || "";
+  const effectiveParticipantCount = Math.max(
+    participantCount,
+    Number(body.groupParticipantCount ?? 1)
+  );
   const notes = [
     `Creator: ${createdByName || "Unknown"} <${createdByEmail || "no email"}>`,
     `Latest participant: ${body.profile?.name || "Unknown"} <${body.profile?.email || "no email"}>`,
@@ -298,8 +302,8 @@ async function groupFields(body, now, existingRecord) {
     "Group Key": body.groupId,
     "Created By Email": createdByEmail,
     "Created By Name": createdByName,
-    "Participant Count": Math.max(participantCount, Number(body.groupParticipantCount ?? 1)),
-    Status: participantCount >= 2 ? "Ready for Comparison" : "Waiting for Participants",
+    "Participant Count": effectiveParticipantCount,
+    Status: effectiveParticipantCount >= 2 ? "Ready for Comparison" : "Waiting for Participants",
     "Invite Link": inviteLink,
     "Created At": existing["Created At"] || body.createdAt || now,
     Notes: notes

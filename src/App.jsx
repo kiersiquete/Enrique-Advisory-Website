@@ -1196,7 +1196,8 @@ export default function App() {
 
     return {
       group: savedGroup,
-      inviteLink
+      inviteLink,
+      resultPackage: updatedResult
     };
   }
 
@@ -3240,8 +3241,10 @@ function ResultsScreen({
   const [inviteLinkError, setInviteLinkError] = useState("");
   const [submitPending, setSubmitPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [inviteReadyResultPackage, setInviteReadyResultPackage] = useState(null);
   const invitePanelRef = useRef(null);
-  const { result } = resultPackage;
+  const resultPackageForSave = inviteReadyResultPackage ?? resultPackage;
+  const { result } = resultPackageForSave;
   const stage = result.stage;
   const unknownCount = result.transparency?.unknownCount ?? 0;
   const unknownPillars = (result.transparency?.unknownByPillar ?? [])
@@ -3267,7 +3270,7 @@ function ResultsScreen({
     [pillarBreakdowns]
   );
   const finalCopy = getFinalActionCopy(language);
-  const hasInvite = Boolean(resultPackage.groupId);
+  const hasInvite = Boolean(resultPackageForSave.groupId);
   const [submitError, setSubmitError] = useState("");
 
   async function submitResult({ allowWithoutInvite = false } = {}) {
@@ -3279,7 +3282,7 @@ function ResultsScreen({
     setSubmitError("");
     setSubmitPending(true);
     try {
-      await onSubmitFinal({ ...resultPackage, finalizedAt: new Date().toISOString() });
+      await onSubmitFinal({ ...resultPackageForSave, finalizedAt: new Date().toISOString() });
       setSubmitted(true);
       setInvitePromptOpen(false);
     } catch {
@@ -3295,6 +3298,7 @@ function ResultsScreen({
     try {
       const next = await onCreateInvite(resultPackage, "");
       setInviteLinkModalLink(next.inviteLink);
+      setInviteReadyResultPackage(next.resultPackage ?? null);
     } catch {
       setInviteLinkError(finalCopy.inviteLinkError);
     } finally {
