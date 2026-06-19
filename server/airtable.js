@@ -176,6 +176,21 @@ function selectLanguage(language) {
   return language === "es" ? "Spanish" : "English";
 }
 
+function formatDateTimeForAirtable(value) {
+  const date = new Date(value || Date.now());
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).format(date);
+}
+
 function sessionKeyFor(body) {
   const email = body.profile?.email || "unknown-email";
   const createdAt = body.createdAt || new Date().toISOString();
@@ -231,8 +246,8 @@ function respondentFields(body, now) {
     "Lead Status": "Completed",
     "Consent Accepted": "Yes",
     Source: "Website Self-Assessment",
-    "Created At": body.createdAt || now,
-    "Last Assessment At": now
+    "Created At": formatDateTimeForAirtable(body.createdAt || now),
+    "Last Assessment At": formatDateTimeForAirtable(now)
   };
 }
 
@@ -258,11 +273,11 @@ function sessionFields(body, sessionKey, now) {
     "Unknown Responses": Number(result.transparency?.unknownCount ?? body.transparency?.unknownCount ?? 0),
     "Dimension Scores JSON": safeJson(pillarScores),
     "Profile JSON": safeJson(body.profile),
-    "Started At": body.createdAt || now,
-    "Completed At": body.createdAt || now,
+    "Started At": formatDateTimeForAirtable(body.createdAt || now),
+    "Completed At": formatDateTimeForAirtable(body.createdAt || now),
     "Group Key": body.groupId || "",
     "Participant ID": body.participantId || "",
-    "Finalized At": body.finalizedAt || now,
+    "Finalized At": formatDateTimeForAirtable(body.finalizedAt || now),
     "Raw Result JSON": safeJson({ ...body, result })
   };
 }
@@ -305,7 +320,7 @@ async function groupFields(body, now, existingRecord) {
     "Participant Count": effectiveParticipantCount,
     Status: effectiveParticipantCount >= 2 ? "Ready for Comparison" : "Waiting for Participants",
     "Invite Link": inviteLink,
-    "Created At": existing["Created At"] || body.createdAt || now,
+    "Created At": existing["Created At"] || formatDateTimeForAirtable(body.createdAt || now),
     Notes: notes
   };
 }
@@ -317,7 +332,7 @@ function answerFields(body, sessionKey, now) {
     "Session Key": sessionKey,
     "Respondent Email": body.profile?.email || "",
     Language: selectLanguage(body.language),
-    "Submitted At": now
+    "Submitted At": formatDateTimeForAirtable(now)
   };
 
   Object.entries(answers)
@@ -418,7 +433,7 @@ export async function getComparisonGroupFromAirtable(groupId) {
         role: profile.relationship,
         generation: profile.generation,
         country: profile.country,
-        completedAt: fields["Completed At"] || raw.createdAt || new Date().toISOString(),
+        completedAt: raw.createdAt || fields["Completed At"] || new Date().toISOString(),
         answers: raw.answers ?? {},
         result: {
           overall: Number(result.overall ?? fields["Overall Score"] ?? 0),
@@ -435,7 +450,7 @@ export async function getComparisonGroupFromAirtable(groupId) {
   return {
     id: groupKey,
     maxParticipants: 3,
-    createdAt: groupRecord?.fields?.["Created At"] || new Date().toISOString(),
+    createdAt: new Date().toISOString(),
     invitations: [],
     participants
   };
