@@ -1,4 +1,5 @@
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
+const MAX_GROUP_PARTICIPANTS = 3;
 
 const TABLES = {
   respondents: {
@@ -230,6 +231,40 @@ function parseJson(value, fallback = null) {
   }
 }
 
+function validationError(message) {
+  const error = new Error(message);
+  error.code = "VALIDATION_ERROR";
+  return error;
+}
+
+function validateAssessmentBody(body = {}) {
+  if (!normalizedEmail(body)) {
+    throw validationError("Respondent email is required");
+  }
+
+  if (!body.profile?.name?.trim()) {
+    throw validationError("Respondent name is required");
+  }
+
+  if (!body.answers || typeof body.answers !== "object" || Array.isArray(body.answers)) {
+    throw validationError("Assessment answers are required");
+  }
+
+  if (Object.keys(body.answers).length === 0) {
+    throw validationError("Assessment answers are required");
+  }
+
+  const result = body.result ?? {};
+  if (!Number.isFinite(Number(result.overall ?? body.overall))) {
+    throw validationError("Assessment result score is required");
+  }
+
+  const pillarScores = result.pillarScores ?? body.pillarScores;
+  if (!Array.isArray(pillarScores) || pillarScores.length === 0) {
+    throw validationError("Assessment pillar scores are required");
+  }
+}
+
 function respondentFields(body, now) {
   const profile = body.profile ?? {};
 
@@ -249,6 +284,17 @@ function respondentFields(body, now) {
     "Created At": formatDateTimeForAirtable(body.createdAt || now),
     "Last Assessment At": formatDateTimeForAirtable(now)
   };
+}
+
+async function upsertRespondent(body, now) {
+  const email = normalizedEmail(body);
+  if (!email) return null;
+
+  return upsertByFormula(
+    "respondents",
+    `{Email} = '${escapeFormulaValue(email)}'`,
+    respondentFields(body, now)
+  );
 }
 
 function sessionFields(body, sessionKey, now) {
@@ -300,9 +346,13 @@ async function groupFields(body, now, existingRecord) {
   const createdByEmail = existing["Created By Email"] || body.profile?.email || body.inviteEmail || "";
   const createdByName = existing["Created By Name"] || body.profile?.name || "";
   const inviteLink = body.inviteLink || existing["Invite Link"] || "";
-  const effectiveParticipantCount = Math.max(
-    participantCount,
-    Number(body.groupParticipantCount ?? 1)
+  const providedParticipantCount = Number(body.groupParticipantCount);
+  const effectiveParticipantCount = Math.min(
+    MAX_GROUP_PARTICIPANTS,
+    Math.max(
+      participantCount,
+      Number.isFinite(providedParticipantCount) ? providedParticipantCount : 1
+    )
   );
   const notes = [
     `Creator: ${createdByName || "Unknown"} <${createdByEmail || "no email"}>`,
@@ -354,44 +404,43 @@ function getQuestionOrder(questionId) {
 }
 
 export async function persistAssessmentToAirtable(body) {
+  validateAssessmentBody(body);
+
   if (!getConfig()) {
     throw new Error("Missing Airtable configuration");
   }
 
+  const normalizedBody = {
+    ...body,
+    groupId: String(body.groupId ?? "").trim()
+  };
   const now = new Date().toISOString();
-  const email = normalizedEmail(body);
-  const sessionKey = sessionKeyFor(body);
-  const existingSession = await findRecordByFormula(
-    "sessions",
-    `{Session Key} = '${escapeFormulaValue(sessionKey)}'`
-  );
+  const sessionKey = sessionKeyFor(normalizedBody);
 
-  if (email && !existingSession) {
-    await createRecord("respondents", respondentFields(body, now));
-  }
+  await upsertRespondent(normalizedBody, now);
 
   await upsertByFormula(
     "sessions",
     `{Session Key} = '${escapeFormulaValue(sessionKey)}'`,
-    sessionFields(body, sessionKey, now)
+    sessionFields(normalizedBody, sessionKey, now)
   );
 
-  if (body.groupId) {
+  if (normalizedBody.groupId) {
     const existingGroup = await findRecordByFormula(
       "groups",
-      `{Group Key} = '${escapeFormulaValue(body.groupId)}'`
+      `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`
     );
     await upsertByFormula(
       "groups",
-      `{Group Key} = '${escapeFormulaValue(body.groupId)}'`,
-      await groupFields(body, now, existingGroup)
+      `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`,
+      await groupFields(normalizedBody, now, existingGroup)
     );
   }
 
   await upsertByFormula(
     "answers",
     `{Session Key} = '${escapeFormulaValue(sessionKey)}'`,
-    answerFields(body, sessionKey, now)
+    answerFields(normalizedBody, sessionKey, now)
   );
 
   return { ok: true, persistence: "airtable", sessionKey };
@@ -424,8 +473,9 @@ export async function getComparisonGroupFromAirtable(groupId) {
       const result = raw.result ?? {};
       const profile = raw.profile ?? parseJson(fields["Profile JSON"], {});
       const pillarScores = result.pillarScores ?? parseJson(fields["Dimension Scores JSON"], []);
+      const overallScore = Number(result.overall ?? fields["Overall Score"]);
 
-      if (!result.overall && !fields["Overall Score"]) return null;
+      if (!Number.isFinite(overallScore)) return null;
 
       return {
         id: fields["Participant ID"] || record.id,
@@ -436,7 +486,7 @@ export async function getComparisonGroupFromAirtable(groupId) {
         completedAt: raw.createdAt || fields["Completed At"] || new Date().toISOString(),
         answers: raw.answers ?? {},
         result: {
-          overall: Number(result.overall ?? fields["Overall Score"] ?? 0),
+          overall: overallScore,
           stageId: result.stage?.id || raw.stageId || "",
           pillarScores,
           transparency: result.transparency ?? raw.transparency ?? { unknownCount: 0 }

@@ -24,6 +24,10 @@ export default async function handler(req, res) {
     const result = await persistAssessmentToAirtable(body);
     return res.status(200).json(result);
   } catch (error) {
+    if (error.code === "VALIDATION_ERROR") {
+      return res.status(400).json({ error: error.message });
+    }
+
     console.error("Airtable persistence failed", error);
     return res.status(500).json({ error: "Unable to save assessment result" });
   }

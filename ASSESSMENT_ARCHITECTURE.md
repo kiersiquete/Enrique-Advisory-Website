@@ -550,6 +550,7 @@ These items are intentionally parked until the next implementation pass or until
 3. Whether respondent PDFs include profile details.
 4. Consent copy for profile storage and follow-up emails.
 5. Final Gilbert booking/scheduler link for the result CTA, booking modal, and PDF CTA.
+6. Gilbert/admin detailed report delivery after a respondent requests the summary report. Keep the user-facing result concise, but restore the internal detailed analysis workflow when email/admin operations are resumed.
 
 Decided:
 

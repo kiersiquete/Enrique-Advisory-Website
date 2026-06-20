@@ -75,43 +75,25 @@ function useViewportMatch(query) {
 
 const RESULT_DETAIL_COPY = {
   en: {
-    breakdownTitle: "Detailed diagnostic breakdown",
-    breakdownIntro:
-      "Each pillar shows what the score suggests, what the family can do next, and where execution usually becomes difficult.",
-    scrollHint: "Scroll inside this report tile",
-    scoreLabel: "Score",
-    whatItMeans: "What it means",
-    familyActions: "What the family can do",
-    executionRisk: "Where families often get stuck",
-    gilbertRole: "Where Gilbert can help",
     implementationGapTitle: "The implementation gap",
     implementationGapBody:
       "After the diagnosis, most families can see the problem and even agree on the solution. The harder part is execution: who leads the work, how decisions are financed, how much time the family can commit, and how to keep momentum when sensitive conversations appear. Gilbert's role is to help convert insight into a sequence of conversations, agreements, and practical governance work.",
+    topicSummaryLabel: "Topic map",
+    topicSummaryTitle: "Results by topic",
+    topicSummaryIntro:
+      "A short read of each dimension. Use it to see where the family appears clear, where structure may help, and what to discuss first.",
+    howToReadTitle: "How to read your result",
+    howToReadItems: [
+      "This is a conversation map, not a grade or verdict.",
+      "Lower scores point to topics that may need clearer agreements.",
+      "Unknown answers are useful signals about what may not be visible yet."
+    ],
     priorityAreas: "Priority areas",
     loadingChart: "Loading chart...",
     strongestAreas: "Relative strengths",
     noPriority: "No urgent low-score pillar appeared. The next step is refinement and continuity.",
-    pdfTitle: "Family Business Maturity Diagnostic Report",
-    pdfSubtitle:
-      "A practical interpretation of the assessment, including priority areas, next actions, and where Gilbert can help the family execute.",
-    scoreInterpretation: "Score interpretation",
-    stageReflection: "Stage reflection",
     transparencyTitle: "Transparency signal",
     unknownResponses: "Unknown responses",
-    topAffectedPillars: "Most affected pillars",
-    problemSolutionTitle: "Problem-solution-execution cycle",
-    problemSolutionSteps: [
-      "Problem: the diagnostic identifies where governance, information flow, or alignment may be weak.",
-      "Solution: the family can define structures, agreements, calendars, roles, or decision rights.",
-      "Execution challenge: implementation usually requires time, facilitation, budget, and agreement across generations or ownership branches.",
-      "Gilbert's role: help the family prioritize, facilitate the right conversations, and translate decisions into a realistic governance roadmap."
-    ],
-    bookingCtaTitle: "Request a conversation with Gilbert",
-    bookingCtaBody:
-      "Use this report as the starting point for a focused family governance conversation. Share your result and contact details so Gilbert can follow up personally.",
-    bookingCtaButton: "Request follow-up",
-    reportNote:
-      "This report comes from a self-assessment. It is not an audit, legal opinion, or valuation. It is designed to help the family decide what to discuss next.",
     scoreBands: {
       priority: {
         label: "Priority",
@@ -136,43 +118,25 @@ const RESULT_DETAIL_COPY = {
     }
   },
   es: {
-    breakdownTitle: "Desglose detallado del diagnóstico",
-    breakdownIntro:
-      "Cada pilar muestra qué sugiere el puntaje, qué puede hacer la familia y dónde suele complicarse la ejecución.",
-    scrollHint: "Desplázate dentro de esta tarjeta",
-    scoreLabel: "Puntaje",
-    whatItMeans: "Qué significa",
-    familyActions: "Qué puede hacer la familia",
-    executionRisk: "Dónde suelen atorarse las familias",
-    gilbertRole: "Dónde puede ayudar Gilbert",
     implementationGapTitle: "La brecha de ejecución",
     implementationGapBody:
       "Después del diagnóstico, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es ejecutar: quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo sostener el avance cuando aparecen conversaciones sensibles. El rol de Gilbert es ayudar a convertir el diagnóstico en una secuencia de conversaciones, acuerdos y trabajo práctico de gobierno.",
+    topicSummaryLabel: "Mapa de temas",
+    topicSummaryTitle: "Resultados por tema",
+    topicSummaryIntro:
+      "Una lectura breve de cada dimensión. Úsala para ver dónde hay claridad, dónde puede ayudar la estructura y qué conviene conversar primero.",
+    howToReadTitle: "Cómo leer tu resultado",
+    howToReadItems: [
+      "Este es un mapa de conversación, no una calificación ni un veredicto.",
+      "Los puntajes más bajos señalan temas que pueden necesitar acuerdos más claros.",
+      "Las respuestas sin información también muestran qué puede no estar visible todavía."
+    ],
     priorityAreas: "Áreas prioritarias",
     loadingChart: "Cargando gráfica...",
     strongestAreas: "Fortalezas relativas",
     noPriority: "No apareció un pilar con urgencia baja. El siguiente paso es refinamiento y continuidad.",
-    pdfTitle: "Reporte de Diagnóstico de Madurez para Empresas Familiares",
-    pdfSubtitle:
-      "Una interpretación práctica del diagnóstico, con prioridades, siguientes acciones y dónde Gilbert puede ayudar a la familia a ejecutar.",
-    scoreInterpretation: "Interpretación del puntaje",
-    stageReflection: "Reflexión de etapa",
     transparencyTitle: "Señal de transparencia",
     unknownResponses: "Respuestas sin información",
-    topAffectedPillars: "Pilares más afectados",
-    problemSolutionTitle: "Ciclo problema-solución-ejecución",
-    problemSolutionSteps: [
-      "Problema: el diagnóstico identifica dónde puede haber debilidad en gobierno, flujo de información o alineación.",
-      "Solución: la familia puede definir estructuras, acuerdos, calendarios, roles o derechos de decisión.",
-      "Reto de ejecución: implementar suele requerir tiempo, facilitación, presupuesto y acuerdo entre generaciones o ramas propietarias.",
-      "Rol de Gilbert: ayudar a priorizar, facilitar las conversaciones correctas y traducir decisiones en una ruta de gobierno realista."
-    ],
-    bookingCtaTitle: "Solicita una conversación con Gilbert",
-    bookingCtaBody:
-      "Usa este reporte como punto de partida para una conversación enfocada de gobierno familiar. Comparte tu resultado y datos de contacto para que Gilbert te busque personalmente.",
-    bookingCtaButton: "Solicitar seguimiento",
-    reportNote:
-      "Este reporte viene de una autoevaluación. No es una auditoría, opinión legal ni valuación. Está diseñado para ayudar a la familia a decidir qué conversar después.",
     scoreBands: {
       priority: {
         label: "Prioridad",
@@ -766,6 +730,7 @@ function createParticipantSummary(resultPackage, participantId = createParticipa
 
 function upsertResultInGroup(groupId, resultPackage, inviteEmail = "") {
   const groups = loadGroups();
+  const normalizedInviteEmail = String(inviteEmail ?? "").trim();
   const group = groups[groupId] ?? {
     id: groupId,
     maxParticipants: MAX_GROUP_PARTICIPANTS,
@@ -783,11 +748,11 @@ function upsertResultInGroup(groupId, resultPackage, inviteEmail = "") {
     group.participants.push(summary);
   }
 
-  if (inviteEmail.trim()) {
+  if (normalizedInviteEmail) {
     group.invitations = [
       ...(group.invitations ?? []),
       {
-        email: inviteEmail.trim(),
+        email: normalizedInviteEmail,
         createdAt: new Date().toISOString()
       }
     ].slice(-8);
@@ -863,9 +828,9 @@ function createMockResultPackage(language = "en") {
   };
 }
 
-function createMockComparisonGroup(language = "en", participantCount = 2) {
+function createMockComparisonGroup(language = "en", participantCount = 2, scenario = "default") {
   const questions = FULL_QUESTIONS[language] ?? FULL_QUESTIONS.en;
-  const groupId = "DEMO-COMPARE";
+  const groupId = scenario === "empty-states" ? "DEMO-EMPTY" : "DEMO-COMPARE";
   const firstAnswers = Object.fromEntries(
     questions.map((question, index) => [
       question.id,
@@ -884,15 +849,28 @@ function createMockComparisonGroup(language = "en", participantCount = 2) {
       index % 11 === 0 ? UNKNOWN_ANSWER : [3, 4, 3, 5, 4, 3, 4, 5][index % 8]
     ])
   );
-  const demoAlignedPillars = new Set(["constitution", "ownership", "management", "harmony"]);
-  questions.forEach((question, index) => {
-    if (!demoAlignedPillars.has(question.pillarId)) return;
+  if (scenario === "empty-states") {
+    questions.forEach((question) => {
+      firstAnswers[question.id] = 5;
+      secondAnswers[question.id] = 1;
+      thirdAnswers[question.id] = 3;
+    });
+  } else {
+    const demoAlignedPillars = new Set(["constitution", "ownership", "management", "harmony"]);
+    questions.forEach((question, index) => {
+      if (!demoAlignedPillars.has(question.pillarId)) return;
 
-    const alignedValue = [4, 4, 3, 4, 4, 3][index % 6];
-    firstAnswers[question.id] = alignedValue;
-    secondAnswers[question.id] = alignedValue;
-    thirdAnswers[question.id] = alignedValue;
-  });
+      const alignedValue = [4, 4, 3, 4, 4, 3][index % 6];
+      firstAnswers[question.id] = alignedValue;
+      secondAnswers[question.id] = alignedValue;
+      thirdAnswers[question.id] = alignedValue;
+    });
+    questions.forEach((question) => {
+      if (question.pillarId !== "management") return;
+
+      thirdAnswers[question.id] = 2;
+    });
+  }
   const base = createMockResultPackage(language);
   const firstPackage = {
     ...base,
@@ -954,10 +932,20 @@ function createMockComparisonGroup(language = "en", participantCount = 2) {
   };
 }
 
-function loadMockComparisonDemo(language, participantCount = 2) {
-  const demo = createMockComparisonGroup(language, participantCount);
+function loadMockComparisonDemo(language, participantCount = 2, scenario = "default") {
+  const demo = createMockComparisonGroup(language, participantCount, scenario);
   saveStoredGroup(demo.group);
   return demo;
+}
+
+function getMockScenario(params) {
+  return params.get("scenario") === "empty-states" ? "empty-states" : "default";
+}
+
+function getMockParticipantCount(params, key) {
+  const directValue = params.get(key);
+  const participantValue = params.get("participants");
+  return directValue === "3" || participantValue === "3" ? 3 : 2;
 }
 
 export default function App() {
@@ -983,8 +971,8 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     if (params.has("mock-comparison")) {
       const mockLanguage = params.get("lang") === "es" ? "es" : "en";
-      const mockParticipantCount = params.get("participants") === "3" ? 3 : 2;
-      const demo = loadMockComparisonDemo(mockLanguage, mockParticipantCount);
+      const mockParticipantCount = getMockParticipantCount(params, "mock-comparison");
+      const demo = loadMockComparisonDemo(mockLanguage, mockParticipantCount, getMockScenario(params));
       setCookieConsent("accepted");
       setLanguage(mockLanguage);
       setActiveMode("full");
@@ -997,16 +985,19 @@ export default function App() {
     if (!params.has("mock-results")) return;
 
     const mockLanguage = params.get("lang") === "es" ? "es" : "en";
-    const mockParticipantCount = params.get("participants") === "3" ? 3 : 2;
+    const mockParticipantCount = getMockParticipantCount(params, "with-comparison");
     const demo = params.has("with-comparison")
-      ? loadMockComparisonDemo(mockLanguage, mockParticipantCount)
+      ? loadMockComparisonDemo(mockLanguage, mockParticipantCount, getMockScenario(params))
       : null;
     const mockPackage = demo?.latestResult ?? createMockResultPackage(mockLanguage);
     setCookieConsent("accepted");
     setLanguage(mockLanguage);
     setActiveMode("full");
     setLatestResult(mockPackage);
-    if (demo) setGroupRefresh((value) => value + 1);
+    if (demo) {
+      setActiveComparisonGroup(demo.group);
+      setGroupRefresh((value) => value + 1);
+    }
     setScreen("results");
   }, []);
 
@@ -1115,12 +1106,6 @@ export default function App() {
       setLatestResult(resultPackage);
       setPendingGroupId(null);
       setScreen("results");
-
-      void submitFinalResult({ ...resultPackage, finalizedAt: new Date().toISOString() }).catch(
-        (error) => {
-          console.error("Automatic assessment save failed", error);
-        }
-      );
     }, 850);
   }
 
@@ -1128,6 +1113,8 @@ export default function App() {
     clearAssessmentDraft();
     setAssessmentDraft(null);
     setShowResumePrompt(false);
+    setPendingGroupId(null);
+    setActiveComparisonGroup(null);
     setActiveMode(null);
     setScreen("assessment-home");
   }
@@ -1170,27 +1157,62 @@ export default function App() {
 
   async function submitFinalResult(resultPackage) {
     const response = await persistResult(resultPackage);
+    setLatestResult(resultPackage);
     if (resultPackage.groupId) {
+      const { group } = upsertResultInGroup(resultPackage.groupId, resultPackage, "");
+      saveStoredGroup({
+        ...group,
+        inviteLink: resultPackage.inviteLink || group.inviteLink || ""
+      });
+      setGroupRefresh((value) => value + 1);
       await refreshGroupFromServer(resultPackage.groupId);
     }
     return response;
   }
 
-  async function handleCreateInvite(resultPackage, inviteEmail) {
+  async function handleCreateInvite(resultPackage, inviteEmail, options = {}) {
+    const { commitToLatest = true } = options;
     const groupId = resultPackage.groupId ?? createGroupId();
     const withGroup = { ...resultPackage, groupId };
+
+    if (!commitToLatest) {
+      const participantId = resultPackage.participantId ?? createParticipantId();
+      const inviteLink = getInviteUrl(groupId, language);
+      const updatedResult = {
+        ...withGroup,
+        participantId,
+        inviteEmail: String(inviteEmail ?? "").trim(),
+        inviteLink,
+        groupParticipantCount: 1
+      };
+
+      return {
+        group: {
+          id: groupId,
+          maxParticipants: MAX_GROUP_PARTICIPANTS,
+          createdAt: new Date().toISOString(),
+          invitations: [],
+          participants: [createParticipantSummary(updatedResult, participantId)]
+        },
+        inviteLink,
+        resultPackage: updatedResult
+      };
+    }
+
     const { group, participantId } = upsertResultInGroup(groupId, withGroup, inviteEmail);
     const inviteLink = getInviteUrl(group.id, language);
     const updatedResult = {
       ...withGroup,
       participantId,
-      inviteEmail: inviteEmail.trim(),
+      inviteEmail: String(inviteEmail ?? "").trim(),
       inviteLink,
       groupParticipantCount: group.participants.length
     };
 
-    setLatestResult(updatedResult);
-    setGroupRefresh((value) => value + 1);
+    if (commitToLatest) {
+      setLatestResult(updatedResult);
+      setGroupRefresh((value) => value + 1);
+    }
 
     const savedGroup = getStoredGroup(group.id) ?? group;
 
@@ -1238,7 +1260,6 @@ export default function App() {
           copy={copy}
           language={language}
           onNavigate={navigate}
-          onStartAssessment={startAssessment}
         />
       )}
 
@@ -1323,7 +1344,7 @@ function SiteHeader({
   const navItems = [
     { id: "home", label: copy.nav.home },
     { id: "about", label: copy.nav.about },
-    { id: "assessment-home", label: copy.nav.assessment }
+    { id: "assessment-home", label: copy.nav.assessment, secondary: true }
   ];
 
   useEffect(() => {
@@ -1382,10 +1403,12 @@ function SiteHeader({
               <button
                 key={item.id}
                 type="button"
-                className={`min-h-10 min-w-0 rounded-md px-2 text-sm font-semibold transition duration-200 sm:px-4 ${
+                className={`min-h-10 min-w-0 rounded-md px-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 sm:px-4 ${
                   active
                     ? "bg-forest text-white shadow-line"
-                    : "text-forest hover:bg-white/80 hover:text-forest"
+                    : item.secondary
+                      ? "text-forest/68 hover:bg-white/70 hover:text-forest"
+                      : "text-forest hover:bg-white/80 hover:text-forest"
                 }`}
                 aria-current={active ? "page" : undefined}
                 onClick={() => goTo(item.id)}
@@ -1420,10 +1443,12 @@ function SiteHeader({
                 <button
                   key={item.id}
                   type="button"
-                  className={`min-h-11 min-w-0 rounded-md px-3 text-sm font-semibold transition duration-200 ${
+                  className={`min-h-11 min-w-0 rounded-md px-3 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 ${
                     active
                       ? "bg-forest text-white shadow-line"
-                      : "text-forest hover:bg-parchment hover:text-forest"
+                      : item.secondary
+                        ? "text-forest/68 hover:bg-parchment hover:text-forest"
+                        : "text-forest hover:bg-parchment hover:text-forest"
                   }`}
                   aria-current={active ? "page" : undefined}
                   onClick={() => goTo(item.id)}
@@ -1545,23 +1570,23 @@ function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver
 function HomePage({ copy, language, onNavigate, onStartAssessment }) {
   const heroStats = [
     {
-      value: "8",
-      label: language === "es" ? "dimensiones familiares" : "family dimensions"
+      value: "12+",
+      label: language === "es" ? "años dentro de empresa familiar" : "years inside family enterprise"
     },
     {
-      value: "~10",
-      label: language === "es" ? "minutos para empezar" : "minutes to begin"
+      value: "3",
+      label: language === "es" ? "roles vividos: familia, propiedad, consejo" : "lived roles: family, owner, board"
     },
     {
-      value: "50",
-      label: language === "es" ? "preguntas simples" : "simple questions"
+      value: "EN/ES",
+      label: language === "es" ? "asesoría bilingüe" : "bilingual advisory"
     }
   ];
 
   const heroLabel =
     language === "es"
-      ? "Diagnóstico de madurez para empresa familiar"
-      : "Family Enterprise Maturity Assessment";
+      ? "Asesoría para empresas familiares"
+      : "Family Enterprise Advisory";
   return (
     <section className="w-full">
       <section className="relative overflow-hidden border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#f4efe6_46%,#e7ddcf_100%)]">
@@ -1596,17 +1621,10 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
               <button
                 type="button"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
-                onClick={onStartAssessment}
+                onClick={() => onNavigate("about")}
               >
                 {copy.home.primaryCta}
                 <ArrowRight aria-hidden="true" size={18} />
-              </button>
-              <button
-                type="button"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-forest/18 bg-white/72 px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:bg-white active:translate-y-px active:scale-[0.99]"
-                onClick={() => onNavigate("about")}
-              >
-                {copy.home.secondaryCta}
               </button>
             </div>
             <div
@@ -1684,7 +1702,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
         </div>
       </section>
 
-      <section className="border-b border-forest/10 bg-parchment/56 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+      <section className="border-b border-forest/10 bg-parchment/44 px-5 py-10 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
@@ -1702,7 +1720,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             ))}
             <button
               type="button"
-              className="mt-2 inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
+              className="mt-2 inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-md border border-forest/18 bg-white px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
               onClick={onStartAssessment}
             >
               {copy.home.toolCta}
@@ -1774,7 +1792,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             <button
               type="button"
               className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-copper px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-              onClick={onStartAssessment}
+              onClick={() => onNavigate("about")}
             >
               {copy.home.ctaButton}
               <ArrowRight aria-hidden="true" size={18} />
@@ -1841,30 +1859,30 @@ function AdvisoryEvidenceSection({ copy }) {
   const evidence = copy.home.evidence;
 
   return (
-    <section className="border-b border-forest/10 bg-parchment/56 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+    <section className="border-b border-forest/10 bg-white px-5 py-10 sm:px-8 lg:px-12 xl:px-8">
       <div className="mx-auto max-w-[1400px]">
-        <div className="grid gap-5 lg:grid-cols-[0.78fr_1.22fr]">
-          <div className="rounded-lg bg-forest p-6 text-white shadow-soft sm:p-8">
+        <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="rounded-lg border border-forest/10 bg-parchment/56 p-5 shadow-line sm:p-6">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
               {evidence.label}
             </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight text-white sm:text-5xl">
+            <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
               {evidence.title}
             </h2>
-            <p className="mt-5 text-base leading-7 text-white/76 sm:text-lg sm:leading-8">
+            <p className="mt-4 text-base leading-7 text-ink/72">
               {evidence.intro}
             </p>
-            <div className="mt-8 divide-y divide-white/14 border-y border-white/14">
+            <div className="mt-6 divide-y divide-forest/10 border-y border-forest/10">
               {evidence.stats.map((stat) => (
-                <div key={stat.value} className="grid gap-2 py-5 sm:grid-cols-[0.34fr_1fr] sm:items-center">
-                  <p className="font-display text-4xl font-semibold leading-none text-copper sm:text-5xl">
+                <div key={stat.value} className="grid gap-2 py-4 sm:grid-cols-[0.28fr_1fr] sm:items-center">
+                  <p className="font-display text-3xl font-semibold leading-none text-copper sm:text-4xl">
                     {stat.value}
                   </p>
-                  <p className="text-sm font-medium leading-6 text-white/72">{stat.label}</p>
+                  <p className="text-sm font-medium leading-6 text-ink/68">{stat.label}</p>
                 </div>
               ))}
             </div>
-            <p className="mt-5 text-xs font-medium leading-5 text-white/52">
+            <p className="mt-4 text-xs font-medium leading-5 text-muted">
               {evidence.sourceNote}
             </p>
           </div>
@@ -1939,7 +1957,7 @@ function ApproachFeature({ block, index }) {
   );
 }
 
-function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
+function AboutPage({ copy, language, onNavigate }) {
   return (
     <section className="w-full">
       <section className="px-5 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-16 xl:px-8">
@@ -1959,8 +1977,8 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
             </div>
             <button
               type="button"
-              className="inline-flex min-h-12 w-fit max-w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
-              onClick={onStartAssessment}
+              className="inline-flex min-h-12 w-fit max-w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-forest/18 bg-white px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
+              onClick={() => onNavigate("assessment-home")}
             >
               {copy.about.heroCta}
               <ArrowRight aria-hidden="true" size={18} />
@@ -2043,7 +2061,7 @@ function AboutPage({ copy, language, onNavigate, onStartAssessment }) {
             <button
               type="button"
               className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99]"
-              onClick={onStartAssessment}
+              onClick={() => onNavigate("assessment-home")}
             >
               {copy.about.toolCta}
               <ArrowRight aria-hidden="true" size={18} />
@@ -2080,20 +2098,20 @@ function AssessmentLanding({ copy, language, onStart }) {
     language === "es"
       ? [
           { value: "50", label: "preguntas" },
-          { value: "8", label: "dimensiones" },
+          { value: "8", label: "temas clave" },
           { value: "~10", label: "minutos" },
           { value: "0", label: "preparación" }
         ]
       : [
           { value: "50", label: "questions" },
-          { value: "8", label: "dimensions" },
+          { value: "8", label: "key topics" },
           { value: "~10", label: "minutes" },
           { value: "0", label: "prep needed" }
         ];
   const deliverables =
     language === "es"
-      ? ["Gráfica radar", "Resultado completo", "Áreas de enfoque"]
-      : ["Radar chart", "Full result", "Focus areas"];
+      ? ["Mapa visual", "Resumen claro", "Áreas de enfoque"]
+      : ["Visual map", "Clear summary", "Focus areas"];
 
   return (
     <section className="w-full flex-1 px-4 py-8 sm:px-8 sm:py-10 lg:px-12 xl:px-8">
@@ -2186,6 +2204,20 @@ function AssessmentLanding({ copy, language, onStart }) {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-4 flex gap-3 rounded-lg border border-white/18 bg-white/8 p-4 sm:items-start sm:p-5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/12 text-[#F2A56E]">
+                  <Handshake aria-hidden="true" size={19} />
+                </span>
+                <span>
+                  <span className="block text-base font-semibold text-white">
+                    {copy.assessmentIntro.gilbertContextTitle}
+                  </span>
+                  <span className="mt-1 block text-sm leading-6 text-white/70">
+                    {copy.assessmentIntro.gilbertContextBody}
+                  </span>
+                </span>
+              </div>
             </div>
           </section>
 
@@ -2251,41 +2283,6 @@ function AssessmentLanding({ copy, language, onStart }) {
             </div>
           </aside>
         </div>
-
-        <section className="mt-6 rounded-xl border border-forest/10 bg-white p-5 shadow-line sm:p-7 lg:p-8">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,0.55fr)_minmax(0,0.45fr)] lg:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-copper sm:text-sm">
-                {copy.assessmentIntro.coverageLabel}
-              </p>
-              <h2 className="mt-3 max-w-3xl font-display text-3xl font-semibold leading-tight text-forest [text-wrap:balance] sm:text-5xl">
-                {copy.assessmentIntro.coverageTitle}
-              </h2>
-            </div>
-            <p className="max-w-2xl text-base leading-7 text-muted sm:text-lg sm:leading-8 lg:justify-self-end">
-              {copy.assessmentIntro.coverageBody}
-            </p>
-          </div>
-
-          <div className="mt-7 grid overflow-hidden rounded-lg border border-forest/10 bg-forest/10 md:grid-cols-2 xl:grid-cols-4">
-            {PILLARS.map((pillar, index) => (
-              <article key={pillar.id} className="bg-white p-4 sm:p-5">
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="text-sm font-semibold text-copper">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span className="h-px flex-1 bg-forest/12" />
-                </div>
-                <h3 className="text-base font-semibold leading-6 text-forest">
-                  {pillar.labels[language]}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  {pillar.descriptions[language]}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
 
       </div>
     </section>
@@ -2964,15 +2961,21 @@ function AssessmentFlow({
         (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
 
       if (isTypingTarget || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (!/^[0-5]$/.test(event.key)) return;
+      if (/^[0-5]$/.test(event.key)) {
+        event.preventDefault();
+        selectScore(Number(event.key));
+        return;
+      }
 
-      event.preventDefault();
-      selectScore(Number(event.key));
+      if ((event.key === "Enter" || event.key === " ") && isAssessmentAnswered(currentAnswer)) {
+        event.preventDefault();
+        goNext();
+      }
     }
 
     window.addEventListener("keydown", handleScoreKey);
     return () => window.removeEventListener("keydown", handleScoreKey);
-  }, [profileStepComplete, question.id, transition]);
+  }, [currentAnswer, profileStepComplete, question.id, transition]);
 
   function goNext() {
     if (!isAssessmentAnswered(currentAnswer)) return;
@@ -2995,6 +2998,26 @@ function AssessmentFlow({
     setTransition(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  useEffect(() => {
+    if (!transition) return undefined;
+
+    function handleTransitionKey(event) {
+      const target = event.target;
+      const isTypingTarget =
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
+
+      if (isTypingTarget || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+
+      event.preventDefault();
+      continueToNextPillar();
+    }
+
+    window.addEventListener("keydown", handleTransitionKey);
+    return () => window.removeEventListener("keydown", handleTransitionKey);
+  }, [transition]);
 
   if (!profileStepComplete) {
     return (
@@ -3034,7 +3057,7 @@ function AssessmentFlow({
           </p>
           <button
             type="button"
-            className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
+            className="mt-8 inline-flex min-h-12 min-w-[14rem] items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:bg-forest-2 active:translate-y-px"
             onClick={continueToNextPillar}
           >
             {copy.continueToNextPillar}
@@ -3178,12 +3201,12 @@ function AssessmentFlow({
               </button>
             </div>
 
-            <div className="mt-8 flex flex-col gap-4 border-t border-forest/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-ink/60">{copy.scaleNote}</p>
-              <div className="flex gap-3">
+            <div className="mt-8 grid gap-4 border-t border-forest/10 pt-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+              <p className="max-w-3xl text-sm leading-6 text-ink/60">{copy.scaleNote}</p>
+              <div className="grid w-full grid-cols-2 gap-3 sm:w-[18rem]">
                 <button
                   type="button"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md border border-forest/15 bg-white px-4 text-sm font-semibold text-forest disabled:opacity-40"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-forest/15 bg-white px-3 text-sm font-semibold text-forest disabled:opacity-40"
                   onClick={() => setIndex((value) => Math.max(0, value - 1))}
                   disabled={index === 0}
                 >
@@ -3192,7 +3215,7 @@ function AssessmentFlow({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-forest px-5 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/35"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-forest px-3 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/35"
                   onClick={goNext}
                   disabled={!isAssessmentAnswered(currentAnswer)}
                 >
@@ -3240,7 +3263,9 @@ function ResultsScreen({
   const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
   const [inviteLinkError, setInviteLinkError] = useState("");
   const [submitPending, setSubmitPending] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(
+    () => Boolean(resultPackage.finalizedAt || resultPackage.reportRequest?.status === "requested")
+  );
   const [inviteReadyResultPackage, setInviteReadyResultPackage] = useState(null);
   const invitePanelRef = useRef(null);
   const resultPackageForSave = inviteReadyResultPackage ?? resultPackage;
@@ -3282,11 +3307,48 @@ function ResultsScreen({
     setSubmitError("");
     setSubmitPending(true);
     try {
-      await onSubmitFinal({ ...resultPackageForSave, finalizedAt: new Date().toISOString() });
+      const submittedAt = new Date().toISOString();
+      const advisorPillarNotes = buildPillarBreakdowns(
+        resultPackageForSave.result,
+        resultPackageForSave.language
+      ).map((breakdown) => ({
+        id: breakdown.id,
+        label: breakdown.label,
+        score: breakdown.score,
+        rating: breakdown.band.label,
+        priority: breakdown.score !== null && breakdown.score < 80,
+        meaning: breakdown.whatItMeans,
+        familyCanDo: breakdown.familyActions,
+        whereFamiliesGetStuck: breakdown.executionRisk,
+        gilbertCanHelp: breakdown.gilbertHelp
+      }));
+      await onSubmitFinal({
+        ...resultPackageForSave,
+        finalizedAt: submittedAt,
+        reportRequest: {
+          type: "summary",
+          status: "requested",
+          recipientEmail: resultPackageForSave.profile?.email || "",
+          language: resultPackageForSave.language,
+          detailedAnalysisRetained: true,
+          advisorDetail: {
+            visibility: "internal",
+            note:
+              "User-facing report should stay concise; use this retained detail for Gilbert/admin follow-up.",
+            delivery: {
+              destination: "Airtable Raw Result JSON",
+              nextStep:
+                "Use this internal detail to prepare Gilbert's follow-up notes or the requested summary report."
+            },
+            pillarNotes: advisorPillarNotes
+          },
+          requestedAt: submittedAt
+        }
+      });
       setSubmitted(true);
       setInvitePromptOpen(false);
-    } catch {
-      setSubmitError(finalCopy.error);
+    } catch (error) {
+      setSubmitError(getSaveErrorMessage(error, finalCopy));
     } finally {
       setSubmitPending(false);
     }
@@ -3296,7 +3358,7 @@ function ResultsScreen({
     setInviteLinkPending(true);
     setInviteLinkError("");
     try {
-      const next = await onCreateInvite(resultPackage, "");
+      const next = await onCreateInvite(resultPackage, "", { commitToLatest: false });
       setInviteLinkModalLink(next.inviteLink);
       setInviteReadyResultPackage(next.resultPackage ?? null);
     } catch {
@@ -3438,8 +3500,8 @@ function ResultsScreen({
       )}
 
       <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="space-y-4">
-          <section className="overflow-hidden rounded-xl border border-forest/12 bg-white shadow-line">
+        <div className="h-fit self-start space-y-4">
+          <section className="h-fit overflow-hidden rounded-xl border border-forest/12 bg-white shadow-line">
             <div className="border-b border-forest/10 p-6 sm:p-8">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
                 {copy.reflection}
@@ -3449,46 +3511,31 @@ function ResultsScreen({
               </p>
             </div>
 
-            <div id="diagnostic-breakdown" className="p-6 sm:p-8">
-              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <h2 className="font-display text-4xl font-semibold leading-tight text-forest">
-                    {detailCopy.breakdownTitle}
-                  </h2>
-                  <p className="mt-3 max-w-3xl text-base leading-7 text-ink/68">
-                    {detailCopy.breakdownIntro}
+            <div id="diagnostic-breakdown" className="border-t border-forest/10 p-6 sm:p-8">
+              <div className="mb-7">
+                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
+                      {detailCopy.topicSummaryLabel}
+                    </p>
+                    <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
+                      {detailCopy.topicSummaryTitle}
+                    </h2>
+                  </div>
+                  <p className="max-w-xl text-sm leading-6 text-ink/64">
+                    {detailCopy.topicSummaryIntro}
                   </p>
                 </div>
-                <span className="w-fit text-xs font-bold uppercase tracking-[0.14em] text-muted">
-                  {detailCopy.scrollHint}
-                </span>
-              </div>
-
-              <div className="report-scroll mt-6 max-h-[1120px] space-y-4 overflow-y-auto pr-1 sm:pr-3 xl:max-h-[1280px]">
-                {pillarBreakdowns.map((breakdown) => (
-                  <PillarBreakdownCard
-                    key={breakdown.id}
-                    breakdown={breakdown}
-                    copy={copy}
-                    detailCopy={detailCopy}
-                  />
-                ))}
+                <PillarSummaryGrid breakdowns={pillarBreakdowns} copy={copy} />
               </div>
             </div>
           </section>
 
+          <ResultGuideCard detailCopy={detailCopy} />
+
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
-          <section className="rounded-xl border border-forest/12 bg-parchment/80 p-6 shadow-line">
-            <h2 className="font-display text-3xl font-semibold leading-tight text-forest">
-              {detailCopy.implementationGapTitle}
-            </h2>
-            <p className="mt-4 text-sm leading-7 text-ink/72">
-              {detailCopy.implementationGapBody}
-            </p>
-          </section>
-
           <InviteFamilyPanel
             copy={copy}
             language={language}
@@ -3544,18 +3591,6 @@ function ResultsScreen({
             <div className="mt-5 space-y-3">
               <button
                 type="button"
-                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
-                onClick={() => {
-                  document
-                    .getElementById("diagnostic-breakdown")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-              >
-                {copy.fullCtas[0]}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-              <button
-                type="button"
                 className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
                 onClick={() => setInvitePromptOpen(true)}
                 disabled={submitPending || submitted}
@@ -3574,7 +3609,7 @@ function ResultsScreen({
         </aside>
       </div>
       {invitePromptOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-forest/45 px-5 py-8 backdrop-blur-sm">
+        <ResultModalOverlay>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
             <div className="flex items-start justify-between gap-5">
               <div>
@@ -3595,6 +3630,10 @@ function ResultsScreen({
               </button>
             </div>
             <p className="mt-4 text-base leading-7 text-ink/72">{finalCopy.inviteBody}</p>
+            <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/72">
+              <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
+              <p>{finalCopy.invitePrivacyNote}</p>
+            </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
@@ -3618,10 +3657,10 @@ function ResultsScreen({
               </button>
             </div>
           </div>
-        </div>
+        </ResultModalOverlay>
       )}
       {inviteLinkModalOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-forest/45 px-5 py-8 backdrop-blur-sm">
+        <ResultModalOverlay>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
             <div className="flex items-start justify-between gap-5">
               <div>
@@ -3642,6 +3681,10 @@ function ResultsScreen({
               </button>
             </div>
             <p className="mt-4 text-base leading-7 text-ink/72">{finalCopy.inviteLinkBody}</p>
+            <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/72">
+              <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
+              <p>{finalCopy.invitePrivacyNote}</p>
+            </div>
 
             {inviteLinkModalLink ? (
               <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
@@ -3650,6 +3693,10 @@ function ResultsScreen({
                 </p>
                 <p className="mt-3 break-all rounded-md bg-white px-3 py-3 text-sm leading-6 text-ink/78">
                   {inviteLinkModalLink}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-ink/70">{finalCopy.inviteShareContext}</p>
+                <p className="mt-3 rounded-md border border-copper/20 bg-copper/10 px-3 py-2 text-sm font-semibold leading-6 text-forest">
+                  {finalCopy.inviteSaveReminder}
                 </p>
                 <button
                   type="button"
@@ -3682,13 +3729,82 @@ function ResultsScreen({
               type="button"
               className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/16 bg-white px-4 text-sm font-semibold text-forest transition hover:border-copper"
               onClick={finishAfterInviteLink}
-              disabled={submitPending}
+              disabled={submitPending || !inviteLinkModalLink}
             >
               {submitPending ? finalCopy.saving : finalCopy.done}
             </button>
           </div>
-        </div>
+        </ResultModalOverlay>
       )}
+    </section>
+  );
+}
+
+function ResultModalOverlay({ children }) {
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] grid place-items-center overflow-y-auto bg-forest/45 px-5 py-8 backdrop-blur-sm">
+      {children}
+    </div>,
+    document.body
+  );
+}
+
+function PillarSummaryGrid({ breakdowns, copy }) {
+  return (
+    <div className="mt-5 grid gap-3 md:grid-cols-2">
+      {breakdowns.map((breakdown) => {
+        const scoreWidth = breakdown.score === null ? 100 : Math.max(0, Math.min(100, breakdown.score));
+
+        return (
+          <article
+            key={breakdown.id}
+            className="rounded-lg border border-forest/10 bg-parchment/32 p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base font-bold leading-tight text-forest">
+                  {breakdown.label}
+                </h3>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-copper">
+                  {breakdown.band.label}
+                </p>
+              </div>
+              <span className="shrink-0 text-lg font-bold text-forest">
+                {breakdown.score === null ? copy.noScore : `${breakdown.score}/100`}
+              </span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-forest/8">
+              <div
+                className={`h-full rounded-full ${pillarBarColor(breakdown.score ?? 0)}`}
+                style={{ width: `${scoreWidth}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm leading-6 text-ink/68">
+              {breakdown.band.summary}
+            </p>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+function ResultGuideCard({ detailCopy }) {
+  return (
+    <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
+      <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
+        {detailCopy.howToReadTitle}
+      </h2>
+      <ul className="mt-4 space-y-3">
+        {detailCopy.howToReadItems.map((item) => (
+          <li key={item} className="flex gap-3 text-sm leading-6 text-ink/72">
+            <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={16} />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -3761,6 +3877,10 @@ function InviteFamilyPanel({
                 {comparisonCopy.inviteTitle}
               </h2>
               <p className="mt-2 text-sm leading-6 text-ink/70">{comparisonCopy.inviteBody}</p>
+              <div className="mt-3 flex gap-2 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-xs leading-5 text-ink/70">
+                <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={15} />
+                <p>{comparisonCopy.invitePrivacyNote}</p>
+              </div>
             </div>
           </div>
 
@@ -3851,11 +3971,11 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
   const comparisonCopy = copy.comparison;
   const visualCopy = getComparisonVisualCopy(language);
   const participants = (group.participants ?? []).slice(0, MAX_GROUP_PARTICIPANTS);
+  const canCompare = participants.length >= 2;
   const rows = buildComparisonRows(participants, language);
   const convergence = rows.filter((row) => row.numericCount >= 2 && row.gap <= 10);
   const transparency = rows.filter((row) => row.hasTransparencyGap);
   const stats = buildComparisonStats(rows, participants);
-  const inputComparison = buildInputComparison(participants, language);
 
   return (
     <section className="w-full px-5 py-8 sm:px-8 lg:px-16 xl:px-24">
@@ -3881,6 +4001,35 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
         </div>
       </header>
 
+      {!canCompare ? (
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+          <div className="rounded-xl border border-forest/12 bg-white p-6 shadow-line sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
+              {comparisonCopy.participants}: {participants.length} / {MAX_GROUP_PARTICIPANTS}
+            </p>
+            <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-forest">
+              {comparisonCopy.waitingTitle}
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-ink/70">
+              {comparisonCopy.waitingBody}
+            </p>
+            <button
+              type="button"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
+              onClick={onBackToResult}
+            >
+              <ArrowLeft aria-hidden="true" size={17} />
+              {comparisonCopy.backToResult}
+            </button>
+          </div>
+          <QuickReadRail
+            stats={stats}
+            rows={rows}
+            visualCopy={visualCopy}
+          />
+        </section>
+      ) : (
+        <>
       <section className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           <div
@@ -3902,7 +4051,6 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
           </div>
           <LargestGapSpotlight
             row={stats.biggestGap}
-            participants={participants}
             language={language}
             copy={copy}
             visualCopy={visualCopy}
@@ -3980,27 +4128,17 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
           />
         </aside>
       </div>
+      </>
+      )}
 
-      <DetailedInputComparison
-        participants={participants}
-        language={language}
-        inputComparison={inputComparison}
-        visualCopy={visualCopy}
-        comparisonCopy={comparisonCopy}
-        copy={copy}
-        transparency={transparency}
-      />
     </section>
   );
 }
 
-function LargestGapSpotlight({ row, participants, language, copy, visualCopy, comparisonCopy }) {
+function LargestGapSpotlight({ row, language, copy, visualCopy, comparisonCopy }) {
   if (!row) return null;
 
-  const spotlightScores = Array.from(
-    { length: MAX_GROUP_PARTICIPANTS },
-    (_, index) => row.scores[index] ?? null
-  );
+  const spotlightScores = row.scores.filter((score) => score?.participant);
 
   return (
     <section className="rounded-xl border border-copper/20 bg-white p-5 shadow-line">
@@ -4019,15 +4157,6 @@ function LargestGapSpotlight({ row, participants, language, copy, visualCopy, co
       </div>
       <div className="mt-4 space-y-3">
         {spotlightScores.map((score, index) => {
-          if (!score) {
-            return (
-              <div key={`${row.id}-spotlight-empty-${index}`} aria-hidden="true">
-                <div className="mb-1.5 h-5" />
-                <div className="h-3 rounded-full bg-forest/[0.04]" />
-              </div>
-            );
-          }
-
           const color = COMPARISON_COLORS[index % COMPARISON_COLORS.length];
           const width = Math.max(0, Math.min(100, score.score ?? 0));
 
@@ -4243,201 +4372,6 @@ function ComparisonMapRow({ row, language, copy, visualCopy, comparisonCopy }) {
   );
 }
 
-function DetailedInputComparison({
-  participants,
-  language,
-  inputComparison,
-  visualCopy,
-  comparisonCopy,
-  copy,
-  transparency
-}) {
-  const narrative = buildComparisonNarrative(inputComparison, visualCopy);
-  const topPillars = inputComparison.pillars
-    .filter((pillar) => pillar.stats.maxGap > 0 || pillar.stats.unknownCount > 0)
-    .sort((a, b) => b.stats.maxGap - a.stats.maxGap)
-    .slice(0, 8);
-
-  return (
-    <section className="mt-6 rounded-xl border border-forest/12 bg-white p-4 shadow-line sm:p-5">
-      <div>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-            {visualCopy.inputLabel}
-          </p>
-          <h2 className="mt-2 max-w-3xl font-display text-3xl font-semibold leading-tight text-forest">
-            {visualCopy.inputTitle}
-          </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-ink/68">
-            {visualCopy.inputBody}
-          </p>
-        </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          <InputPatternCard
-            label={visualCopy.sameAnswers}
-            value={inputComparison.stats.same}
-            total={inputComparison.stats.comparable}
-            tone="forest"
-          />
-          <InputPatternCard
-            label={visualCopy.closeAnswers}
-            value={inputComparison.stats.close}
-            total={inputComparison.stats.comparable}
-            tone="copper"
-          />
-          <InputPatternCard
-            label={visualCopy.farAnswers}
-            value={inputComparison.stats.far}
-            total={inputComparison.stats.comparable}
-            tone="red"
-          />
-        </div>
-      </div>
-
-      <div className="mt-5 grid items-stretch gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.55fr)]">
-        <section className="flex h-full flex-col rounded-xl border border-forest/10 bg-parchment/30 p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-                {visualCopy.narrativeLabel}
-              </p>
-              <h3 className="mt-2 font-display text-2xl font-semibold leading-tight text-forest">
-                {visualCopy.narrativeTitle}
-              </h3>
-            </div>
-            <span className="text-xs font-bold uppercase tracking-[0.1em] text-muted">
-              {visualCopy.scrollHint}
-            </span>
-          </div>
-          <div className="report-scroll mt-4 max-h-[604px] flex-1 space-y-4 overflow-y-auto pr-1 sm:pr-3">
-            {narrative.map((item) => (
-              <NarrativeInsightCard key={item.id} item={item} />
-            ))}
-            <div className="rounded-lg border border-forest/8 bg-white p-4">
-              <h4 className="text-base font-bold text-forest">{visualCopy.howToReadTitle}</h4>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-ink/70">
-                {visualCopy.howToReadItems.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={15} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <aside className="space-y-4">
-          <section className="flex h-full flex-col rounded-xl border border-copper/24 bg-copper/8 p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
-                  {visualCopy.dimensionSummaryTitle}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-ink/68">
-                  {visualCopy.dimensionSummaryBody}
-                </p>
-              </div>
-              <span className="shrink-0 text-xs font-bold uppercase tracking-[0.1em] text-muted">
-                {visualCopy.scrollHint}
-              </span>
-            </div>
-            <div className="report-scroll mt-4 max-h-[544px] flex-1 space-y-3 overflow-y-auto pr-1 sm:pr-2">
-              {topPillars.map((pillar) => (
-                <DimensionNarrativeRow
-                  key={pillar.id}
-                  pillar={pillar}
-                  visualCopy={visualCopy}
-                  comparisonCopy={comparisonCopy}
-                />
-              ))}
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      <div className="mt-5 max-w-[440px]">
-        <a
-          href={`mailto:${copy.contactEmail}`}
-          className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
-        >
-          {comparisonCopy.groupCallCta}
-          <Mail aria-hidden="true" size={18} />
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function InputPatternCard({ label, value, total, tone }) {
-  const percent = total > 0 ? Math.round((value / total) * 100) : 0;
-  const color =
-    tone === "red" ? "#A64B3C" : tone === "copper" ? "#C4713A" : "#1C3D2E";
-
-  return (
-    <div className="grid grid-cols-[58px_1fr] items-center gap-3 rounded-lg border border-forest/10 bg-white p-3 shadow-line">
-      <div
-        className="grid h-[58px] w-[58px] place-items-center rounded-full"
-        style={{
-          background: `conic-gradient(${color} ${percent * 3.6}deg, rgba(28, 61, 46, 0.1) 0deg)`
-        }}
-      >
-        <div className="grid h-[44px] w-[44px] place-items-center rounded-full bg-white">
-          <span className="text-xs font-bold text-forest">{percent}%</span>
-        </div>
-      </div>
-      <div>
-        <p className="text-sm font-bold leading-5 text-forest">{label}</p>
-        <p className="mt-1 text-xs font-semibold text-muted">
-          {value} / {total}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function NarrativeInsightCard({ item }) {
-  return (
-    <article className="rounded-lg border border-forest/8 bg-white p-4 shadow-line">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">{item.label}</p>
-          <h4 className="mt-2 text-lg font-bold leading-tight text-forest">{item.title}</h4>
-        </div>
-        <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] ${item.className}`}>
-          {item.badge}
-        </span>
-      </div>
-      <p className="mt-3 text-sm leading-6 text-ink/72">{item.body}</p>
-      {item.detail && <p className="mt-2 text-sm font-semibold leading-6 text-forest">{item.detail}</p>}
-    </article>
-  );
-}
-
-function DimensionNarrativeRow({ pillar, visualCopy, comparisonCopy }) {
-  const band = getInputGapBand(pillar.stats.maxGap, visualCopy);
-
-  return (
-    <div className="rounded-lg bg-white p-3 shadow-line">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-bold leading-5 text-forest">{pillar.shortLabel}</p>
-          <p className="mt-1 text-xs font-semibold leading-5 text-muted">
-            {visualCopy.dimensionSummaryLine(
-              pillar.stats.highGap,
-              pillar.stats.closeGap,
-              pillar.stats.unknownCount
-            )}
-          </p>
-        </div>
-        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${band.className}`}>
-          {comparisonCopy.scoreGap}: {pillar.stats.maxGap}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function ComparisonInsightCard({
   title,
   body,
@@ -4509,46 +4443,7 @@ function getComparisonVisualCopy(language) {
       aligned: "Alineado",
       watch: "Revisar",
       discuss: "Conversar",
-      inputLabel: "Evidencia de respuestas",
-      inputTitle: "Interpretación breve de la comparación",
-      inputBody:
-        "Esta lectura resume qué puede significar la distancia entre perspectivas sin convertir el resultado en una tabla larga de respuestas.",
-      sameAnswers: "Misma respuesta",
-      closeAnswers: "Diferencia pequeña",
-      farAnswers: "Diferencia alta",
-      howToReadTitle: "Cómo leerlo",
-      howToReadItems: [
-        "Una diferencia alta no significa que alguien esté equivocado.",
-        "Puede señalar distinta información, rol o experiencia dentro del sistema familiar.",
-        "Las respuestas sin información también son una señal de transparencia."
-      ],
-      narrativeLabel: "Lectura comparativa",
-      narrativeTitle: "Qué significa esta comparación",
-      scrollHint: "Desplazar dentro del recuadro",
-      dimensionSummaryTitle: "Resumen por dimensión",
-      dimensionSummaryBody:
-        "Una lectura compacta de dónde las respuestas se acercan, se separan o muestran falta de información.",
-      dimensionSummaryLine: (high, close, unknown) =>
-        `${high} altas · ${close} cercanas${unknown ? ` · ${unknown} sin información` : ""}`,
-      overallPatternLabel: "Patrón general",
-      overallPatternTitle: "Las respuestas muestran una diferencia real de percepción",
-      overallPatternBody: (far, comparable) =>
-        `${far} de ${comparable} respuestas comparables tienen una diferencia alta. Esto sugiere que las personas no solo asignan puntajes distintos; pueden estar viendo momentos, responsabilidades o información diferente del mismo sistema familiar.`,
-      strongestAgreementLabel: "Mayor acuerdo",
-      strongestAgreementTitle: (pillar) => `Mayor alineación en ${pillar}`,
-      strongestAgreementBody: (gap) =>
-        `La brecha más baja en esta dimensión es de ${gap} punto(s). Puede ser un buen punto de partida porque hay más base compartida para conversar.`,
-      strongestDifferenceLabel: "Mayor diferencia",
-      strongestDifferenceTitle: (pillar) => `Mayor distancia en ${pillar}`,
-      strongestDifferenceBody: (gap) =>
-        `La brecha máxima llega a ${gap} punto(s). Conviene explorar qué información, experiencia o expectativa explica esta diferencia antes de decidir una solución.`,
-      transparencyPatternLabel: "Transparencia",
-      transparencyPatternTitle: "Hay señales de información desigual",
-      transparencyPatternBody: (unknown) =>
-        `${unknown} respuestas fueron marcadas como sin información. Eso no baja el puntaje por sí solo, pero indica que algunos temas no son igualmente visibles para todos.`,
-      same: "Igual",
-      close: "Cerca",
-      far: "Alta diferencia"
+      scrollHint: "Desplazar dentro del recuadro"
     };
   }
 
@@ -4573,46 +4468,7 @@ function getComparisonVisualCopy(language) {
     aligned: "Aligned",
     watch: "Watch",
     discuss: "Discuss",
-    inputLabel: "Response evidence",
-      inputTitle: "Short interpretation of the comparison",
-      inputBody:
-      "This readout explains what the distance between perspectives may mean without turning the result into a long answer-by-answer table.",
-    sameAnswers: "Same answer",
-    closeAnswers: "Small difference",
-    farAnswers: "High difference",
-    howToReadTitle: "How to read this",
-      howToReadItems: [
-        "A high gap does not mean one person is wrong.",
-        "It may show different information, roles, or lived experience inside the family system.",
-        "Unknown answers are also a transparency signal."
-      ],
-      narrativeLabel: "Comparison readout",
-      narrativeTitle: "What this comparison suggests",
-      scrollHint: "Scroll inside this tile",
-      dimensionSummaryTitle: "Dimension summary",
-      dimensionSummaryBody:
-        "A compact read of where answers are close, where they separate, and where information may be uneven.",
-      dimensionSummaryLine: (high, close, unknown) =>
-        `${high} high · ${close} close${unknown ? ` · ${unknown} unknown` : ""}`,
-      overallPatternLabel: "Overall pattern",
-      overallPatternTitle: "The answers show a real difference in perception",
-      overallPatternBody: (far, comparable) =>
-        `${far} of ${comparable} comparable answers have a high difference. This suggests the participants may not just be scoring differently; they may be seeing different responsibilities, information, or moments inside the same family system.`,
-      strongestAgreementLabel: "Strongest agreement",
-      strongestAgreementTitle: (pillar) => `Most alignment appears in ${pillar}`,
-      strongestAgreementBody: (gap) =>
-        `The lowest gap in this dimension is ${gap} point(s). This can be a useful place to start because there is more shared ground for the conversation.`,
-      strongestDifferenceLabel: "Strongest difference",
-      strongestDifferenceTitle: (pillar) => `The widest distance appears in ${pillar}`,
-      strongestDifferenceBody: (gap) =>
-        `The largest answer-level gap reaches ${gap} point(s). This is worth discussing before jumping to a solution, because the difference may come from role, information access, or lived experience.`,
-      transparencyPatternLabel: "Transparency",
-      transparencyPatternTitle: "Some information may not be equally visible",
-      transparencyPatternBody: (unknown) =>
-        `${unknown} answers were marked as unknown. That does not lower the score by itself, but it does show which topics may not be equally visible to everyone.`,
-    same: "Same",
-    close: "Close",
-    far: "High gap"
+    scrollHint: "Scroll inside this tile"
   };
 }
 
@@ -4653,159 +4509,6 @@ function getComparisonGapBand(gap, visualCopy) {
   };
 }
 
-function buildInputComparison(participants, language) {
-  const questions = FULL_QUESTIONS[language] ?? FULL_QUESTIONS.en;
-  const questionItems = questions.map((question, index) => {
-    const answers = participants.map((participant) => ({
-      participant,
-      value: participant.answers?.[question.id]
-    }));
-    const numericValues = answers
-      .map((answer) => answer.value)
-      .filter((value) => Number.isFinite(value));
-    const gap =
-      numericValues.length >= 2 ? Math.max(...numericValues) - Math.min(...numericValues) : 0;
-    const unknownCount = answers.filter((answer) => answer.value === UNKNOWN_ANSWER).length;
-
-    return {
-      id: question.id,
-      text: question.text,
-      pillarId: question.pillarId,
-      pillarShortLabel:
-        PILLARS.find((pillar) => pillar.id === question.pillarId)?.shortLabels[language] ?? "",
-      index,
-      shortLabel: `Q${String(index + 1).padStart(2, "0")}`,
-      answers,
-      numericCount: numericValues.length,
-      unknownCount,
-      gap
-    };
-  });
-
-  const comparable = questionItems.filter((item) => item.numericCount >= 2);
-  const same = comparable.filter((item) => item.gap === 0).length;
-  const close = comparable.filter((item) => item.gap > 0 && item.gap <= 1).length;
-  const far = comparable.filter((item) => item.gap >= 2).length;
-
-  return {
-    stats: {
-      comparable: comparable.length,
-      same,
-      close,
-      far
-    },
-    questions: questionItems,
-    pillars: PILLARS.map((pillar) => {
-      const pillarQuestions = questionItems.filter((item) => item.pillarId === pillar.id);
-      const pillarComparable = pillarQuestions.filter((item) => item.numericCount >= 2);
-      const maxGap = pillarComparable.length
-        ? Math.max(...pillarComparable.map((item) => item.gap))
-        : 0;
-      const highGap = pillarComparable.filter((item) => item.gap >= 2).length;
-      const closeGap = pillarComparable.filter((item) => item.gap > 0 && item.gap <= 1).length;
-      const unknownCount = pillarQuestions.reduce((total, item) => total + item.unknownCount, 0);
-
-      return {
-        id: pillar.id,
-        label: pillar.labels[language],
-        shortLabel: pillar.shortLabels[language],
-        questions: pillarQuestions,
-        stats: {
-          comparable: pillarComparable.length,
-          maxGap,
-          highGap,
-          closeGap,
-          unknownCount
-        }
-      };
-    })
-  };
-}
-
-function buildComparisonNarrative(inputComparison, visualCopy) {
-  const comparable = inputComparison.stats.comparable;
-  const far = inputComparison.stats.far;
-  const topDifference = inputComparison.pillars
-    .filter((pillar) => pillar.stats.maxGap > 0)
-    .sort((a, b) => b.stats.maxGap - a.stats.maxGap)[0];
-  const topAgreement = inputComparison.pillars
-    .filter((pillar) => pillar.stats.comparable > 0)
-    .sort((a, b) => a.stats.maxGap - b.stats.maxGap)[0];
-  const unknownTotal = inputComparison.questions.reduce((total, question) => total + question.unknownCount, 0);
-  const items = [
-    {
-      id: "overall",
-      label: visualCopy.overallPatternLabel,
-      title: visualCopy.overallPatternTitle,
-      body: visualCopy.overallPatternBody(far, comparable),
-      badge: `${far} / ${comparable}`,
-      className: "bg-copper/10 text-[#8A4F2F]"
-    }
-  ];
-
-  if (topDifference) {
-    items.push({
-      id: "difference",
-      label: visualCopy.strongestDifferenceLabel,
-      title: visualCopy.strongestDifferenceTitle(topDifference.label),
-      body: visualCopy.strongestDifferenceBody(topDifference.stats.maxGap),
-      detail: topDifference.questions
-        .filter((question) => question.numericCount >= 2)
-        .sort((a, b) => b.gap - a.gap)[0]?.text,
-      badge: `${topDifference.stats.maxGap}`,
-      className: "bg-[#A64B3C]/10 text-[#76362D]"
-    });
-  }
-
-  if (topAgreement) {
-    items.push({
-      id: "agreement",
-      label: visualCopy.strongestAgreementLabel,
-      title: visualCopy.strongestAgreementTitle(topAgreement.label),
-      body: visualCopy.strongestAgreementBody(topAgreement.stats.maxGap),
-      detail: topAgreement.questions
-        .filter((question) => question.numericCount >= 2)
-        .sort((a, b) => a.gap - b.gap)[0]?.text,
-      badge: `${topAgreement.stats.maxGap}`,
-      className: "bg-forest/8 text-forest"
-    });
-  }
-
-  if (unknownTotal > 0) {
-    items.push({
-      id: "transparency",
-      label: visualCopy.transparencyPatternLabel,
-      title: visualCopy.transparencyPatternTitle,
-      body: visualCopy.transparencyPatternBody(unknownTotal),
-      badge: `${unknownTotal}`,
-      className: "bg-copper/10 text-[#8A4F2F]"
-    });
-  }
-
-  return items;
-}
-
-function getInputGapBand(gap, visualCopy) {
-  if (gap === 0) {
-    return {
-      label: visualCopy.same,
-      className: "bg-forest/8 text-forest"
-    };
-  }
-
-  if (gap <= 1) {
-    return {
-      label: visualCopy.close,
-      className: "bg-copper/10 text-[#8A4F2F]"
-    };
-  }
-
-  return {
-    label: visualCopy.far,
-    className: "bg-[#A64B3C]/10 text-[#76362D]"
-  };
-}
-
 function buildComparisonRows(participants, language) {
   return PILLARS.map((pillar) => {
     const scores = participants.map((participant) => {
@@ -4837,81 +4540,6 @@ function buildComparisonRows(participants, language) {
   });
 }
 
-function PillarBreakdownCard({ breakdown, copy, detailCopy }) {
-  const scoreLabel =
-    breakdown.score === null ? copy.noScore : `${breakdown.score} / 100`;
-
-  return (
-    <article className="rounded-lg border border-forest/10 bg-parchment/35 p-4 sm:p-5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-            {detailCopy.scoreLabel}: {scoreLabel}
-          </p>
-          <h3 className="mt-2 font-display text-2xl font-semibold leading-tight text-forest">
-            {breakdown.label}
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-ink/66">{breakdown.description}</p>
-        </div>
-        <span
-          className={`w-fit shrink-0 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] ${pillarBandClasses(
-            breakdown.band.id
-          )}`}
-        >
-          {breakdown.band.label}
-        </span>
-      </div>
-
-      <div className="mt-4">
-        <div className="mb-2 flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold text-forest">{breakdown.band.summary}</p>
-          <p className="text-sm font-bold text-muted">{scoreLabel}</p>
-        </div>
-        <div className="h-2.5 overflow-hidden rounded-full bg-forest/9">
-          <div
-            className={`h-full rounded-full ${
-              breakdown.score === null ? "bg-forest/18" : pillarBarColor(breakdown.score)
-            }`}
-            style={{ width: breakdown.score === null ? "100%" : `${breakdown.rawScore}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <ReportBlock title={detailCopy.whatItMeans} body={breakdown.whatItMeans} />
-        <ReportListBlock title={detailCopy.familyActions} items={breakdown.familyActions} />
-        <ReportBlock title={detailCopy.executionRisk} body={breakdown.executionRisk} />
-        <ReportBlock title={detailCopy.gilbertRole} body={breakdown.gilbertHelp} />
-      </div>
-    </article>
-  );
-}
-
-function ReportBlock({ title, body }) {
-  return (
-    <div className="rounded-lg border border-forest/8 bg-white p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-ink/72">{body}</p>
-    </div>
-  );
-}
-
-function ReportListBlock({ title, items }) {
-  return (
-    <div className="rounded-lg border border-forest/8 bg-white p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">{title}</p>
-      <ul className="mt-2 space-y-2">
-        {items.map((item) => (
-          <li key={item} className="flex gap-2 text-sm leading-6 text-ink/72">
-            <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={15} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function getResultDetailCopy(language) {
   return RESULT_DETAIL_COPY[language] ?? RESULT_DETAIL_COPY.en;
 }
@@ -4919,53 +4547,93 @@ function getResultDetailCopy(language) {
 function getFinalActionCopy(language) {
   if (language === "es") {
     return {
-      title: "Guardar y continuar",
+      title: "Solicita tu reporte resumen",
       body:
-        "Al continuar, guardaremos el diagnóstico y enviaremos el resumen al email que registraste. También podrás seguir explorando los temas clave en esta página.",
-      continue: "Enviarme el reporte resumen",
+        "Guardaremos tu resultado y Gilbert dará seguimiento directamente con tu reporte resumen.",
+      continue: "Solicitar mi reporte resumen",
       saving: "Guardando...",
-      saved: "Diagnóstico guardado",
+      saved: "Reporte resumen solicitado",
       inviteTitle: "Invita a otro familiar antes de continuar",
       inviteBody:
         "La comparación funciona mejor cuando otra persona de la familia completa el diagnóstico con la misma liga.",
+      invitePrivacyNote:
+        "La comparación solo mostrará diferencias por pilar. No compartirá respuestas individuales ni detalles pregunta por pregunta.",
       inviteFirst: "Invitar primero",
-      continueAnyway: "Continuar sin invitar",
+      continueAnyway: "Enviar reporte sin invitar",
       inviteLinkLabel: "Crear liga de invitación",
       inviteLinkTitle: "Crea una liga para compartir",
       inviteLinkBody:
         "Por ahora, genera una liga privada y compártela manualmente con la persona que quieres invitar.",
+      inviteShareContext:
+        "Al compartirla, explica que sus respuestas se mantienen privadas y que la comparación solo ayuda a ver temas donde la familia percibe cosas distintas.",
+      inviteSaveReminder:
+        "Haz clic en Listo para guardar tu diagnóstico y dejar activa esta liga en el registro.",
       createInviteLink: "Crear liga de invitación",
       creatingInviteLink: "Creando liga...",
       inviteLinkError: "No se pudo crear la liga de invitación. Inténtalo de nuevo.",
       error: "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
+      apiErrors: {
+        "Unable to save assessment result":
+          "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo."
+      },
+      validationErrors: {
+        "Respondent email is required": "El email del participante es obligatorio.",
+        "Respondent name is required": "El nombre del participante es obligatorio.",
+        "Assessment answers are required": "Las respuestas del diagnóstico son obligatorias.",
+        "Assessment result score is required": "El puntaje del diagnóstico es obligatorio.",
+        "Assessment pillar scores are required": "Los puntajes por pilar son obligatorios."
+      },
       close: "Cerrar",
-      done: "Listo"
+      done: "Listo, guardar diagnóstico"
     };
   }
 
   return {
-    title: "Save and continue",
+    title: "Request your summary report",
     body:
-      "When you continue, we will save this assessment and send the summary report to the email you provided. You can still explore the key topics on this page.",
-    continue: "Send me the summary report",
+      "We'll save your results, and Gilbert will follow up directly with your summary report.",
+    continue: "Request my summary report",
     saving: "Saving...",
-    saved: "Assessment saved",
+    saved: "Summary report requested",
     inviteTitle: "Invite another family member before continuing",
     inviteBody:
       "The comparison is most useful when another family member completes the assessment from the same link.",
+    invitePrivacyNote:
+      "The comparison only shows pillar-level differences. It will not share individual answers or question-by-question details.",
     inviteFirst: "Invite first",
-    continueAnyway: "Continue without inviting",
+    continueAnyway: "Send report without inviting",
     inviteLinkLabel: "Create invitation link",
     inviteLinkTitle: "Create a link to share",
     inviteLinkBody:
       "For now, generate a private invitation link and share it manually with the person you want to invite.",
+    inviteShareContext:
+      "When you share it, explain that their answers stay private and the comparison only helps reveal topics where the family sees things differently.",
+    inviteSaveReminder:
+      "Click Done to save your assessment and keep this invitation link active in the record.",
     createInviteLink: "Create invitation link",
     creatingInviteLink: "Creating link...",
     inviteLinkError: "We could not create the invitation link. Please try again.",
     error: "We could not save the assessment. Check the Airtable settings in Vercel and try again.",
+    apiErrors: {
+      "Unable to save assessment result":
+        "We could not save the assessment. Check the Airtable settings in Vercel and try again."
+    },
+    validationErrors: {
+      "Respondent email is required": "Respondent email is required.",
+      "Respondent name is required": "Respondent name is required.",
+      "Assessment answers are required": "Assessment answers are required.",
+      "Assessment result score is required": "Assessment result score is required.",
+      "Assessment pillar scores are required": "Assessment pillar scores are required."
+    },
     close: "Close",
-    done: "Done"
+    done: "Done, save assessment"
   };
+}
+
+function getSaveErrorMessage(error, finalCopy) {
+  const message = error instanceof Error ? error.message : "";
+  if (!message) return finalCopy.error;
+  return finalCopy.validationErrors?.[message] ?? finalCopy.apiErrors?.[message] ?? message;
 }
 
 function getPillarBand(item, language) {
@@ -5116,6 +4784,7 @@ function ScoreRing({ score }) {
 }
 
 async function persistResult(resultPackage) {
+  const result = resultPackage.result ?? {};
   const response = await fetch("/api/results", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -5132,10 +4801,11 @@ async function persistResult(resultPackage) {
       inviteLink: resultPackage.inviteLink,
       groupParticipantCount: resultPackage.groupParticipantCount,
       finalizedAt: resultPackage.finalizedAt,
-      overall: resultPackage.result.overall,
-      stageId: resultPackage.result.stage.id,
-      pillarScores: resultPackage.result.pillarScores,
-      transparency: resultPackage.result.transparency
+      reportRequest: resultPackage.reportRequest,
+      overall: result.overall,
+      stageId: result.stage?.id,
+      pillarScores: result.pillarScores,
+      transparency: result.transparency
     })
   });
 
@@ -5146,266 +4816,4 @@ async function persistResult(resultPackage) {
   }
 
   return data;
-}
-
-async function downloadPdfSummary(resultPackage, language) {
-  const { jsPDF } = await import("jspdf");
-  const copy = COPY[language];
-  const { result } = resultPackage;
-  const detailCopy = getResultDetailCopy(language);
-  const breakdowns = buildPillarBreakdowns(result, language);
-  const priorityBreakdowns = getPriorityBreakdowns(breakdowns);
-  const strongBreakdowns = getStrongBreakdowns(breakdowns);
-  const unknownCount = result.transparency?.unknownCount ?? 0;
-  const unknownPillars = (result.transparency?.unknownByPillar ?? [])
-    .filter((item) => item.unknown > 0)
-    .sort((a, b) => b.unknown - a.unknown)
-    .slice(0, 4)
-    .map((item) => ({
-      ...item,
-      pillar: PILLARS.find((pillar) => pillar.id === item.id)
-    }))
-    .filter((item) => item.pillar);
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
-  const width = doc.internal.pageSize.getWidth();
-  const height = doc.internal.pageSize.getHeight();
-  const margin = 48;
-  const contentWidth = width - margin * 2;
-  const forest = [6, 53, 45];
-  const copper = [196, 113, 58];
-  const muted = [91, 96, 86];
-  const ink = [38, 42, 38];
-  const parchment = [244, 239, 230];
-  let y = 54;
-
-  const ensureSpace = (needed = 48) => {
-    if (y + needed > height - margin) {
-      doc.addPage();
-      y = margin;
-    }
-  };
-
-  const addWrapped = (
-    text,
-    size = 10.5,
-    weight = "normal",
-    color = ink,
-    maxWidth = contentWidth,
-    x = margin,
-    lineGap = 5
-  ) => {
-    doc.setFont("helvetica", weight);
-    doc.setFontSize(size);
-    doc.setTextColor(...color);
-    const lines = doc.splitTextToSize(text, maxWidth);
-    ensureSpace(lines.length * (size + lineGap));
-    doc.text(lines, x, y);
-    y += lines.length * (size + lineGap);
-  };
-
-  const addSectionTitle = (title, intro) => {
-    ensureSpace(76);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
-    doc.setTextColor(...forest);
-    doc.text(title, margin, y);
-    y += 18;
-    doc.setDrawColor(...copper);
-    doc.setLineWidth(1.2);
-    doc.line(margin, y, margin + 68, y);
-    y += 18;
-    if (intro) {
-      addWrapped(intro, 10.5, "normal", muted);
-      y += 6;
-    }
-  };
-
-  const addBullet = (text, x = margin, maxWidth = contentWidth) => {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...ink);
-    const lines = doc.splitTextToSize(text, maxWidth - 14);
-    ensureSpace(lines.length * 15 + 4);
-    doc.text("-", x, y);
-    doc.text(lines, x + 14, y);
-    y += lines.length * 15 + 4;
-  };
-
-  const addBar = (label, score, bandLabel) => {
-    ensureSpace(40);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
-    doc.setTextColor(...forest);
-    doc.text(label, margin, y);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...muted);
-    doc.text(score === null ? copy.noScore : `${score} / 100`, width - margin - 70, y);
-    y += 9;
-    doc.setFillColor(224, 231, 226);
-    doc.roundedRect(margin, y, contentWidth, 6, 3, 3, "F");
-    if (score !== null) {
-      doc.setFillColor(score < 65 ? 196 : 28, score < 65 ? 113 : 61, score < 65 ? 58 : 46);
-      doc.roundedRect(margin, y, (contentWidth * score) / 100, 6, 3, 3, "F");
-    }
-    y += 17;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(...muted);
-    doc.text(bandLabel, margin, y);
-    y += 11;
-  };
-
-  const addBookingCta = () => {
-    const panelHeight = 128;
-    ensureSpace(panelHeight + 12);
-    doc.setFillColor(...forest);
-    doc.roundedRect(margin, y, contentWidth, panelHeight, 10, 10, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(255, 255, 255);
-    doc.text(detailCopy.bookingCtaTitle, margin + 24, y + 32);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
-    doc.setTextColor(233, 229, 218);
-    const bodyLines = doc.splitTextToSize(detailCopy.bookingCtaBody, contentWidth - 48);
-    doc.text(bodyLines, margin + 24, y + 54);
-
-    const buttonY = y + 92;
-    doc.setFillColor(...copper);
-    doc.roundedRect(margin + 24, buttonY, 172, 28, 5, 5, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
-    doc.setTextColor(255, 255, 255);
-    doc.text(detailCopy.bookingCtaButton, margin + 36, buttonY + 18);
-
-    y += panelHeight + 12;
-  };
-
-  doc.setFillColor(...forest);
-  doc.rect(0, 0, width, 142, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.text(detailCopy.pdfTitle, margin, y);
-  y += 25;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10.5);
-  const subtitle = doc.splitTextToSize(detailCopy.pdfSubtitle, contentWidth * 0.82);
-  doc.text(subtitle, margin, y);
-
-  y = 178;
-  doc.setFillColor(...parchment);
-  doc.roundedRect(margin, y - 22, contentWidth, 92, 8, 8, "F");
-  doc.setTextColor(...forest);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(30);
-  doc.text(`${roundedScore(result.overall)}`, margin + 22, y + 20);
-  doc.setFontSize(12);
-  doc.text("/ 100", margin + 76, y + 20);
-  doc.setFontSize(13);
-  doc.text(`${result.stage.level[language]} - ${result.stage.labels[language]}`, margin + 150, y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10.5);
-  doc.setTextColor(...muted);
-  const stageLines = doc.splitTextToSize(result.stage.descriptions[language], contentWidth - 172);
-  doc.text(stageLines, margin + 150, y + 20);
-  y += 96;
-
-  addSectionTitle(detailCopy.stageReflection);
-  addWrapped(result.stage.reflections[language], 11, "normal", ink);
-  y += 14;
-
-  addSectionTitle(detailCopy.priorityAreas);
-  if (priorityBreakdowns.length > 0) {
-    priorityBreakdowns.forEach((item) => {
-      addBullet(`${item.label}: ${item.score} / 100 - ${item.band.summary}`);
-    });
-  } else {
-    addWrapped(detailCopy.noPriority, 10.5, "normal", ink);
-  }
-  if (strongBreakdowns.length > 0) {
-    y += 8;
-    addWrapped(detailCopy.strongestAreas, 11, "bold", forest);
-    strongBreakdowns.forEach((item) => {
-      addBullet(`${item.label}: ${item.score} / 100 - ${item.band.label}`);
-    });
-  }
-  y += 12;
-
-  addSectionTitle(copy.pillarScores, detailCopy.breakdownIntro);
-  breakdowns.forEach((item) => {
-    addBar(item.label, item.score, item.band.label);
-  });
-  y += 12;
-
-  addSectionTitle(detailCopy.breakdownTitle);
-  breakdowns.forEach((item) => {
-    ensureSpace(168);
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(218, 211, 198);
-    doc.roundedRect(margin, y - 8, contentWidth, 22, 5, 5, "S");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...forest);
-    doc.text(item.label, margin + 10, y + 7);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(...muted);
-    doc.text(
-      item.score === null ? copy.noScore : `${item.score} / 100 - ${item.band.label}`,
-      width - margin - 130,
-      y + 7
-    );
-    y += 32;
-
-    addWrapped(detailCopy.whatItMeans, 10, "bold", copper);
-    addWrapped(item.whatItMeans, 9.5, "normal", ink);
-    y += 4;
-
-    addWrapped(detailCopy.familyActions, 10, "bold", copper);
-    item.familyActions.forEach((action) => addBullet(action));
-    y += 4;
-
-    addWrapped(detailCopy.executionRisk, 10, "bold", copper);
-    addWrapped(item.executionRisk, 9.5, "normal", ink);
-    y += 4;
-
-    addWrapped(detailCopy.gilbertRole, 10, "bold", copper);
-    addWrapped(item.gilbertHelp, 9.5, "normal", ink);
-    y += 16;
-  });
-
-  addSectionTitle(copy.whatCanDo);
-  result.stage.whatCanDo[language].forEach((item) => addBullet(item));
-  y += 10;
-
-  addSectionTitle(detailCopy.problemSolutionTitle);
-  detailCopy.problemSolutionSteps.forEach((item) => addBullet(item));
-  y += 8;
-
-  addSectionTitle(copy.consultantSupport);
-  addWrapped(SUPPORT_MESSAGE[language], 11, "normal", ink);
-  addWrapped(detailCopy.implementationGapBody, 10.5, "normal", ink);
-
-  if (unknownCount > 0) {
-    y += 12;
-    addSectionTitle(detailCopy.transparencyTitle);
-    addWrapped(`${detailCopy.unknownResponses}: ${unknownCount}`, 11, "bold", forest);
-    if (unknownPillars.length > 0) {
-      addWrapped(detailCopy.topAffectedPillars, 10, "bold", copper);
-      unknownPillars.forEach((item) => {
-        addBullet(`${item.pillar.labels[language]}: ${item.unknown}`);
-      });
-    }
-  }
-
-  y += 14;
-  addWrapped(detailCopy.reportNote, 9.5, "normal", muted);
-  y += 12;
-  addBookingCta();
-
-  const date = new Date().toISOString().slice(0, 10);
-  doc.save(`family-business-maturity-diagnostic-report-${date}.pdf`);
 }

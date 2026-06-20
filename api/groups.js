@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   const groupId = String(req.query?.group ?? "").trim();
   if (!groupId) {
-    return res.status(400).json({ error: "Missing group key" });
+    return res.status(400).json({ error: "Missing comparison group key" });
   }
 
   try {
