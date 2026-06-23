@@ -35,6 +35,10 @@ const app = createApp({
     if (!groupId) throw new Error("Missing group key");
     if (groupId === "FAIL") throw new Error("Lookup failed");
     return { id: groupId, participants: [] };
+  },
+  async sendSummaryEmails(body, result) {
+    calls.push({ type: "email", body, result });
+    return { skipped: true, reason: "test-email-sender" };
   }
 });
 
@@ -50,6 +54,7 @@ try {
   });
   assert.equal(saveOk.response.status, 200);
   assert.equal(saveOk.body.persistence, "airtable");
+  assert.equal(saveOk.body.email.reason, "test-email-sender");
 
   const validation = await requestJson(baseUrl, "/api/results", {
     method: "POST",
@@ -91,7 +96,7 @@ try {
 
   assert.deepEqual(
     calls.map((call) => call.type),
-    ["persist", "persist", "persist", "group", "group", "group"]
+    ["persist", "email", "persist", "persist", "group", "group", "group"]
   );
 
   console.log("API route verification passed.");

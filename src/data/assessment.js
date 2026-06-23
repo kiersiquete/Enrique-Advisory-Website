@@ -1154,9 +1154,6 @@ export const COPY = {
       countLabel: "Unknown responses",
       pillarLabel: "Most affected pillars"
     },
-    completedPillar: "Completed",
-    nextPillar: "Next topic",
-    continueToNextPillar: "Continue to Next Topic",
     loadingTitle: "Preparing your result",
     loadingBody: "Your responses are being organized across the eight topics.",
     overallScore: "Overall score",
@@ -1697,9 +1694,6 @@ export const COPY = {
       countLabel: "Respuestas sin información",
       pillarLabel: "Pilares más afectados"
     },
-    completedPillar: "Completado",
-    nextPillar: "Siguiente tema",
-    continueToNextPillar: "Continuar al siguiente tema",
     loadingTitle: "Preparando tu resultado",
     loadingBody: "Tus respuestas se están organizando en los ocho temas.",
     overallScore: "Puntaje general",

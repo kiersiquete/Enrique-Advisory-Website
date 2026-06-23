@@ -3,6 +3,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./airtable.js";
+import { sendSummaryReportEmails } from "./email.js";
 
 const port = process.env.PORT || 5174;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,7 +30,8 @@ async function loadLocalEnv() {
 
 export function createApp({
   persistAssessment = persistAssessmentToAirtable,
-  getComparisonGroup = getComparisonGroupFromAirtable
+  getComparisonGroup = getComparisonGroupFromAirtable,
+  sendSummaryEmails = sendSummaryReportEmails
 } = {}) {
   const app = express();
 
@@ -39,7 +41,14 @@ export function createApp({
   app.post("/api/results", async (req, res) => {
     try {
       const result = await persistAssessment(req.body ?? {});
-      res.json(result);
+      let email;
+      try {
+        email = await sendSummaryEmails(req.body ?? {}, result);
+      } catch (emailError) {
+        console.error("Summary email delivery failed", emailError);
+        email = { sent: false, error: "summary-email-delivery-failed" };
+      }
+      res.json({ ...result, email });
     } catch (error) {
       if (error.code === "VALIDATION_ERROR") {
         res.status(400).json({ error: error.message });

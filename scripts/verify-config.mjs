@@ -29,7 +29,14 @@ for (const key of [
   "AIRTABLE_RESPONDENTS_TABLE_ID",
   "AIRTABLE_SESSIONS_TABLE_ID",
   "AIRTABLE_GROUPS_TABLE_ID",
-  "AIRTABLE_ANSWERS_TABLE_ID"
+  "AIRTABLE_ANSWERS_TABLE_ID",
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_USER",
+  "SMTP_PASS",
+  "EMAIL_FROM",
+  "EMAIL_REPLY_TO",
+  "ADMIN_REPORT_EMAIL"
 ]) {
   assert.match(envExample, new RegExp(`^${key}=`, "m"), `.env.example is missing ${key}`);
 }

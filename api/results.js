@@ -1,4 +1,5 @@
 import { persistAssessmentToAirtable } from "../server/airtable.js";
+import { sendSummaryReportEmails } from "../server/email.js";
 
 function readBody(req) {
   if (!req.body) return {};
@@ -22,7 +23,14 @@ export default async function handler(req, res) {
 
   try {
     const result = await persistAssessmentToAirtable(body);
-    return res.status(200).json(result);
+    let email;
+    try {
+      email = await sendSummaryReportEmails(body, result);
+    } catch (emailError) {
+      console.error("Summary email delivery failed", emailError);
+      email = { sent: false, error: "summary-email-delivery-failed" };
+    }
+    return res.status(200).json({ ...result, email });
   } catch (error) {
     if (error.code === "VALIDATION_ERROR") {
       return res.status(400).json({ error: error.message });

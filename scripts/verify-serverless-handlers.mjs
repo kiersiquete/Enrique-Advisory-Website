@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 
 process.env.AIRTABLE_API_TOKEN = "test-token";
 process.env.AIRTABLE_BASE_ID = "appTestBase";
+delete process.env.SMTP_HOST;
+delete process.env.SMTP_PORT;
+delete process.env.SMTP_USER;
+delete process.env.SMTP_PASS;
 
 function createResponse() {
   return {
@@ -139,6 +143,7 @@ await resultsHandler(
 );
 assert.equal(validResultResponse.statusCode, 200);
 assert.equal(validResultResponse.body.persistence, "airtable");
+assert.equal(validResultResponse.body.email.reason, "no-summary-report-request");
 
 const stringBodyResultResponse = createResponse();
 await resultsHandler(
@@ -163,6 +168,37 @@ await resultsHandler(
 );
 assert.equal(stringBodyResultResponse.statusCode, 200);
 assert.equal(stringBodyResultResponse.body.persistence, "airtable");
+
+const summaryRequestResponse = createResponse();
+await resultsHandler(
+  {
+    method: "POST",
+    body: {
+      createdAt: "2026-06-20T09:20:00.000Z",
+      finalizedAt: "2026-06-20T09:25:00.000Z",
+      language: "en",
+      mode: "full",
+      profile: { name: "Summary Request", email: "summary@example.com" },
+      answers: { "en-full-vision-1": 5 },
+      result: {
+        overall: 80,
+        stage: { id: "strength" },
+        transparency: { unknownCount: 0 },
+        pillarScores: [{ id: "vision", score: 80, scored: 1, unknown: 0, total: 1 }]
+      },
+      reportRequest: {
+        type: "summary",
+        status: "requested",
+        recipientEmail: "summary@example.com",
+        requestedAt: "2026-06-20T09:25:00.000Z"
+      }
+    }
+  },
+  summaryRequestResponse
+);
+assert.equal(summaryRequestResponse.statusCode, 200);
+assert.equal(summaryRequestResponse.body.persistence, "airtable");
+assert.equal(summaryRequestResponse.body.email.reason, "missing-smtp-config");
 
 const missingGroupResponse = createResponse();
 await groupsHandler({ method: "GET", query: {} }, missingGroupResponse);

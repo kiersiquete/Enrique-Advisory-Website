@@ -2825,7 +2825,6 @@ function AssessmentFlow({
     Math.min(Math.max(usableDraft?.index ?? 0, 0), Math.max(questions.length - 1, 0))
   );
   const [answers, setAnswers] = useState(() => usableDraft?.answers ?? {});
-  const [transition, setTransition] = useState(null);
   const [profileStepComplete, setProfileStepComplete] = useState(() =>
     Boolean(usableDraft?.profileStepComplete)
   );
@@ -2952,7 +2951,7 @@ function AssessmentFlow({
   }
 
   useEffect(() => {
-    if (!profileStepComplete || transition) return undefined;
+    if (!profileStepComplete) return undefined;
 
     function handleScoreKey(event) {
       const target = event.target;
@@ -2975,7 +2974,7 @@ function AssessmentFlow({
 
     window.addEventListener("keydown", handleScoreKey);
     return () => window.removeEventListener("keydown", handleScoreKey);
-  }, [currentAnswer, profileStepComplete, question.id, transition]);
+  }, [currentAnswer, profileStepComplete, question.id]);
 
   function goNext() {
     if (!isAssessmentAnswered(currentAnswer)) return;
@@ -2985,39 +2984,12 @@ function AssessmentFlow({
     }
     const nextQuestion = questions[index + 1];
     if (nextQuestion.pillarId !== question.pillarId) {
-      const nextPillar = PILLARS.find((item) => item.id === nextQuestion.pillarId);
-      setTransition({ completed: pillar, next: nextPillar, nextIndex: index + 1 });
+      setIndex((value) => value + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     setIndex((value) => value + 1);
   }
-
-  function continueToNextPillar() {
-    if (!transition) return;
-    setIndex(transition.nextIndex);
-    setTransition(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  useEffect(() => {
-    if (!transition) return undefined;
-
-    function handleTransitionKey(event) {
-      const target = event.target;
-      const isTypingTarget =
-        target instanceof HTMLElement &&
-        (target.isContentEditable || ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName));
-
-      if (isTypingTarget || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.key !== "Enter" && event.key !== " ") return;
-
-      event.preventDefault();
-      continueToNextPillar();
-    }
-
-    window.addEventListener("keydown", handleTransitionKey);
-    return () => window.removeEventListener("keydown", handleTransitionKey);
-  }, [transition]);
 
   if (!profileStepComplete) {
     return (
@@ -3035,36 +3007,6 @@ function AssessmentFlow({
         onChange={updateProfile}
         onSubmit={submitProfile}
       />
-    );
-  }
-
-  if (transition) {
-    return (
-      <section className="grid min-h-[calc(100dvh-80px)] place-items-center px-5 py-10 sm:px-8">
-        <div className="fade-up w-full max-w-2xl rounded-xl border border-forest/10 bg-white p-8 text-center shadow-soft sm:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-copper">
-            {copy.completedPillar}
-          </p>
-          <h1 className="mt-3 font-display text-5xl font-semibold text-forest">
-            {transition.completed.labels[language]}
-          </h1>
-          <div className="mx-auto my-8 h-px w-28 bg-forest/15" />
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted">
-            {copy.nextPillar}
-          </p>
-          <p className="mt-3 font-display text-4xl font-semibold text-forest">
-            {transition.next.labels[language]}
-          </p>
-          <button
-            type="button"
-            className="mt-8 inline-flex min-h-12 min-w-[14rem] items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:bg-forest-2 active:translate-y-px"
-            onClick={continueToNextPillar}
-          >
-            {copy.continueToNextPillar}
-            <ArrowRight aria-hidden="true" size={18} />
-          </button>
-        </div>
-      </section>
     );
   }
 
@@ -3499,96 +3441,52 @@ function ResultsScreen({
         </section>
       )}
 
-      <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="h-fit self-start space-y-4">
-          <section className="h-fit overflow-hidden rounded-xl border border-forest/12 bg-white shadow-line">
-            <div className="border-b border-forest/10 p-6 sm:p-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
-                {copy.reflection}
-              </p>
-              <p className="mt-4 max-w-5xl text-lg leading-8 text-ink/74">
-                {stage.reflections[language]}
-              </p>
-            </div>
-
-            <div id="diagnostic-breakdown" className="border-t border-forest/10 p-6 sm:p-8">
-              <div className="mb-7">
-                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
-                      {detailCopy.topicSummaryLabel}
-                    </p>
-                    <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
-                      {detailCopy.topicSummaryTitle}
-                    </h2>
-                  </div>
-                  <p className="max-w-xl text-sm leading-6 text-ink/64">
-                    {detailCopy.topicSummaryIntro}
-                  </p>
-                </div>
-                <PillarSummaryGrid breakdowns={pillarBreakdowns} copy={copy} />
-              </div>
-            </div>
-          </section>
-
-          <ResultGuideCard detailCopy={detailCopy} />
-
-        </div>
-
-        <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
-          <InviteFamilyPanel
-            copy={copy}
-            language={language}
-            resultPackage={resultPackage}
-            group={group}
-            onCreateInvite={onCreateInvite}
-            onViewComparison={onViewComparison}
-            onRefreshGroup={onRefreshGroup}
-            panelRef={invitePanelRef}
-          />
-
-          <section className="rounded-xl border border-copper/25 bg-white p-6 shadow-line">
-            <h2 className="font-display text-3xl font-semibold leading-tight text-forest">
-              {finalCopy.title}
-            </h2>
-            <p className="mt-4 text-base leading-7 text-ink/72">
-              {finalCopy.body}
+      <div className="mt-6 space-y-6">
+        <section className="h-fit overflow-hidden rounded-xl border border-forest/12 bg-white shadow-line">
+          <div className="border-b border-forest/10 p-6 sm:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
+              {copy.reflection}
             </p>
-            <div className="mt-5 space-y-2">
-              {priorityBreakdowns.length > 0 ? (
-                priorityBreakdowns.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-3 rounded-lg bg-parchment/70 px-3 py-2 text-sm"
-                  >
-                    <span className="font-semibold text-forest">{item.shortLabel}</span>
-                    <span className="font-bold text-copper">{item.score}</span>
-                  </div>
-                ))
-              ) : (
-                <p className="rounded-lg bg-parchment/70 px-3 py-2 text-sm leading-6 text-muted">
-                  {detailCopy.noPriority}
-                </p>
-              )}
-            </div>
-            {strongBreakdowns.length > 0 && (
-              <div className="mt-4 border-t border-forest/10 pt-4">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted">
-                  {detailCopy.strongestAreas}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {strongBreakdowns.map((item) => (
-                    <span
-                      key={item.id}
-                      className="rounded-full bg-forest/8 px-3 py-1 text-xs font-semibold text-forest"
-                    >
-                      {item.shortLabel} {item.score}
-                    </span>
-                  ))}
+            <p className="mt-4 max-w-5xl text-lg leading-8 text-ink/74">
+              {stage.reflections[language]}
+            </p>
+          </div>
+
+          <div id="diagnostic-breakdown" className="border-t border-forest/10 p-6 sm:p-8">
+            <div className="mb-7">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
+                    {detailCopy.topicSummaryLabel}
+                  </p>
+                  <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
+                    {detailCopy.topicSummaryTitle}
+                  </h2>
                 </div>
+                <p className="max-w-xl text-sm leading-6 text-ink/64">
+                  {detailCopy.topicSummaryIntro}
+                </p>
               </div>
-            )}
-            <div className="mt-5 space-y-3">
+              <PillarSummaryGrid breakdowns={pillarBreakdowns} copy={copy} />
+            </div>
+          </div>
+        </section>
+
+        <ResultGuideCard detailCopy={detailCopy} />
+
+        <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
+          <div className="mx-auto max-w-6xl">
+            <InviteFamilyPanel
+              copy={copy}
+              language={language}
+              resultPackage={resultPackage}
+              group={group}
+              onCreateInvite={onCreateInvite}
+              onViewComparison={onViewComparison}
+              onRefreshGroup={onRefreshGroup}
+              panelRef={invitePanelRef}
+              embedded
+            >
               <button
                 type="button"
                 className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
@@ -3603,10 +3501,9 @@ function ResultsScreen({
                   {submitError}
                 </p>
               )}
-            </div>
-          </section>
-
-        </aside>
+            </InviteFamilyPanel>
+          </div>
+        </section>
       </div>
       {invitePromptOpen && (
         <ResultModalOverlay>
@@ -3818,7 +3715,9 @@ function InviteFamilyPanel({
   onViewComparison,
   onRefreshGroup,
   panelRef,
-  wide = false
+  wide = false,
+  embedded = false,
+  children
 }) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteLink, setInviteLink] = useState(
@@ -3859,47 +3758,51 @@ function InviteFamilyPanel({
   }
 
   return (
-    <section ref={panelRef} className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
+    <section
+      ref={panelRef}
+      className={
+        embedded
+          ? "min-w-0"
+          : "rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6"
+      }
+    >
       <div
         className={
-          wide
+          embedded
+            ? "grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.52fr)] lg:items-center"
+            : wide
             ? "grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.58fr)] lg:items-start"
             : "space-y-4"
         }
       >
         <div>
-          <div className="flex items-start gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-forest text-white">
-              <UsersRound aria-hidden="true" size={20} />
-            </span>
-            <div>
-              <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
-                {comparisonCopy.inviteTitle}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-ink/70">{comparisonCopy.inviteBody}</p>
-              <div className="mt-3 flex gap-2 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-xs leading-5 text-ink/70">
-                <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={15} />
-                <p>{comparisonCopy.invitePrivacyNote}</p>
+          <div>
+            <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
+              {comparisonCopy.inviteTitle}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-ink/70">{comparisonCopy.inviteBody}</p>
+            <div className="mt-3 flex gap-2 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-xs leading-5 text-ink/70">
+              <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={15} />
+              <p>{comparisonCopy.invitePrivacyNote}</p>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-parchment/70 p-3">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="font-semibold text-forest">{comparisonCopy.participantCount}</span>
+                <span className="font-bold text-copper">
+                  {participantCount} / {MAX_GROUP_PARTICIPANTS}
+                </span>
               </div>
+              <p className="mt-2 text-xs leading-5 text-muted">{comparisonCopy.maxNote}</p>
             </div>
-          </div>
 
-          <div className="mt-4 rounded-lg bg-parchment/70 p-3">
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="font-semibold text-forest">{comparisonCopy.participantCount}</span>
-              <span className="font-bold text-copper">
-                {participantCount} / {MAX_GROUP_PARTICIPANTS}
-              </span>
-            </div>
-            <p className="mt-2 text-xs leading-5 text-muted">{comparisonCopy.maxNote}</p>
+            {!canCompare && (
+              <div className="mt-4 border-t border-forest/10 pt-4">
+                <p className="text-sm font-semibold text-forest">{comparisonCopy.waitingTitle}</p>
+                <p className="mt-1 text-sm leading-6 text-ink/68">{comparisonCopy.waitingBody}</p>
+              </div>
+            )}
           </div>
-
-          {!canCompare && (
-            <div className="mt-4 border-t border-forest/10 pt-4">
-              <p className="text-sm font-semibold text-forest">{comparisonCopy.waitingTitle}</p>
-              <p className="mt-1 text-sm leading-6 text-ink/68">{comparisonCopy.waitingBody}</p>
-            </div>
-          )}
         </div>
 
         <div className="space-y-3">
@@ -3961,6 +3864,8 @@ function InviteFamilyPanel({
               <ArrowRight aria-hidden="true" size={17} />
             </button>
           )}
+
+          {children}
         </div>
       </div>
     </section>
@@ -4092,7 +3997,7 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
               })}
             </div>
           </div>
-          <div className="report-scroll mt-5 max-h-[526px] space-y-3 overflow-y-auto pr-1 sm:pr-3 2xl:max-h-[562px]">
+          <div className="mt-5 space-y-3">
             {rows.map((row) => (
               <ComparisonMapRow
                 key={row.id}
@@ -4114,8 +4019,6 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
             items={convergence}
             language={language}
             comparisonCopy={comparisonCopy}
-            scrollable
-            scrollMaxClassName="max-h-[132px]"
           />
           <ComparisonInsightCard
             title={comparisonCopy.transparencyTitle}
@@ -4124,7 +4027,6 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
             items={transparency}
             language={language}
             comparisonCopy={comparisonCopy}
-            scrollable
           />
         </aside>
       </div>
@@ -4379,12 +4281,8 @@ function ComparisonInsightCard({
   items,
   language,
   comparisonCopy,
-  accent = false,
-  scrollable = false,
-  scrollMaxClassName = "max-h-[236px]"
+  accent = false
 }) {
-  const visibleItems = scrollable ? items : items.slice(0, 5);
-
   return (
     <section
       className={`rounded-xl border p-5 shadow-line ${
@@ -4393,13 +4291,9 @@ function ComparisonInsightCard({
     >
       <h2 className="font-display text-2xl font-semibold leading-tight text-forest">{title}</h2>
       <p className="mt-2 text-sm leading-6 text-ink/68">{body}</p>
-      <div
-        className={`mt-4 space-y-2 ${
-          scrollable ? `report-scroll ${scrollMaxClassName} overflow-y-auto pr-1` : ""
-        }`}
-      >
+      <div className="mt-4 space-y-2">
         {items.length > 0 ? (
-          visibleItems.map((item) => (
+          items.map((item) => (
             <div
               key={item.id}
               className="flex items-center justify-between gap-3 rounded-lg bg-parchment/70 px-3 py-2 text-sm"
