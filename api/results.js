@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const result = await persistAssessmentToAirtable(body);
     let email;
     try {
-      email = await sendSummaryReportEmails(body, result);
+      email = await sendSummaryReportEmails(body, result, { baseUrl: requestBaseUrl(req) });
     } catch (emailError) {
       console.error("Summary email delivery failed", emailError);
       email = { sent: false, error: "summary-email-delivery-failed" };
@@ -39,4 +39,12 @@ export default async function handler(req, res) {
     console.error("Airtable persistence failed", error);
     return res.status(500).json({ error: "Unable to save assessment result" });
   }
+}
+
+function requestBaseUrl(req) {
+  if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/$/, "");
+  const headers = req.headers || {};
+  const protocol = headers["x-forwarded-proto"] || "https";
+  const host = headers["x-forwarded-host"] || headers.host;
+  return host ? `${protocol}://${host}` : "";
 }

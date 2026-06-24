@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./airtable.js";
 import { sendSummaryReportEmails } from "./email.js";
+import { createSummaryPdfBuffer, decodeSummaryReportPayload } from "./summary-report.js";
 
 const port = process.env.PORT || 5174;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,7 +44,7 @@ export function createApp({
       const result = await persistAssessment(req.body ?? {});
       let email;
       try {
-        email = await sendSummaryEmails(req.body ?? {}, result);
+        email = await sendSummaryEmails(req.body ?? {}, result, { baseUrl: requestBaseUrl(req) });
       } catch (emailError) {
         console.error("Summary email delivery failed", emailError);
         email = { sent: false, error: "summary-email-delivery-failed" };
@@ -62,6 +63,26 @@ export function createApp({
 
   app.all("/api/results", (_req, res) => {
     res.setHeader("Allow", "POST");
+    res.status(405).json({ error: "Method not allowed" });
+  });
+
+  app.get("/api/summary-pdf", (req, res) => {
+    try {
+      const payload = decodeSummaryReportPayload(req.query.data);
+      const pdf = createSummaryPdfBuffer(payload);
+      const safeName = String(payload.name || "summary").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="gilbert-devlyn-summary-${safeName || "report"}.pdf"`);
+      res.setHeader("Cache-Control", "private, max-age=0, no-store");
+      res.send(pdf);
+    } catch {
+      res.status(400).json({ error: "Unable to create summary PDF" });
+    }
+  });
+
+  app.all("/api/summary-pdf", (_req, res) => {
+    res.setHeader("Allow", "GET");
     res.status(405).json({ error: "Method not allowed" });
   });
 
@@ -92,6 +113,14 @@ export function createApp({
   });
 
   return app;
+}
+
+function requestBaseUrl(req) {
+  if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/$/, "");
+  const headers = req.headers || {};
+  const protocol = headers["x-forwarded-proto"] || req.protocol || "http";
+  const host = headers["x-forwarded-host"] || headers.host;
+  return host ? `${protocol}://${host}` : "";
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

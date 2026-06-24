@@ -8,7 +8,7 @@
     "dev:web": "vite --host 0.0.0.0",
     "dev:api": "node --use-system-ca server/index.js",
     "build": "vite build",
-    "verify": "node --check server/airtable.js && node --check server/email.js && node --check server/index.js && node --check api/results.js && node --check api/groups.js && npm run verify:config && npm run verify:lockfile && npm run verify:ui && npm run verify:airtable && npm run verify:api && npm run verify:serverless && npm run build",
+    "verify": "node --check server/airtable.js && node --check server/email.js && node --check server/summary-report.js && node --check server/index.js && node --check api/results.js && node --check api/groups.js && node --check api/summary-pdf.js && npm run verify:config && npm run verify:lockfile && npm run verify:ui && npm run verify:airtable && npm run verify:api && npm run verify:serverless && npm run build",
     "verify:config": "node scripts/verify-config.mjs",
     "verify:lockfile": "node scripts/verify-lockfile.mjs",
     "verify:api": "node scripts/verify-api-routes.mjs",

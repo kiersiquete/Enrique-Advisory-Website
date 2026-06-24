@@ -63,6 +63,10 @@ body {
   max-width: none;
 }
 
+#root > main > [data-site-footer] ~ [data-site-footer] {
+  display: none;
+}
+
 button,
 input,
 select,

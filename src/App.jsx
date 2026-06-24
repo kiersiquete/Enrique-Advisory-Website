@@ -20,6 +20,7 @@ import {
   Linkedin,
   Mail,
   Menu,
+  Play,
   RefreshCcw,
   Scale,
   Search,
@@ -958,6 +959,7 @@ export default function App() {
   const [assessmentDraft, setAssessmentDraft] = useState(loadAssessmentDraft);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [groupRefresh, setGroupRefresh] = useState(0);
+  const [privacyPolicyOpen, setPrivacyPolicyOpen] = useState(false);
 
   const copy = COPY[language];
   const isMockDemoRoute =
@@ -1281,6 +1283,7 @@ export default function App() {
           onDraftChange={handleDraftChange}
           onBack={() => navigate("assessment-home")}
           onComplete={handleComplete}
+          onOpenPrivacyPolicy={() => setPrivacyPolicyOpen(true)}
         />
       )}
 
@@ -1317,7 +1320,19 @@ export default function App() {
         />
       )}
 
-      {!isMockDemoRoute && !isMockResultRoute && <CookieConsentBanner copy={copy.cookieConsent} />}
+      {!isMockDemoRoute && !isMockResultRoute && (
+        <CookieConsentBanner
+          copy={copy.cookieConsent}
+          onOpenPrivacyPolicy={() => setPrivacyPolicyOpen(true)}
+        />
+      )}
+
+      {privacyPolicyOpen && (
+        <PrivacyPolicyModal
+          copy={copy.privacyPolicy}
+          onClose={() => setPrivacyPolicyOpen(false)}
+        />
+      )}
 
       {screen === "home" && showResumePrompt && assessmentDraft && (
         <ResumeAssessmentPrompt
@@ -1464,7 +1479,7 @@ function SiteHeader({
   );
 }
 
-function CookieConsentBanner({ copy }) {
+function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
   const [ready, setReady] = useState(false);
   const [choice, setChoice] = useState(null);
 
@@ -1486,6 +1501,13 @@ function CookieConsentBanner({ copy }) {
         <div className="max-w-2xl">
           <p className="text-sm font-bold text-forest">{copy.title}</p>
           <p className="mt-1 text-sm leading-6 text-muted">{copy.body}</p>
+          <button
+            type="button"
+            className="mt-2 inline-flex text-sm font-bold text-forest underline decoration-forest/30 underline-offset-4 transition hover:text-copper"
+            onClick={onOpenPrivacyPolicy}
+          >
+            {copy.privacyLink}
+          </button>
         </div>
         <div className="flex shrink-0">
           <button
@@ -1494,6 +1516,106 @@ function CookieConsentBanner({ copy }) {
             onClick={acceptCookies}
           >
             {copy.accept}
+          </button>
+        </div>
+      </div>
+    </section>,
+    document.body
+  );
+}
+
+function PrivacyPolicyModal({ copy, onClose }) {
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  if (!copy || typeof document === "undefined") return null;
+
+  return createPortal(
+    <section
+      className="fixed inset-0 z-[9995] flex items-center justify-center bg-forest/48 px-4 py-6 backdrop-blur-sm sm:px-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="privacy-policy-title"
+    >
+      <div className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-forest/12 bg-white shadow-soft">
+        <div className="flex items-start justify-between gap-4 border-b border-forest/10 p-5 sm:p-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
+              {copy.label}
+            </p>
+            <h2
+              id="privacy-policy-title"
+              className="mt-2 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl"
+            >
+              {copy.title}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted">{copy.updated}</p>
+          </div>
+          <button
+            type="button"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-forest/12 bg-white text-forest transition hover:border-copper hover:text-copper"
+            onClick={onClose}
+            aria-label={copy.close}
+          >
+            <X aria-hidden="true" size={20} />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-5 sm:p-6">
+          <div className="space-y-4 text-sm leading-7 text-ink/76 sm:text-base">
+            {copy.intro.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+          <div className="mt-7 space-y-7">
+            {copy.sections.map((section) => (
+              <section key={section.title}>
+                <h3 className="font-display text-xl font-semibold leading-tight text-forest sm:text-2xl">
+                  {section.title}
+                </h3>
+                <div className="mt-3 space-y-3 text-sm leading-7 text-muted sm:text-base">
+                  {(Array.isArray(section.body) ? section.body : [section.body]).map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+                {section.table && (
+                  <div className="mt-4 overflow-hidden rounded-lg border border-forest/10">
+                    <div className="grid grid-cols-3 bg-parchment/60 text-xs font-bold uppercase tracking-[0.14em] text-forest">
+                      {section.table.headers.map((header) => (
+                        <div key={header} className="border-r border-forest/10 p-3 last:border-r-0">
+                          {header}
+                        </div>
+                      ))}
+                    </div>
+                    {section.table.rows.map((row) => (
+                      <div key={row.join("-")} className="grid grid-cols-3 border-t border-forest/10 text-sm leading-6 text-muted">
+                        {row.map((cell) => (
+                          <div key={cell} className="border-r border-forest/10 p-3 last:border-r-0">
+                            {cell}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-forest/10 p-4 sm:p-5">
+          <button
+            type="button"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest px-5 text-sm font-bold text-white transition hover:bg-forest-2 sm:w-auto"
+            onClick={onClose}
+          >
+            {copy.close}
           </button>
         </div>
       </div>
@@ -1650,21 +1772,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
         </div>
       </section>
 
-      <section className="border-b border-forest/10 bg-white px-5 py-12 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {copy.nav.about}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-              {copy.home.gilbertTitle}
-            </h2>
-          </div>
-          <p className="text-base leading-8 text-ink/74 sm:text-lg">
-            {copy.home.gilbertBody}
-          </p>
-        </div>
-      </section>
+      <VideoPlaceholderSection video={copy.home.video} language={language} />
 
       <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-[1.18fr_0.82fr]">
@@ -1808,6 +1916,101 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
           </div>
         </div>
       </section>
+    </section>
+  );
+}
+
+function VideoPlaceholderSection({ video, language }) {
+  return (
+    <section className="border-b border-forest/10 bg-parchment/38 px-5 py-12 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.5fr_0.5fr] lg:items-center">
+        <div className="max-w-3xl lg:self-center">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {video.label}
+          </p>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+            {video.title}
+          </h2>
+          <p className="mt-4 text-base leading-8 text-ink/74 sm:text-lg">
+            {video.body}
+          </p>
+        </div>
+
+        <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
+          <div className="aspect-video bg-[linear-gradient(135deg,rgba(28,61,46,0.92),rgba(28,61,46,0.72)),url('/gilbert-home.jpg')] bg-cover bg-center">
+            {video.embedUrl ? (
+              <iframe
+                className="h-full w-full"
+                src={video.embedUrl}
+                title={video.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
+                <span className="grid h-16 w-16 place-items-center rounded-full border border-white/24 bg-white/14 text-white shadow-line backdrop-blur">
+                  <Play aria-hidden="true" size={28} fill="currentColor" />
+                </span>
+                <span className="rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white/82">
+                  {video.duration}
+                </span>
+                <p className="max-w-sm text-sm font-medium leading-6 text-white/72">
+                  {language === "es"
+                    ? "Espacio reservado para el video final de Gilbert."
+                    : "Reserved space for Gilbert's final video."}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AboutVideoSection({ video, language }) {
+  return (
+    <section className="px-5 py-12 sm:px-8 sm:py-14 lg:px-12 lg:py-16 xl:px-8">
+      <div className="mx-auto max-w-[1100px] text-center">
+        <div className="mx-auto mb-7 max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {video.label}
+          </p>
+          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl lg:text-6xl">
+            {video.title}
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-ink/70 sm:text-lg">
+            {video.body}
+          </p>
+        </div>
+        <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
+          <div className="aspect-video bg-[linear-gradient(135deg,rgba(28,61,46,0.92),rgba(28,61,46,0.72)),url('/gilbert-home.jpg')] bg-cover bg-center">
+            {video.embedUrl ? (
+              <iframe
+                className="h-full w-full"
+                src={video.embedUrl}
+                title={video.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
+                <span className="grid h-14 w-14 place-items-center rounded-full border border-white/24 bg-white/14 text-white shadow-line backdrop-blur">
+                  <Play aria-hidden="true" size={24} fill="currentColor" />
+                </span>
+                <span className="rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white/82">
+                  {video.duration}
+                </span>
+                <p className="max-w-sm text-sm font-medium leading-6 text-white/72">
+                  {language === "es"
+                    ? "Espacio reservado para el video final de Gilbert."
+                    : "Reserved space for Gilbert's final video."}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -1960,6 +2163,8 @@ function ApproachFeature({ block, index }) {
 function AboutPage({ copy, language, onNavigate }) {
   return (
     <section className="w-full">
+      <AboutVideoSection video={copy.about.video} language={language} />
+
       <section className="px-5 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-16 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-stretch">
           <div className="flex flex-col gap-4 lg:h-full">
@@ -1986,12 +2191,9 @@ function AboutPage({ copy, language, onNavigate }) {
           </div>
 
           <div className="flex min-h-full flex-col justify-start lg:py-1">
-            <p className="text-sm font-bold uppercase tracking-[0.22em] text-copper">
-              {copy.about.label}
-            </p>
-            <h1 className="mt-5 max-w-4xl font-display text-[2.65rem] font-semibold leading-[1.04] text-forest sm:text-[3.45rem] xl:text-[4rem]">
+            <h2 className="max-w-4xl font-display text-[2.65rem] font-semibold leading-[1.04] text-forest sm:text-[3.45rem] xl:text-[4rem]">
               {copy.about.title}
-            </h1>
+            </h2>
             <div className="mt-6 space-y-4">
               {copy.about.bio.map((paragraph) => (
                 <p key={paragraph} className="text-base leading-7 text-ink/76 sm:text-[1.02rem] sm:leading-8">
@@ -2334,6 +2536,7 @@ function SiteFooter({ copy, language, onNavigate }) {
 
   return (
     <footer
+      data-site-footer
       className="mt-auto border-t border-white/10 bg-forest px-5 py-10 text-white sm:px-8 sm:py-12 lg:px-12 xl:px-8"
       role="contentinfo"
     >
@@ -2414,7 +2617,8 @@ function AssessmentProfileIntake({
   countryOptions,
   onBack,
   onChange,
-  onSubmit
+  onSubmit,
+  onOpenPrivacyPolicy
 }) {
   const intake = copy.intake;
   const selectedMode = copy.modes[mode] ?? copy.modes.full;
@@ -2782,7 +2986,20 @@ function AssessmentProfileIntake({
             {showProfileError ? (
               <p className="text-sm font-semibold text-[#9F3F32]">{intake.completeMessage}</p>
             ) : (
-              <p className="text-sm text-ink/60">{intake.requiredNote}</p>
+              <div className="space-y-2">
+                <p className="text-sm text-ink/60">{intake.requiredNote}</p>
+                <p className="text-sm leading-6 text-ink/60">
+                  {intake.privacyAgreement}{" "}
+                  <button
+                    type="button"
+                    className="font-bold text-forest underline decoration-forest/30 underline-offset-4 transition hover:text-copper"
+                    onClick={onOpenPrivacyPolicy}
+                  >
+                    {intake.privacyLink}
+                  </button>
+                  .
+                </p>
+              </div>
             )}
             <button
               type="submit"
@@ -2806,7 +3023,8 @@ function AssessmentFlow({
   initialDraft,
   onDraftChange,
   onBack,
-  onComplete
+  onComplete,
+  onOpenPrivacyPolicy
 }) {
   const questions = FULL_QUESTIONS[language];
   const intake = copy.intake;
@@ -3006,6 +3224,7 @@ function AssessmentFlow({
         onBack={onBack}
         onChange={updateProfile}
         onSubmit={submitProfile}
+        onOpenPrivacyPolicy={onOpenPrivacyPolicy}
       />
     );
   }
@@ -3496,6 +3715,11 @@ function ResultsScreen({
                 {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
                 <ArrowRight aria-hidden="true" size={18} />
               </button>
+              {submitted && (
+                <p className="rounded-md border border-copper/20 bg-copper/10 px-3 py-2 text-sm leading-6 text-forest">
+                  {finalCopy.successNote}
+                </p>
+              )}
               {submitError && (
                 <p className="rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
                   {submitError}
@@ -4447,6 +4671,8 @@ function getFinalActionCopy(language) {
       continue: "Solicitar mi reporte resumen",
       saving: "Guardando...",
       saved: "Reporte resumen solicitado",
+      successNote:
+        "Tu reporte debería llegar a tu email en unos minutos. Si no lo recibes, no dudes en escribirnos para dar seguimiento.",
       inviteTitle: "Invita a otro familiar antes de continuar",
       inviteBody:
         "La comparación funciona mejor cuando otra persona de la familia completa el diagnóstico con la misma liga.",
@@ -4489,6 +4715,8 @@ function getFinalActionCopy(language) {
     continue: "Request my summary report",
     saving: "Saving...",
     saved: "Summary report requested",
+    successNote:
+      "Your report should arrive in your email within a few minutes. If you do not receive it, please do not hesitate to email us so we can follow up.",
     inviteTitle: "Invite another family member before continuing",
     inviteBody:
       "The comparison is most useful when another family member completes the assessment from the same link.",
