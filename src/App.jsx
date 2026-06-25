@@ -47,6 +47,7 @@ const GROUP_STORAGE_KEY = "family-business-maturity-groups";
 const ASSESSMENT_DRAFT_STORAGE_KEY = "family-business-maturity-draft";
 const COOKIE_CONSENT_KEY = "gilbert_devlyn_cookie_consent";
 const MAX_GROUP_PARTICIPANTS = 3;
+const MIN_COMPARISON_PARTICIPANTS = 2;
 const PHONE_COUNTRY_LOOKUP = new Map(PHONE_COUNTRY_OPTIONS.map((option) => [option.id, option]));
 const COMPARISON_COLORS = [
   { line: "#1C3D2E", soft: "rgba(28, 61, 46, 0.1)" },
@@ -1016,7 +1017,7 @@ export default function App() {
     setPendingGroupId(groupId);
     setActiveMode("full");
 
-    if (existingGroup?.participants?.length >= MAX_GROUP_PARTICIPANTS) {
+    if (existingGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
       setActiveComparisonGroup(existingGroup);
       setScreen("comparison");
       return;
@@ -1026,7 +1027,7 @@ export default function App() {
     fetchComparisonGroup(groupId).then((group) => {
       if (!group?.participants?.length) return;
       setGroupRefresh((value) => value + 1);
-      if (group.participants.length >= MAX_GROUP_PARTICIPANTS) {
+      if (group.participants.length >= MIN_COMPARISON_PARTICIPANTS) {
         setActiveComparisonGroup(group);
         setScreen("comparison");
       }
@@ -1159,15 +1160,21 @@ export default function App() {
 
   async function submitFinalResult(resultPackage) {
     const response = await persistResult(resultPackage);
+    const serverGroup = response.group ? saveStoredGroup(response.group) : null;
     setLatestResult(resultPackage);
     if (resultPackage.groupId) {
       const { group } = upsertResultInGroup(resultPackage.groupId, resultPackage, "");
-      saveStoredGroup({
+      const savedGroup = saveStoredGroup({
         ...group,
-        inviteLink: resultPackage.inviteLink || group.inviteLink || ""
+        ...(serverGroup ?? {}),
+        inviteLink: resultPackage.inviteLink || serverGroup?.inviteLink || group.inviteLink || ""
       });
       setGroupRefresh((value) => value + 1);
-      await refreshGroupFromServer(resultPackage.groupId);
+      const refreshedGroup = serverGroup ?? (await refreshGroupFromServer(resultPackage.groupId));
+      const comparisonGroup = refreshedGroup ?? savedGroup;
+      if (comparisonGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
+        setActiveComparisonGroup(comparisonGroup);
+      }
     }
     return response;
   }

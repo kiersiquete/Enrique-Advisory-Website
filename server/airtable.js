@@ -443,7 +443,11 @@ export async function persistAssessmentToAirtable(body) {
     answerFields(normalizedBody, sessionKey, now)
   );
 
-  return { ok: true, persistence: "airtable", sessionKey };
+  const group = normalizedBody.groupId
+    ? await getComparisonGroupFromAirtable(normalizedBody.groupId)
+    : null;
+
+  return { ok: true, persistence: "airtable", sessionKey, group };
 }
 
 export async function getComparisonGroupFromAirtable(groupId) {
