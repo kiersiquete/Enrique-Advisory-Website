@@ -54,6 +54,30 @@ const COMPARISON_COLORS = [
   { line: "#C4713A", soft: "rgba(196, 113, 58, 0.12)" },
   { line: "#2E7C73", soft: "rgba(46, 124, 115, 0.12)" }
 ];
+const SCREEN_ROUTES = {
+  home: "/",
+  about: "/about",
+  "assessment-home": "/diagnostic"
+};
+const ROUTE_SCREENS = new Map(Object.entries(SCREEN_ROUTES).map(([screen, path]) => [path, screen]));
+
+function routeScreenFromLocation() {
+  if (typeof window === "undefined") return "home";
+  return ROUTE_SCREENS.get(window.location.pathname) ?? "home";
+}
+
+function publicScreenPath(screenName) {
+  return SCREEN_ROUTES[screenName] ?? null;
+}
+
+function updateBrowserRoute(screenName, mode = "push") {
+  if (typeof window === "undefined") return;
+  const path = publicScreenPath(screenName);
+  if (!path) return;
+  const nextUrl = path;
+  if (nextUrl === `${window.location.pathname}${window.location.search}`) return;
+  window.history[mode === "replace" ? "replaceState" : "pushState"]({}, "", nextUrl);
+}
 
 function useViewportMatch(query) {
   const [matches, setMatches] = useState(() => {
@@ -669,9 +693,7 @@ function createParticipantId() {
 }
 
 function getInviteUrl(groupId, language) {
-  const url = new URL(window.location.href);
-  url.search = "";
-  url.hash = "";
+  const url = new URL("/diagnostic", window.location.origin);
   url.searchParams.set("group", groupId);
   url.searchParams.set("lang", language);
   return url.toString();
@@ -952,7 +974,7 @@ function getMockParticipantCount(params, key) {
 
 export default function App() {
   const [language, setLanguage] = useState("en");
-  const [screen, setScreen] = useState("home");
+  const [screen, setScreen] = useState(routeScreenFromLocation);
   const [activeMode, setActiveMode] = useState(null);
   const [latestResult, setLatestResult] = useState(loadLatestResult);
   const [pendingGroupId, setPendingGroupId] = useState(null);
@@ -969,6 +991,23 @@ export default function App() {
   const isMockResultRoute =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("mock-results");
+
+  useEffect(() => {
+    function handlePopState() {
+      const nextScreen = routeScreenFromLocation();
+      setActiveMode(null);
+      setPendingGroupId(null);
+      setActiveComparisonGroup(null);
+      setScreen(nextScreen);
+      if (nextScreen === "home" && loadAssessmentDraft()) {
+        setAssessmentDraft(loadAssessmentDraft());
+        setShowResumePrompt(true);
+      }
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1010,6 +1049,10 @@ export default function App() {
 
     const groupId = params.get("group")?.trim();
     if (!groupId) return;
+
+    if (window.location.pathname !== SCREEN_ROUTES["assessment-home"]) {
+      window.history.replaceState({}, "", `${SCREEN_ROUTES["assessment-home"]}${window.location.search}`);
+    }
 
     const linkLanguage = params.get("lang") === "es" ? "es" : "en";
     const existingGroup = getStoredGroup(groupId);
@@ -1064,6 +1107,7 @@ export default function App() {
     setActiveComparisonGroup(null);
     setActiveMode(mode);
     setScreen("assessment");
+    updateBrowserRoute("assessment-home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1072,6 +1116,7 @@ export default function App() {
     setPendingGroupId(null);
     setActiveComparisonGroup(null);
     setScreen(screenName);
+    updateBrowserRoute(screenName);
     if (screenName === "home" && loadAssessmentDraft()) {
       setAssessmentDraft(loadAssessmentDraft());
       setShowResumePrompt(true);
@@ -1120,6 +1165,7 @@ export default function App() {
     setActiveComparisonGroup(null);
     setActiveMode(null);
     setScreen("assessment-home");
+    updateBrowserRoute("assessment-home");
   }
 
   function handleDraftChange(draft) {
@@ -1137,6 +1183,7 @@ export default function App() {
     setAssessmentDraft(draft);
     setShowResumePrompt(false);
     setScreen("assessment");
+    updateBrowserRoute("assessment-home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
