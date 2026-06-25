@@ -169,8 +169,8 @@ const countsAfterFirstSave = tableCounts();
 await persistAssessmentToAirtable(sampleBody());
 assert.deepEqual(
   tableCounts(),
-  countsAfterFirstSave,
-  "saving the same standalone assessment again should update existing records"
+  { ...countsAfterFirstSave, Respondents: countsAfterFirstSave.Respondents + 1 },
+  "saving the same standalone assessment again should create another respondent row while updating existing session records"
 );
 assert.match(
   TABLES.Respondents[0].fields["Created At"],
@@ -190,7 +190,7 @@ await persistAssessmentToAirtable(
   })
 );
 
-assert.equal(TABLES.Respondents.length, 1, "same email should upsert respondent instead of duplicating");
+assert.equal(TABLES.Respondents.length, 3, "same email should create a new respondent row for each saved assessment");
 assert.equal(TABLES["Comparison Groups"].length, 1, "group should be created when group id is present");
 assert.equal(TABLES["Comparison Groups"][0].fields["Participant Count"], 1);
 assert.equal(TABLES["Comparison Groups"][0].fields["Invite Link"], "https://example.com/?group=GROUP123&lang=en");
@@ -207,8 +207,8 @@ await persistAssessmentToAirtable(
 );
 assert.deepEqual(
   tableCounts(),
-  countsAfterFirstGroupSave,
-  "saving the same grouped assessment again should update existing records"
+  { ...countsAfterFirstGroupSave, Respondents: countsAfterFirstGroupSave.Respondents + 1 },
+  "saving the same grouped assessment again should create another respondent row while updating existing group/session records"
 );
 
 await persistAssessmentToAirtable(
@@ -228,7 +228,7 @@ await persistAssessmentToAirtable(
   })
 );
 
-assert.equal(TABLES.Respondents.length, 2, "second email should create a second respondent");
+assert.equal(TABLES.Respondents.length, 5, "each saved assessment should create its own respondent row");
 assert.equal(TABLES["Comparison Groups"][0].fields["Participant Count"], 2);
 assert.equal(TABLES["Comparison Groups"][0].fields.Status, "Ready for Comparison");
 

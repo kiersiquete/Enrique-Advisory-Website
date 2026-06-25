@@ -290,11 +290,7 @@ async function upsertRespondent(body, now) {
   const email = normalizedEmail(body);
   if (!email) return null;
 
-  return upsertByFormula(
-    "respondents",
-    `{Email} = '${escapeFormulaValue(email)}'`,
-    respondentFields(body, now)
-  );
+  return createRecord("respondents", respondentFields(body, now));
 }
 
 function sessionFields(body, sessionKey, now) {
