@@ -50,12 +50,28 @@ function priorityLines(body) {
     .filter(Boolean);
 }
 
+function participantName(body, fallback = "Participant") {
+  return body.profile?.name || body.reportRequest?.recipientEmail || fallback;
+}
+
+function invitationStatus(body) {
+  return body.inviteLink || body.inviteEmail ? "Invitation created" : "No invitation created";
+}
+
 function createSummaryPdfUrl(body, savedResult, options = {}) {
   const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
   if (!baseUrl) return "";
 
   const payload = buildSummaryReportPayload(body, savedResult);
   return `${baseUrl}/api/summary-pdf?data=${encodeSummaryReportPayload(payload)}`;
+}
+
+function createAdminPdfUrl(body, savedResult, options = {}) {
+  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (!baseUrl) return "";
+
+  const payload = buildAdminReportPayload(body, savedResult);
+  return `${baseUrl}/api/advisor-report-pdf?data=${encodeSummaryReportPayload(payload)}`;
 }
 
 function plainSummaryEmail(body, savedResult = {}, options = {}) {
@@ -176,13 +192,15 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
 </html>`;
 }
 
-function adminEmailText(body, sessionKey) {
+function adminEmailText(body, savedResult = {}, options = {}) {
   const profile = body.profile ?? {};
+  const name = participantName(body, "Participant");
   const score = Math.round(Number(body.result?.overall ?? body.overall ?? 0));
   const priorities = priorityLines(body);
+  const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return [
-    "A new summary report was requested from the website.",
+    `${name} just finished assessment.`,
     "",
     `Name: ${profile.name || "Unknown"}`,
     `Email: ${profile.email || "Unknown"}`,
@@ -193,9 +211,12 @@ function adminEmailText(body, sessionKey) {
     `Language: ${body.language || "en"}`,
     `Overall score: ${score}/100`,
     priorities.length ? `Priority areas: ${priorities.join(", ")}` : "",
+    `Invitation status: ${invitationStatus(body)}`,
+    body.inviteEmail ? `Invited email: ${body.inviteEmail}` : "Invited email: Not provided",
     body.groupId ? `Group key: ${body.groupId}` : "",
     body.inviteLink ? `Invite link: ${body.inviteLink}` : "",
-    sessionKey ? `Airtable session key: ${sessionKey}` : "",
+    adminPdfUrl ? `Advisor PDF: ${adminPdfUrl}` : "",
+    savedResult.sessionKey ? `Airtable session key: ${savedResult.sessionKey}` : "",
     "",
     "Detailed advisor notes are retained in the Airtable Raw Result JSON."
   ]
@@ -210,21 +231,24 @@ function detailRow(label, value) {
   </tr>`;
 }
 
-export function htmlAdminEmail(body, savedResult = {}) {
+export function htmlAdminEmail(body, savedResult = {}, options = {}) {
   const report = buildAdminReportPayload(body, savedResult);
   const priorities = (report.focusAreas || []).slice(0, 3);
   const participant = report.participant ?? {};
+  const name = participant.name || report.name || "Participant";
+  const completionTitle = `${name} just finished assessment`;
+  const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>New diagnostic summary request</title>
+    <title>${escapeHtml(completionTitle)}</title>
   </head>
   <body style="margin:0; padding:0; background:#f4efe6; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">
-      A new diagnostic summary report was requested.
+      ${escapeHtml(completionTitle)}.
     </span>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4efe6; padding:32px 16px;">
       <tr>
@@ -233,13 +257,13 @@ export function htmlAdminEmail(body, savedResult = {}) {
             <tr>
               <td style="background:#1c3d2e; padding:28px 34px;">
                 <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Advisor notification</p>
-                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">New diagnostic summary request</p>
+                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(completionTitle)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
-                <h1 style="margin:0 0 12px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(participant.name || report.name || "Participant")}</h1>
-                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">This person requested a summary report from the Family Enterprise Diagnostic. The detailed advisor PDF is attached and includes the question-by-question appendix.</p>
+                <h1 style="margin:0 0 12px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(name)}</h1>
+                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">This person finished the Family Enterprise Diagnostic and requested the summary report. The detailed advisor PDF is attached and includes the question-by-question appendix.</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
@@ -262,6 +286,8 @@ export function htmlAdminEmail(body, savedResult = {}) {
                   ${detailRow("Generation", participant.generation)}
                   ${detailRow("Started", report.timing?.startedAt)}
                   ${detailRow("Requested", report.timing?.requestedAt)}
+                  ${detailRow("Invitation status", report.context?.inviteStatus)}
+                  ${detailRow("Invited email", report.context?.inviteEmail)}
                   ${detailRow("Group key", report.context?.groupId)}
                 </table>
 
@@ -276,6 +302,18 @@ export function htmlAdminEmail(body, savedResult = {}) {
                           )
                           .join("")}
                       </div>`
+                    : ""
+                }
+
+                ${
+                  adminPdfUrl
+                    ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 18px;">
+                        <tr>
+                          <td style="background:#c46f3a; border-radius:7px;">
+                            <a href="${escapeHtml(adminPdfUrl)}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">View and download advisor PDF</a>
+                          </td>
+                        </tr>
+                      </table>`
                     : ""
                 }
 
@@ -485,15 +523,15 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
     html: htmlSummaryEmail(body, savedResult, options)
   });
 
-  const adminText = adminEmailText(body, savedResult.sessionKey);
+  const adminText = adminEmailText(body, savedResult, options);
   const adminPdf = createAdminPdfBuffer(buildAdminReportPayload(body, savedResult));
   const adminEmail = await sendSmtpEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: recipientEmail,
-    subject: `New summary report request: ${body.profile?.name || recipientEmail}`,
+    subject: `${participantName(body, recipientEmail)} just finished assessment`,
     text: adminText,
-    html: htmlAdminEmail(body, savedResult),
+    html: htmlAdminEmail(body, savedResult, options),
     attachments: [
       {
         filename: "gilbert-advisor-diagnostic-report.pdf",

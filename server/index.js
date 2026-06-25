@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./airtable.js";
 import { sendSummaryReportEmails } from "./email.js";
-import { createSummaryPdfBuffer, decodeSummaryReportPayload } from "./summary-report.js";
+import { createAdminPdfBuffer, createSummaryPdfBuffer, decodeSummaryReportPayload } from "./summary-report.js";
 
 const port = process.env.PORT || 5174;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -82,6 +82,29 @@ export function createApp({
   });
 
   app.all("/api/summary-pdf", (_req, res) => {
+    res.setHeader("Allow", "GET");
+    res.status(405).json({ error: "Method not allowed" });
+  });
+
+  app.get("/api/advisor-report-pdf", (req, res) => {
+    try {
+      const payload = decodeSummaryReportPayload(req.query.data);
+      const pdf = createAdminPdfBuffer(payload);
+      const safeName = String(payload.name || payload.participant?.name || "advisor-report")
+        .replace(/[^a-z0-9]+/gi, "-")
+        .replace(/^-|-$/g, "")
+        .toLowerCase();
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="gilbert-devlyn-advisor-report-${safeName || "report"}.pdf"`);
+      res.setHeader("Cache-Control", "private, max-age=0, no-store");
+      res.send(pdf);
+    } catch {
+      res.status(400).json({ error: "Unable to create advisor report PDF" });
+    }
+  });
+
+  app.all("/api/advisor-report-pdf", (_req, res) => {
     res.setHeader("Allow", "GET");
     res.status(405).json({ error: "Method not allowed" });
   });

@@ -163,6 +163,7 @@ export function buildAdminReportPayload(body = {}, savedResult = {}) {
   const summary = buildSummaryReportPayload(body, savedResult);
   const profile = body.profile ?? {};
   const result = body.result ?? {};
+  const hasInvitation = Boolean(body.inviteLink || body.inviteEmail);
 
   return {
     ...summary,
@@ -185,6 +186,8 @@ export function buildAdminReportPayload(body = {}, savedResult = {}) {
       mode: body.mode || "full",
       groupId: body.groupId || "",
       participantId: body.participantId || "",
+      inviteStatus: hasInvitation ? "Invitation created" : "No invitation created",
+      inviteEmail: body.inviteEmail || "",
       inviteLink: body.inviteLink || "",
       sessionKey: savedResult.sessionKey || summary.sessionKey || ""
     },
@@ -378,6 +381,7 @@ export function createAdminPdfBuffer(payload) {
   const parchment = "#f8f3ea";
   const muted = "#6f726d";
   const ink = "#3f433f";
+  const bottomContentLimit = pageHeight - 82;
   let y = 0;
 
   function pageHeader(title) {
@@ -396,7 +400,7 @@ export function createAdminPdfBuffer(payload) {
   }
 
   function ensureSpace(height) {
-    if (y + height <= pageHeight - 54) return;
+    if (y + height <= bottomContentLimit) return;
     doc.addPage();
     pageHeader("Advisor report");
   }
@@ -421,14 +425,24 @@ export function createAdminPdfBuffer(payload) {
     y += 22;
   }
 
-  pageHeader("Summary request");
+  function listItem(text, x, itemY, width, color = forest) {
+    doc.setFillColor(color);
+    doc.circle(x + 4, itemY + 3, 3, "F");
+    doc.setTextColor(ink);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    return wrapText(doc, text || "Not provided", x + 14, itemY, width - 14, 12);
+  }
+
+  const participantName = report.participant?.name || report.name || "Participant";
+  pageHeader(`${participantName} just finished assessment`);
 
   doc.setFillColor(forest);
   doc.roundedRect(margin, y, pageWidth - margin * 2, 122, 8, 8, "F");
   doc.setTextColor("#ffffff");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(25);
-  doc.text(report.participant?.name || report.name || "Participant", margin + 20, y + 34);
+  doc.text(participantName, margin + 20, y + 34);
   doc.setFontSize(13);
   doc.setTextColor("#d8c7b2");
   doc.text(report.participant?.email || "No email provided", margin + 20, y + 58);
@@ -445,7 +459,7 @@ export function createAdminPdfBuffer(payload) {
   sectionTitle("Contact and context");
   const cardY = y;
   doc.setFillColor("#ffffff");
-  doc.roundedRect(margin, cardY, pageWidth - margin * 2, 150, 8, 8, "F");
+  doc.roundedRect(margin, cardY, pageWidth - margin * 2, 212, 8, 8, "F");
   const col = (pageWidth - margin * 2 - 48) / 3;
   labelValue("Phone", report.participant?.phone, margin + 18, cardY + 26, col);
   labelValue("Country", report.participant?.country, margin + 18 + col + 18, cardY + 26, col);
@@ -453,8 +467,12 @@ export function createAdminPdfBuffer(payload) {
   labelValue("Generation", report.participant?.generation, margin + 18, cardY + 88, col);
   labelValue("Started", report.timing?.startedAt, margin + 18 + col + 18, cardY + 88, col);
   labelValue("Requested", report.timing?.requestedAt, margin + 18 + (col + 18) * 2, cardY + 88, col);
-  y = cardY + 178;
+  labelValue("Invitation status", report.context?.inviteStatus, margin + 18, cardY + 150, col);
+  labelValue("Invited email", report.context?.inviteEmail, margin + 18 + col + 18, cardY + 150, col);
+  labelValue("Group key", report.context?.groupId, margin + 18 + (col + 18) * 2, cardY + 150, col);
+  y = cardY + 240;
 
+  ensureSpace(168);
   sectionTitle("Summary explanation");
   doc.setFillColor("#ffffff");
   doc.roundedRect(margin, y, pageWidth - margin * 2, 118, 8, 8, "F");
@@ -468,29 +486,40 @@ export function createAdminPdfBuffer(payload) {
   wrapText(doc, report.resultSummary, margin + 18, y + 48, pageWidth - margin * 2 - 36, 14);
   y += 146;
 
+  ensureSpace(168);
   sectionTitle("Priority areas");
   const listY = y;
   doc.setFillColor("#ffffff");
-  doc.roundedRect(margin, listY, pageWidth - margin * 2, 118, 8, 8, "F");
-  doc.setTextColor(ink);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  let leftY = listY + 28;
-  for (const item of (report.focusAreas || []).slice(0, 3)) {
-    leftY = wrapText(doc, `- ${item}`, margin + 18, leftY, 230, 13) + 4;
-  }
+  doc.roundedRect(margin, listY, pageWidth - margin * 2, 124, 8, 8, "F");
+  doc.setTextColor(copper);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("PRIORITY AREAS", margin + 18, listY + 26);
   doc.setTextColor(copper);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.text("RELATIVE STRENGTHS", margin + 300, listY + 26);
-  doc.setTextColor(ink);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  let rightY = listY + 48;
-  for (const item of (report.strengths || []).slice(0, 3)) {
-    rightY = wrapText(doc, `- ${item}`, margin + 300, rightY, 225, 13) + 4;
+
+  let leftY = listY + 50;
+  const focusItems = (report.focusAreas || []).slice(0, 3);
+  if (focusItems.length) {
+    for (const item of focusItems) {
+      leftY = listItem(item, margin + 18, leftY, 230, copper) + 5;
+    }
+  } else {
+    leftY = listItem("No priority areas recorded.", margin + 18, leftY, 230, muted) + 5;
   }
-  y = listY + 146;
+
+  let rightY = listY + 48;
+  const strengthItems = (report.strengths || []).slice(0, 3);
+  if (strengthItems.length) {
+    for (const item of strengthItems) {
+      rightY = listItem(item, margin + 300, rightY, 225, forest) + 5;
+    }
+  } else {
+    rightY = listItem("No relative strengths recorded.", margin + 300, rightY, 225, muted) + 5;
+  }
+  y = listY + 152;
 
   sectionTitle("Scores by dimension");
   for (const pillar of report.pillarScores || []) {
@@ -511,49 +540,51 @@ export function createAdminPdfBuffer(payload) {
     y += 42;
   }
 
-  doc.addPage();
-  pageHeader("Question-by-question appendix");
-  doc.setTextColor(ink);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  y = wrapText(
-    doc,
-    "This appendix is for Gilbert's internal review. It includes the submitted answer for each diagnostic question so follow-up can be grounded in the respondent's actual inputs.",
-    margin,
-    y,
-    pageWidth - margin * 2,
-    14
-  ) + 22;
-
-  let currentPillar = "";
-  for (const row of report.answerRows || []) {
-    if (row.pillar !== currentPillar) {
-      ensureSpace(44);
-      currentPillar = row.pillar;
-      doc.setTextColor(copper);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text(currentPillar.toUpperCase(), margin, y);
-      y += 20;
-    }
-
-    ensureSpace(72);
-    doc.setFillColor("#ffffff");
-    const rowStart = y;
-    doc.roundedRect(margin, rowStart, pageWidth - margin * 2, 58, 6, 6, "F");
-    doc.setTextColor(forest);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(`Q${row.number}`, margin + 12, rowStart + 18);
+  if ((report.answerRows || []).length) {
+    doc.addPage();
+    pageHeader("Question-by-question appendix");
     doc.setTextColor(ink);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    wrapText(doc, row.question, margin + 44, rowStart + 18, 330, 12);
-    doc.setTextColor(forest);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    wrapText(doc, row.answerLabel, pageWidth - margin - 130, rowStart + 18, 118, 12);
-    y += 68;
+    doc.setFontSize(10);
+    y = wrapText(
+      doc,
+      "This appendix is for Gilbert's internal review. It includes the submitted answer for each diagnostic question so follow-up can be grounded in the respondent's actual inputs.",
+      margin,
+      y,
+      pageWidth - margin * 2,
+      14
+    ) + 22;
+
+    let currentPillar = "";
+    for (const row of report.answerRows || []) {
+      if (row.pillar !== currentPillar) {
+        ensureSpace(44);
+        currentPillar = row.pillar;
+        doc.setTextColor(copper);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(currentPillar.toUpperCase(), margin, y);
+        y += 20;
+      }
+
+      ensureSpace(72);
+      doc.setFillColor("#ffffff");
+      const rowStart = y;
+      doc.roundedRect(margin, rowStart, pageWidth - margin * 2, 58, 6, 6, "F");
+      doc.setTextColor(forest);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.text(`Q${row.number}`, margin + 12, rowStart + 18);
+      doc.setTextColor(ink);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      wrapText(doc, row.question, margin + 44, rowStart + 18, 330, 12);
+      doc.setTextColor(forest);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      wrapText(doc, row.answerLabel, pageWidth - margin - 130, rowStart + 18, 118, 12);
+      y += 68;
+    }
   }
 
   const pageCount = doc.getNumberOfPages();
