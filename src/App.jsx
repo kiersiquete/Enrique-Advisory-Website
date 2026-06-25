@@ -1201,7 +1201,10 @@ export default function App() {
 
   async function refreshGroupFromServer(groupId) {
     const group = await fetchComparisonGroup(groupId);
-    if (group) setGroupRefresh((value) => value + 1);
+    if (group) {
+      saveStoredGroup(group);
+      setGroupRefresh((value) => value + 1);
+    }
     return group;
   }
 
@@ -1221,6 +1224,13 @@ export default function App() {
       const comparisonGroup = refreshedGroup ?? savedGroup;
       if (comparisonGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
         setActiveComparisonGroup(comparisonGroup);
+        setScreen("comparison");
+        const params = new URLSearchParams({
+          group: comparisonGroup.id,
+          lang: resultPackage.language || language
+        });
+        window.history.pushState({}, "", `${SCREEN_ROUTES["assessment-home"]}?${params.toString()}`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
     return response;
@@ -1282,8 +1292,14 @@ export default function App() {
   async function handleViewComparison(groupId) {
     const group = (await refreshGroupFromServer(groupId)) ?? getStoredGroup(groupId);
     if (!group) return;
+    if ((group.participants?.length ?? 0) < MIN_COMPARISON_PARTICIPANTS) {
+      setGroupRefresh((value) => value + 1);
+      return;
+    }
     setActiveComparisonGroup(group);
     setScreen("comparison");
+    const params = new URLSearchParams({ group: group.id, lang: language });
+    window.history.pushState({}, "", `${SCREEN_ROUTES["assessment-home"]}?${params.toString()}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
