@@ -1112,16 +1112,16 @@ export const COPY = {
       updated: "Last updated: June 16, 2026",
       close: "Close",
       intro: [
-        "Gilbert Devlyn Advisory | Draft for review",
-        "Important note: This draft is intended as a practical business starting point for the Gilbert Devlyn Advisory website and self-assessment. It should be reviewed by qualified legal counsel before publication, especially before launching paid tools, email automations, analytics, or cross-border data storage."
+        "Gilbert Devlyn Advisory",
+        "This Privacy Policy explains how the website, diagnostic, comparison links, and related communications collect, use, store, and share information. For privacy questions, contact info@gilbertdevlyn.com."
       ],
       sections: [
         {
           title: "1. Who We Are",
           body: [
             "This Privacy Policy explains how Gilbert Devlyn Advisory (\"we,\" \"us,\" or \"our\") collects, uses, stores, and shares information when a visitor uses gilbertdevlyn.com, completes the Family Enterprise Self-Assessment, requests follow-up, or communicates with us.",
-            "Legal entity: [Insert legal entity name].",
-            "Business address: [Insert business mailing address].",
+            "Legal entity: Gilbert Devlyn Advisory.",
+            "Business address: Available upon request.",
             "Contact email: info@gilbertdevlyn.com."
           ]
         },
@@ -1205,7 +1205,7 @@ export const COPY = {
           title: "8. Data Retention",
           body: [
             "We keep personal information only as long as reasonably necessary for the purposes described in this policy, unless a longer retention period is required or permitted by law. Assessment records may be retained for follow-up, advisory preparation, internal operations, and recordkeeping. Draft records stored in your browser remain until you clear them or they are replaced.",
-            "Recommended internal retention rule to confirm: [Insert retention period for completed assessments, incomplete assessments, email events, and contact requests]."
+            "Assessment records, email events, and contact requests are retained only as long as reasonably needed for advisory follow-up, operations, security, and legal compliance, then deleted or anonymized when no longer needed."
           ]
         },
         {
@@ -1248,26 +1248,8 @@ export const COPY = {
             "For privacy questions or requests, contact:",
             "Gilbert Devlyn Advisory",
             "Email: info@gilbertdevlyn.com",
-            "Address: [Insert business mailing address]"
+            "Address: Available upon request"
           ]
-        },
-        {
-          title: "Implementation Checklist Before Publishing",
-          body: [
-            "Confirm the legal entity name and mailing address.",
-            "Confirm the final domain and contact email.",
-            "Confirm where completed assessments will be stored: local server, Airtable, Supabase, CRM, email provider, or another system.",
-            "Confirm which third-party services are active at launch, including hosting, email, scheduling, analytics, Airtable, and PDF generation.",
-            "Confirm retention periods for incomplete and completed assessment records.",
-            "Confirm whether the business is subject to CCPA/CPRA, Mexico privacy law requirements, or other jurisdiction-specific obligations.",
-            "Update the cookie banner if analytics, advertising, or third-party tracking is added.",
-            "Have qualified legal counsel review before publication."
-          ]
-        },
-        {
-          title: "Drafting References",
-          body:
-            "This draft was informed by general privacy and data security principles from the Federal Trade Commission and California Attorney General guidance, including clear privacy disclosures, knowing what personal information is collected, keeping only what is needed, protecting retained information, and describing applicable consumer rights. These references are not a substitute for legal advice."
         }
       ]
     },
@@ -1542,7 +1524,7 @@ export const COPY = {
       unknownResponses: "Unknown"
     },
     footerRights: "© 2026 Gilbert Devlyn Advisory. All rights reserved.",
-    contactEmail: "partner@gilbertdevlyn.com"
+    contactEmail: "info@gilbertdevlyn.com"
   },
   es: {
     appName: "Autoevaluación para Empresas Familiares",
@@ -1978,16 +1960,16 @@ export const COPY = {
       updated: "Última actualización: 16 de junio de 2026",
       close: "Cerrar",
       intro: [
-        "Gilbert Devlyn Advisory | Borrador para revisión",
-        "Nota importante: Este borrador es un punto de partida práctico para el sitio web y la autoevaluación de Gilbert Devlyn Advisory. Debe ser revisado por asesoría legal calificada antes de publicarse, especialmente antes de lanzar herramientas de pago, automatizaciones de email, analítica o almacenamiento de datos entre países."
+        "Gilbert Devlyn Advisory",
+        "Esta Política de Privacidad explica cómo el sitio web, el diagnóstico, las ligas de comparación y las comunicaciones relacionadas recopilan, usan, almacenan y comparten información. Para preguntas de privacidad, escribe a info@gilbertdevlyn.com."
       ],
       sections: [
         {
           title: "1. Quiénes somos",
           body: [
             "Esta Política de Privacidad explica cómo Gilbert Devlyn Advisory (\"nosotros\") recopila, usa, almacena y comparte información cuando una persona usa gilbertdevlyn.com, completa la Autoevaluación de Empresa Familiar, solicita seguimiento o se comunica con nosotros.",
-            "Entidad legal: [Insertar nombre de la entidad legal].",
-            "Dirección comercial: [Insertar dirección postal comercial].",
+            "Entidad legal: Gilbert Devlyn Advisory.",
+            "Dirección comercial: Disponible bajo solicitud.",
             "Email de contacto: info@gilbertdevlyn.com."
           ]
         },
@@ -2071,7 +2053,7 @@ export const COPY = {
           title: "8. Retención de datos",
           body: [
             "Conservamos información personal solo durante el tiempo razonablemente necesario para los fines descritos en esta política, salvo que la ley requiera o permita un periodo mayor. Los registros de evaluación pueden conservarse para seguimiento, preparación de asesoría, operación interna y registro. Los borradores guardados en tu navegador permanecen hasta que los borres o sean reemplazados.",
-            "Regla interna de retención recomendada por confirmar: [Insertar periodo de retención para evaluaciones completas, incompletas, eventos de email y solicitudes de contacto]."
+            "Los registros de evaluación, eventos de email y solicitudes de contacto se conservan solo durante el tiempo razonablemente necesario para seguimiento de asesoría, operación, seguridad y cumplimiento legal; después se eliminan o anonimizan cuando ya no sean necesarios."
           ]
         },
         {
@@ -2114,26 +2096,8 @@ export const COPY = {
             "Para preguntas o solicitudes de privacidad, contacta a:",
             "Gilbert Devlyn Advisory",
             "Email: info@gilbertdevlyn.com",
-            "Dirección: [Insertar dirección postal comercial]"
+            "Dirección: Disponible bajo solicitud"
           ]
-        },
-        {
-          title: "Checklist de implementación antes de publicar",
-          body: [
-            "Confirmar el nombre de la entidad legal y dirección postal.",
-            "Confirmar el dominio final y email de contacto.",
-            "Confirmar dónde se almacenarán las evaluaciones completadas: servidor local, Airtable, Supabase, CRM, proveedor de email u otro sistema.",
-            "Confirmar qué servicios de terceros estarán activos al lanzamiento, incluyendo hosting, email, agenda, analítica, Airtable y generación de PDF.",
-            "Confirmar periodos de retención para registros incompletos y completados.",
-            "Confirmar si el negocio está sujeto a CCPA/CPRA, requisitos de privacidad de México u otras obligaciones por jurisdicción.",
-            "Actualizar el banner de cookies si se agrega analítica, publicidad o seguimiento de terceros.",
-            "Solicitar revisión de asesoría legal calificada antes de publicar."
-          ]
-        },
-        {
-          title: "Referencias de redacción",
-          body:
-            "Este borrador fue informado por principios generales de privacidad y seguridad de datos de la Federal Trade Commission y guías del California Attorney General, incluyendo divulgaciones claras, saber qué información personal se recopila, conservar solo lo necesario, proteger la información retenida y describir derechos aplicables. Estas referencias no sustituyen asesoría legal."
         }
       ]
     },
@@ -2408,6 +2372,6 @@ export const COPY = {
       unknownResponses: "Sin información"
     },
     footerRights: "© 2026 Gilbert Devlyn Advisory. Todos los derechos reservados.",
-    contactEmail: "partner@gilbertdevlyn.com"
+    contactEmail: "info@gilbertdevlyn.com"
   }
 };
