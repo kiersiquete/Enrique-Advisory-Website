@@ -737,3 +737,61 @@ Before handing off the website, confirm:
 - English and Spanish content are available.
 - Desktop, tablet, and mobile layouts have no horizontal overflow.
 
+## 23. Current Task List - June 25 Meeting Checkpoint
+
+This checkpoint captures the project direction from Gilbert and Enrique's latest feedback. The main shift is that the website should feel like an advisor/consultant website first, with the diagnostic positioned as a useful starting point rather than the main product.
+
+### Priority 1: Advisor-first positioning
+
+- Rework the Home page so visitors quickly understand who Gilbert is, what problem he helps solve, and why that problem matters before the diagnostic is introduced.
+- Add a clearer Home page positioning section about the real challenges of family businesses: ownership, succession, governance, next-generation roles, family decision-making, and sensitive conversations.
+- Reframe the diagnostic as a first step into the advisory process, not the core offering, except when someone arrives through a direct diagnostic link.
+- Reduce the weight of functional descriptors such as "bilingual" and focus the message on strategic advisory value.
+
+### Priority 2: Services page and services preview
+
+- Add a `Services` tab to the main navigation in English and Spanish.
+- Create a Services page that explains the main ways of working with Gilbert:
+  - Consulting projects
+  - Board service
+  - Executive coaching
+  - 1:1 advisory
+- For each service, write clear EN/ES copy covering who it is for, what Gilbert helps with, and the likely outcome.
+- Add a short "How I Help" section to the Home page with a preview of the services and a link to the Services page.
+
+### Priority 3: Strengthen About page
+
+- Expand the About page so it does not only tell Gilbert's personal history.
+- Add clearer context around the underlying challenges family businesses face and why Gilbert's lived experience matters strategically.
+- Keep the About page focused on credibility, trust, discretion, and the kind of conversations Gilbert helps families handle.
+
+### Priority 4: Video content plan
+
+- Prepare for one filmed interview or Q&A with Gilbert.
+- Use that recording to create:
+  - A shorter Home page video introducing Gilbert and the advisory work.
+  - A longer About page video explaining his background, lived experience, and way of working.
+- Suggested video prompts:
+  - Who Gilbert is and why he does this work.
+  - Why family businesses often get stuck.
+  - What kinds of conversations families avoid or delay.
+  - How Gilbert helps families turn tension into clearer decisions.
+  - How the diagnostic works as a starting point, not the whole service.
+
+### Priority 5: Invitation and comparison automation
+
+- Finish local QA for the invitation email flow: user enters a family member's email, the system sends the private group link automatically, and the invited person can complete the diagnostic from that link.
+- Confirm the first user's result and invite details are saved correctly when they click Done or request the summary report.
+- Finish local QA for comparison groups: 2-person and 3-person groups should register correctly, update participant counts, and unlock the comparison view when enough people complete the diagnostic.
+- Add comparison result email automation after the 2nd or 3rd invited person completes the diagnostic.
+- Send comparison result access or notification to the participants and to Gilbert.
+
+### Priority 6: Email/report polish
+
+- Polish the summary request email template after the final content direction is approved.
+- Polish the invitation email template so it clearly explains the private group link and reassures users that individual answers are not shared question by question.
+- Decide how Gilbert should receive the detailed internal analysis: email notification/report, read-only Airtable view, or both.
+
+### Paused technical checkpoint
+
+- Current local focus before the meeting: comparison groups and save flow. The latest issue to verify is that the comparison group record and respondent/session details are saved reliably after the first person invites someone and clicks Done.

@@ -39,6 +39,10 @@ const app = createApp({
   async sendSummaryEmails(body, result) {
     calls.push({ type: "email", body, result });
     return { skipped: true, reason: "test-email-sender" };
+  },
+  async sendInviteEmail(body) {
+    calls.push({ type: "invite-email", body });
+    return { sent: true, provider: "test-invite-sender" };
   }
 });
 
@@ -77,6 +81,24 @@ try {
   assert.equal(resultWrongMethod.response.headers.get("allow"), "POST");
   assert.equal(resultWrongMethod.body.error, "Method not allowed");
 
+  const inviteOk = await requestJson(baseUrl, "/api/invitations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      invitedEmail: "family@example.com",
+      inviteLink: "https://gilbertdevlyn.com/diagnostic?group=GROUP123&lang=en",
+      language: "en"
+    })
+  });
+  assert.equal(inviteOk.response.status, 200);
+  assert.equal(inviteOk.body.email.sent, true);
+  assert.equal(inviteOk.body.email.provider, "test-invite-sender");
+
+  const inviteWrongMethod = await requestJson(baseUrl, "/api/invitations", { method: "GET" });
+  assert.equal(inviteWrongMethod.response.status, 405);
+  assert.equal(inviteWrongMethod.response.headers.get("allow"), "POST");
+  assert.equal(inviteWrongMethod.body.error, "Method not allowed");
+
   const missingGroup = await requestJson(baseUrl, "/api/groups");
   assert.equal(missingGroup.response.status, 400);
   assert.equal(missingGroup.body.error, "Missing comparison group key");
@@ -96,7 +118,7 @@ try {
 
   assert.deepEqual(
     calls.map((call) => call.type),
-    ["persist", "email", "persist", "persist", "group", "group", "group"]
+    ["persist", "email", "persist", "persist", "invite-email", "group", "group", "group"]
   );
 
   console.log("API route verification passed.");

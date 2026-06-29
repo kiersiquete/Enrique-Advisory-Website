@@ -3,7 +3,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./airtable.js";
-import { sendSummaryReportEmails } from "./email.js";
+import { sendInvitationEmail, sendSummaryReportEmails } from "./email.js";
 import { createAdminPdfBuffer, createSummaryPdfBuffer, decodeSummaryReportPayload } from "./summary-report.js";
 
 const port = process.env.PORT || 5174;
@@ -32,6 +32,7 @@ async function loadLocalEnv() {
 export function createApp({
   persistAssessment = persistAssessmentToAirtable,
   getComparisonGroup = getComparisonGroupFromAirtable,
+  sendInviteEmail = sendInvitationEmail,
   sendSummaryEmails = sendSummaryReportEmails
 } = {}) {
   const app = express();
@@ -62,6 +63,21 @@ export function createApp({
   });
 
   app.all("/api/results", (_req, res) => {
+    res.setHeader("Allow", "POST");
+    res.status(405).json({ error: "Method not allowed" });
+  });
+
+  app.post("/api/invitations", async (req, res) => {
+    try {
+      const email = await sendInviteEmail(req.body ?? {});
+      res.json({ ok: true, email });
+    } catch (error) {
+      console.error("Invitation email delivery failed", error);
+      res.status(500).json({ error: "Unable to send invitation email" });
+    }
+  });
+
+  app.all("/api/invitations", (_req, res) => {
     res.setHeader("Allow", "POST");
     res.status(405).json({ error: "Method not allowed" });
   });

@@ -10,6 +10,21 @@ const DEFAULT_FROM = "Gilbert <info@gilbertdevlyn.com>";
 const DEFAULT_REPLY_TO = "info@gilbertdevlyn.com";
 const SMTP_TIMEOUT_MS = 15000;
 
+function smtpCaCertificates() {
+  if (process.env.SMTP_USE_SYSTEM_CA === "false" || typeof tls.getCACertificates !== "function") {
+    return undefined;
+  }
+
+  try {
+    const defaultCertificates = tls.getCACertificates("default") ?? [];
+    const systemCertificates = tls.getCACertificates("system") ?? [];
+    const certificates = [...defaultCertificates, ...systemCertificates];
+    return certificates.length ? certificates : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function getEmailConfig() {
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
@@ -23,7 +38,8 @@ function getEmailConfig() {
     pass,
     from: process.env.EMAIL_FROM || DEFAULT_FROM,
     replyTo: process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO,
-    adminEmail: process.env.ADMIN_REPORT_EMAIL || process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO
+    adminEmail: process.env.ADMIN_REPORT_EMAIL || process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO,
+    rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false"
   };
 }
 
@@ -99,6 +115,116 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function plainInvitationEmail(invitation = {}) {
+  const invitedBy = invitation.inviterName || "A family member";
+  const language = invitation.language === "es" ? "es" : "en";
+
+  if (language === "es") {
+    return [
+      "Hola,",
+      "",
+      `${invitedBy} te invitó a completar el Diagnóstico de Empresa Familiar de Gilbert Devlyn.`,
+      "El diagnóstico toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.",
+      "Usa esta liga privada para responder:",
+      "",
+      invitation.inviteLink,
+      "",
+      "La comparación solo muestra diferencias por pilar. No comparte respuestas individuales pregunta por pregunta.",
+      "",
+      "Gracias,",
+      "Gilbert"
+    ].join("\n");
+  }
+
+  return [
+    "Hi,",
+    "",
+    `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Diagnostic.`,
+    "The diagnostic takes about 10 minutes and helps compare pillar-level perspectives within the same family group.",
+    "Use this private link to complete it:",
+    "",
+    invitation.inviteLink,
+    "",
+    "The comparison only shows pillar-level differences. It does not share individual answers or question-by-question details.",
+    "",
+    "Best,",
+    "Gilbert"
+  ].join("\n");
+}
+
+function htmlInvitationEmail(invitation = {}) {
+  const language = invitation.language === "es" ? "es" : "en";
+  const invitedBy = escapeHtml(invitation.inviterName || (language === "es" ? "Un familiar" : "A family member"));
+  const inviteLink = escapeHtml(invitation.inviteLink);
+
+  const text =
+    language === "es"
+      ? {
+          title: "Te invitaron al diagnóstico familiar",
+          preheader: "Completa el diagnóstico y súmate a la comparación familiar privada.",
+          eyebrow: "Invitación privada",
+          body: `${invitedBy} te invitó a completar el Diagnóstico de Empresa Familiar de Gilbert Devlyn. Toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.`,
+          button: "Abrir diagnóstico",
+          privacy:
+            "La comparación solo muestra diferencias por pilar. No comparte respuestas individuales pregunta por pregunta.",
+          footer: "Gilbert Devlyn - Asesoría para empresas familiares"
+        }
+      : {
+          title: "You have been invited to the family diagnostic",
+          preheader: "Complete the diagnostic and join the private family comparison.",
+          eyebrow: "Private invitation",
+          body: `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Diagnostic. It takes about 10 minutes and helps compare pillar-level perspectives within the same family group.`,
+          button: "Open diagnostic",
+          privacy:
+            "The comparison only shows pillar-level differences. It does not share individual answers or question-by-question details.",
+          footer: "Gilbert Devlyn - Family Enterprise Advisory"
+        };
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(text.title)}</title>
+  </head>
+  <body style="margin:0; padding:0; background:#f4efe6; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+    <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">${escapeHtml(text.preheader)}</span>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4efe6; padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+            <tr>
+              <td style="background:#1c3d2e; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Gilbert Devlyn</p>
+                <p style="margin:0; color:#f8f3ea; font-size:18px; line-height:1.4; font-weight:700;">${escapeHtml(text.footer)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:34px;">
+                <p style="margin:0 0 12px; color:#c46f3a; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
+                <h1 style="margin:0 0 18px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(text.title)}</h1>
+                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">${text.body}</p>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
+                  <tr>
+                    <td style="background:#c46f3a; border-radius:7px;">
+                      <a href="${inviteLink}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">${escapeHtml(text.button)}</a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 18px; color:#454943; font-size:14px; line-height:1.65;">${escapeHtml(text.privacy)}</p>
+                <p style="margin:0; color:#6f726d; font-size:12px; line-height:1.55; word-break:break-all;">${inviteLink}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 }
 
 function htmlSummaryEmail(body, savedResult = {}, options = {}) {
@@ -417,12 +543,15 @@ function createSmtpSession(config) {
   let buffer = "";
   let pendingResolve;
   let pendingReject;
+  const ca = smtpCaCertificates();
 
   const socket = tls.connect({
     host: config.host,
     port: config.port,
     servername: config.host,
-    timeout: SMTP_TIMEOUT_MS
+    timeout: SMTP_TIMEOUT_MS,
+    rejectUnauthorized: config.rejectUnauthorized,
+    ...(ca ? { ca } : {})
   });
 
   socket.setEncoding("utf8");
@@ -497,6 +626,38 @@ async function sendSmtpEmail(config, payload) {
   } finally {
     session.socket.end();
   }
+}
+
+export async function sendInvitationEmail(invitation = {}) {
+  const config = getEmailConfig();
+  if (!config) {
+    return { skipped: true, reason: "missing-smtp-config" };
+  }
+
+  const invitedEmail = String(invitation.invitedEmail || "").trim();
+  const inviteLink = String(invitation.inviteLink || "").trim();
+  if (!invitedEmail) {
+    return { skipped: true, reason: "missing-invited-email" };
+  }
+  if (!inviteLink) {
+    return { skipped: true, reason: "missing-invite-link" };
+  }
+
+  const language = invitation.language === "es" ? "es" : "en";
+  const message = await sendSmtpEmail(config, {
+    from: config.from,
+    to: invitedEmail,
+    replyTo: invitation.inviterEmail || config.replyTo,
+    subject: language === "es" ? "Invitación al diagnóstico de Gilbert Devlyn" : "Gilbert Devlyn diagnostic invitation",
+    text: plainInvitationEmail({ ...invitation, invitedEmail, inviteLink, language }),
+    html: htmlInvitationEmail({ ...invitation, invitedEmail, inviteLink, language })
+  });
+
+  return {
+    provider: "smtp",
+    sent: true,
+    messageId: message?.id
+  };
 }
 
 export async function sendSummaryReportEmails(body, savedResult = {}, options = {}) {

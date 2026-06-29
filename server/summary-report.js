@@ -218,154 +218,230 @@ export function createSummaryPdfBuffer(payload) {
   const report = payload ?? {};
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 48;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 46;
   const forest = "#1c3d2e";
   const copper = "#c46f3a";
-  const parchment = "#f8f3ea";
+  const parchment = "#f6f0e7";
+  const mist = "#e9dfd2";
   const muted = "#6f726d";
   const ink = "#3f433f";
+  const softForest = "#eaf0eb";
 
+  function pageBackground() {
+    doc.setFillColor(parchment);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
+  }
+
+  function footer(pageLabel) {
+    doc.setDrawColor("#ded4c6");
+    doc.line(margin, pageHeight - 46, pageWidth - margin, pageHeight - 46);
+    doc.setTextColor(muted);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("Confidential summary. This is not a grade, legal advice, or a substitute for a facilitated family governance process.", margin, pageHeight - 29);
+    doc.text(pageLabel, pageWidth - margin, pageHeight - 29, { align: "right" });
+  }
+
+  function sectionLabel(text, x, y) {
+    doc.setTextColor(copper);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(String(text).toUpperCase(), x, y);
+  }
+
+  function drawMetricCard(x, y, width, height, label, value, detail, accent = forest) {
+    doc.setFillColor("#ffffff");
+    doc.roundedRect(x, y, width, height, 10, 10, "F");
+    doc.setFillColor(accent);
+    doc.roundedRect(x, y, 7, height, 4, 4, "F");
+    sectionLabel(label, x + 20, y + 28);
+    doc.setTextColor(forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(39);
+    doc.text(String(value), x + 20, y + 75);
+    if (detail) {
+      doc.setFontSize(10);
+      doc.setTextColor(muted);
+      wrapText(doc, detail, x + 20, y + 98, width - 40, 13);
+    }
+  }
+
+  function drawListCard(x, y, width, height, title, items, accent) {
+    doc.setFillColor("#ffffff");
+    doc.roundedRect(x, y, width, height, 10, 10, "F");
+    sectionLabel(title, x + 18, y + 28);
+    let itemY = y + 52;
+    const list = (items || []).slice(0, 3);
+
+    if (!list.length) {
+      doc.setTextColor(muted);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      wrapText(doc, "No items recorded.", x + 18, itemY, width - 36, 12);
+      return;
+    }
+
+    for (const item of list) {
+      doc.setFillColor(accent);
+      doc.circle(x + 22, itemY + 3, 3, "F");
+      doc.setTextColor(ink);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      itemY = wrapText(doc, item, x + 34, itemY, width - 52, 12) + 7;
+    }
+  }
+
+  function drawScoreRow(pillar, x, y, width) {
+    const score = Math.max(0, Math.min(100, safeNumber(pillar.score)));
+    const barWidth = 190;
+    const scoreColor = score < 60 ? copper : forest;
+
+    doc.setFillColor("#ffffff");
+    doc.roundedRect(x, y, width, 48, 9, 9, "F");
+    doc.setTextColor(forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    wrapText(doc, pillar.label, x + 18, y + 20, width - barWidth - 92, 12);
+    doc.setFillColor(mist);
+    doc.roundedRect(x + width - barWidth - 58, y + 21, barWidth, 8, 4, 4, "F");
+    doc.setFillColor(scoreColor);
+    doc.roundedRect(x + width - barWidth - 58, y + 21, Math.max(6, (score / 100) * barWidth), 8, 4, 4, "F");
+    doc.setTextColor(forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`${Math.round(score)}/100`, x + width - 18, y + 28, { align: "right" });
+  }
+
+  pageBackground();
   doc.setFillColor(forest);
-  doc.rect(0, 0, pageWidth, 225, "F");
+  doc.rect(0, 0, pageWidth, 246, "F");
+  doc.setFillColor("#244b3b");
+  doc.rect(0, 215, pageWidth, 31, "F");
   doc.setTextColor(copper);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("FAMILY ENTERPRISE DIAGNOSTIC", margin, 54);
+  doc.setFontSize(10);
+  doc.text("FAMILY ENTERPRISE DIAGNOSTIC", margin, 52);
 
   doc.setTextColor("#ffffff");
-  doc.setFontSize(34);
-  doc.text("Summary report", margin, 92);
-  doc.setFontSize(20);
-  doc.text(`for ${report.name || "Participant"}`, margin, 122);
+  doc.setFontSize(36);
+  doc.text("Summary report", margin, 96);
+  doc.setFontSize(18);
+  doc.text(`for ${report.name || "Participant"}`, margin, 126);
 
   doc.setTextColor("#d8c7b2");
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   wrapText(
     doc,
     "A concise conversation map showing the overall result, dimension scores, focus areas, and suggested next conversation.",
     margin,
-    154,
-    420,
-    17
+    160,
+    390,
+    15
   );
 
-  doc.setDrawColor("#476859");
-  doc.line(margin, 185, pageWidth - margin, 185);
   doc.setFont("helvetica", "bold");
   doc.setTextColor("#ffffff");
-  doc.setFontSize(15);
-  doc.text("Gilbert Devlyn", margin, 207);
+  doc.setFontSize(13);
+  doc.text("Gilbert Devlyn", margin, 234);
   doc.setFont("helvetica", "normal");
   doc.setTextColor("#d8c7b2");
-  doc.setFontSize(10);
-  doc.text("Family Enterprise Advisory", margin, 222);
-  doc.text(`Generated ${formatDate(report.generatedAt)}`, pageWidth - margin, 207, { align: "right" });
+  doc.setFontSize(9);
+  doc.text("Family Enterprise Advisory", margin + 100, 234);
+  doc.text(`Generated ${formatDate(report.generatedAt)}`, pageWidth - margin, 234, { align: "right" });
 
-  doc.setFillColor(parchment);
-  doc.rect(0, 225, pageWidth, 567, "F");
+  drawMetricCard(
+    margin,
+    284,
+    178,
+    135,
+    "Overall score",
+    `${Math.round(safeNumber(report.overall))}`,
+    `${report.level || "Diagnostic summary"}`
+  );
 
+  const summaryX = margin + 198;
+  const summaryWidth = pageWidth - margin * 2 - 198;
   doc.setFillColor("#ffffff");
-  doc.roundedRect(margin, 255, 170, 112, 8, 8, "F");
-  doc.setTextColor(muted);
+  doc.roundedRect(summaryX, 284, summaryWidth, 135, 10, 10, "F");
+  doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("OVERALL SCORE", margin + 18, 282);
-  doc.setTextColor(forest);
-  doc.setFontSize(42);
-  doc.text(String(report.overall ?? 0), margin + 18, 326);
-  doc.setFontSize(16);
-  doc.setTextColor(muted);
-  doc.text("/ 100", margin + 85, 326);
-  doc.setTextColor(copper);
-  doc.setFontSize(10);
-  doc.text(String(report.level || "Diagnostic summary").toUpperCase(), margin + 18, 350);
-
-  doc.setFillColor("#ffffff");
-  doc.roundedRect(margin + 190, 255, pageWidth - margin * 2 - 190, 112, 8, 8, "F");
-  doc.setTextColor(forest);
-  doc.setFontSize(20);
-  doc.text("What this suggests", margin + 210, 288);
+  doc.setFontSize(22);
+  doc.text("What this suggests", summaryX + 22, 318);
   doc.setTextColor(ink);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  wrapText(doc, report.resultSummary, margin + 210, 312, 315, 15);
-
-  let y = 405;
-  doc.setTextColor(copper);
-  doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("SCORES BY DIMENSION", margin, y);
-  y += 22;
+  wrapText(doc, report.resultSummary, summaryX + 22, 344, summaryWidth - 44, 14);
 
-  for (const pillar of (report.pillarScores || []).slice(0, 8)) {
-    doc.setFillColor("#ffffff");
-    doc.roundedRect(margin, y, pageWidth - margin * 2, 38, 6, 6, "F");
-    doc.setTextColor(forest);
-    doc.setFontSize(10);
-    doc.text(pillar.label, margin + 14, y + 16);
-    doc.setFillColor("#ece8df");
-    doc.roundedRect(margin + 280, y + 14, 200, 7, 4, 4, "F");
-    doc.setFillColor(pillar.score < 60 ? copper : forest);
-    doc.roundedRect(margin + 280, y + 14, Math.max(4, pillar.score * 2), 7, 4, 4, "F");
-    doc.setTextColor(forest);
-    doc.setFontSize(11);
-    doc.text(`${pillar.score}/100`, pageWidth - margin - 14, y + 18, { align: "right" });
-    y += 46;
-  }
-
-  y += 10;
+  let y = 452;
   const colWidth = (pageWidth - margin * 2 - 16) / 2;
-  doc.setFillColor("#ffffff");
-  doc.roundedRect(margin, y, colWidth, 118, 8, 8, "F");
-  doc.roundedRect(margin + colWidth + 16, y, colWidth, 118, 8, 8, "F");
+  drawListCard(margin, y, colWidth, 142, "Focus areas", report.focusAreas, copper);
+  drawListCard(margin + colWidth + 16, y, colWidth, 142, "Relative strengths", report.strengths, forest);
 
-  doc.setTextColor(copper);
-  doc.setFontSize(10);
-  doc.text("FOCUS AREAS", margin + 16, y + 24);
-  doc.text("RELATIVE STRENGTHS", margin + colWidth + 32, y + 24);
-
-  doc.setTextColor(ink);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  let leftY = y + 46;
-  for (const item of (report.focusAreas || []).slice(0, 3)) {
-    leftY = wrapText(doc, `- ${item}`, margin + 16, leftY, colWidth - 32, 13) + 3;
-  }
-  let rightY = y + 46;
-  for (const item of (report.strengths || []).slice(0, 3)) {
-    rightY = wrapText(doc, `- ${item}`, margin + colWidth + 32, rightY, colWidth - 32, 13) + 3;
-  }
-
-  y += 145;
+  y += 172;
   doc.setFillColor(forest);
-  doc.roundedRect(margin, y, pageWidth - margin * 2, 82, 8, 8, "F");
+  doc.roundedRect(margin, y, pageWidth - margin * 2, 92, 10, 10, "F");
   doc.setTextColor("#ffffff");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(17);
-  doc.text("Suggested next conversation", margin + 18, y + 28);
+  doc.setFontSize(18);
+  doc.text("Suggested next conversation", margin + 20, y + 30);
   doc.setFont("helvetica", "normal");
   doc.setTextColor("#d8c7b2");
   doc.setFontSize(10);
   wrapText(
     doc,
     "Choose one priority conversation rather than trying to solve every governance topic at once. Gilbert can help turn these signals into a practical sequence of conversations and agreements.",
-    margin + 18,
-    y + 50,
-    pageWidth - margin * 2 - 36,
+    margin + 20,
+    y + 53,
+    pageWidth - margin * 2 - 40,
     13
   );
+  footer("Page 1 of 2");
 
-  doc.setTextColor(muted);
-  doc.setFontSize(8);
+  doc.addPage();
+  pageBackground();
+  sectionLabel("Scores by dimension", margin, 56);
+  doc.setTextColor(forest);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(24);
+  doc.text("Dimension scores at a glance", margin, 88);
+  doc.setTextColor(ink);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
   wrapText(
     doc,
-    "Confidential summary. This is not a grade, legal advice, or a substitute for a facilitated family governance process.",
+    "Each score is a signal for conversation. Lower scores are not failures; they simply point to topics that may need clearer agreements, better communication, or a more deliberate governance rhythm.",
     margin,
-    762,
-    pageWidth - margin * 2,
-    10
+    118,
+    pageWidth - margin * 2 - 70,
+    14
   );
+
+  y = 154;
+  for (const pillar of (report.pillarScores || []).slice(0, 8)) {
+    drawScoreRow(pillar, margin, y, pageWidth - margin * 2);
+    y += 58;
+  }
+
+  doc.setFillColor(softForest);
+  doc.roundedRect(margin, y + 6, pageWidth - margin * 2, 76, 10, 10, "F");
+  doc.setTextColor(forest);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("How to use this page", margin + 18, y + 31);
+  doc.setTextColor(ink);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  wrapText(
+    doc,
+    "Use the dimension scores to choose one conversation to begin with. The strongest report is not the one with the highest score; it is the one that helps the family decide what to discuss next.",
+    margin + 18,
+    y + 51,
+    pageWidth - margin * 2 - 36,
+    12
+  );
+  footer("Page 2 of 2");
 
   return Buffer.from(doc.output("arraybuffer"));
 }
@@ -379,6 +455,8 @@ export function createAdminPdfBuffer(payload) {
   const forest = "#1c3d2e";
   const copper = "#c46f3a";
   const parchment = "#f8f3ea";
+  const mist = "#e9dfd2";
+  const softForest = "#eaf0eb";
   const muted = "#6f726d";
   const ink = "#3f433f";
   const bottomContentLimit = pageHeight - 82;
@@ -387,16 +465,20 @@ export function createAdminPdfBuffer(payload) {
   function pageHeader(title) {
     doc.setFillColor(parchment);
     doc.rect(0, 0, pageWidth, pageHeight, "F");
+    doc.setFillColor(forest);
+    doc.rect(0, 0, pageWidth, 92, "F");
     doc.setTextColor(copper);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("GILBERT DEVLYN ADVISOR REPORT", margin, 38);
-    doc.setTextColor(forest);
+    doc.setTextColor("#ffffff");
     doc.setFontSize(22);
     doc.text(title, margin, 68);
-    doc.setDrawColor("#ded8cf");
-    doc.line(margin, 82, pageWidth - margin, 82);
-    y = 110;
+    doc.setTextColor("#d8c7b2");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Confidential internal follow-up notes", pageWidth - margin, 38, { align: "right" });
+    y = 120;
   }
 
   function ensureSpace(height) {
@@ -437,24 +519,36 @@ export function createAdminPdfBuffer(payload) {
   const participantName = report.participant?.name || report.name || "Participant";
   pageHeader(`${participantName} just finished assessment`);
 
-  doc.setFillColor(forest);
-  doc.roundedRect(margin, y, pageWidth - margin * 2, 122, 8, 8, "F");
-  doc.setTextColor("#ffffff");
+  doc.setFillColor("#ffffff");
+  doc.roundedRect(margin, y, pageWidth - margin * 2, 128, 10, 10, "F");
+  doc.setFillColor(copper);
+  doc.roundedRect(margin, y, 8, 128, 4, 4, "F");
+  doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(25);
-  doc.text(participantName, margin + 20, y + 34);
-  doc.setFontSize(13);
-  doc.setTextColor("#d8c7b2");
-  doc.text(report.participant?.email || "No email provided", margin + 20, y + 58);
-  doc.setTextColor("#ffffff");
-  doc.setFontSize(36);
-  doc.text(String(report.overall ?? 0), pageWidth - margin - 118, y + 56);
-  doc.setFontSize(13);
-  doc.setTextColor("#d8c7b2");
-  doc.text("/100", pageWidth - margin - 60, y + 56);
+  doc.setFontSize(24);
+  doc.text(participantName, margin + 24, y + 38);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(report.level || "Diagnostic summary", pageWidth - margin - 20, y + 86, { align: "right" });
-  y += 154;
+  doc.setTextColor(ink);
+  doc.text(report.participant?.email || "No email provided", margin + 24, y + 62);
+  doc.setTextColor(muted);
+  doc.text(`Requested ${report.timing?.requestedAt || "Not provided"}`, margin + 24, y + 85);
+  const scoreCardWidth = 148;
+  doc.setFillColor(softForest);
+  doc.roundedRect(pageWidth - margin - scoreCardWidth - 20, y + 20, scoreCardWidth, 88, 8, 8, "F");
+  doc.setTextColor(copper);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text("OVERALL SCORE", pageWidth - margin - scoreCardWidth - 4, y + 42);
+  doc.setTextColor(forest);
+  doc.setFontSize(32);
+  doc.text(String(report.overall ?? 0), pageWidth - margin - scoreCardWidth - 4, y + 78);
+  doc.setFontSize(11);
+  doc.text("/100", pageWidth - margin - 72, y + 78);
+  doc.setFontSize(9);
+  doc.setTextColor(muted);
+  doc.text(report.level || "Diagnostic summary", pageWidth - margin - 94, y + 98, { align: "center" });
+  y += 160;
 
   sectionTitle("Contact and context");
   const cardY = y;
@@ -475,7 +569,7 @@ export function createAdminPdfBuffer(payload) {
   ensureSpace(168);
   sectionTitle("Summary explanation");
   doc.setFillColor("#ffffff");
-  doc.roundedRect(margin, y, pageWidth - margin * 2, 118, 8, 8, "F");
+  doc.roundedRect(margin, y, pageWidth - margin * 2, 128, 8, 8, "F");
   doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
@@ -484,7 +578,7 @@ export function createAdminPdfBuffer(payload) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   wrapText(doc, report.resultSummary, margin + 18, y + 48, pageWidth - margin * 2 - 36, 14);
-  y += 146;
+  y += 156;
 
   ensureSpace(168);
   sectionTitle("Priority areas");
@@ -524,19 +618,20 @@ export function createAdminPdfBuffer(payload) {
   sectionTitle("Scores by dimension");
   for (const pillar of report.pillarScores || []) {
     ensureSpace(44);
+    const score = Math.max(0, Math.min(100, safeNumber(pillar.score)));
     doc.setFillColor("#ffffff");
     doc.roundedRect(margin, y, pageWidth - margin * 2, 34, 6, 6, "F");
     doc.setTextColor(forest);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text(pillar.label, margin + 12, y + 20);
-    doc.setFillColor("#ece8df");
+    doc.setFillColor(mist);
     doc.roundedRect(margin + 292, y + 14, 160, 7, 4, 4, "F");
-    doc.setFillColor(pillar.score < 60 ? copper : forest);
-    doc.roundedRect(margin + 292, y + 14, Math.max(4, pillar.score * 1.6), 7, 4, 4, "F");
+    doc.setFillColor(score < 60 ? copper : forest);
+    doc.roundedRect(margin + 292, y + 14, Math.max(4, (score / 100) * 160), 7, 4, 4, "F");
     doc.setTextColor(forest);
     doc.setFontSize(10);
-    doc.text(`${pillar.score}/100`, pageWidth - margin - 12, y + 20, { align: "right" });
+    doc.text(`${Math.round(score)}/100`, pageWidth - margin - 12, y + 20, { align: "right" });
     y += 42;
   }
 
@@ -567,23 +662,28 @@ export function createAdminPdfBuffer(payload) {
         y += 20;
       }
 
-      ensureSpace(72);
+      const questionLines = doc.splitTextToSize(String(row.question || ""), 318);
+      const answerLines = doc.splitTextToSize(String(row.answerLabel || "No answer"), 118);
+      const rowHeight = Math.max(58, Math.max(questionLines.length, answerLines.length) * 12 + 28);
+      ensureSpace(rowHeight + 14);
       doc.setFillColor("#ffffff");
       const rowStart = y;
-      doc.roundedRect(margin, rowStart, pageWidth - margin * 2, 58, 6, 6, "F");
+      doc.roundedRect(margin, rowStart, pageWidth - margin * 2, rowHeight, 6, 6, "F");
+      doc.setFillColor(softForest);
+      doc.roundedRect(margin + 10, rowStart + 11, 28, 20, 4, 4, "F");
       doc.setTextColor(forest);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
-      doc.text(`Q${row.number}`, margin + 12, rowStart + 18);
+      doc.text(`Q${row.number}`, margin + 24, rowStart + 25, { align: "center" });
       doc.setTextColor(ink);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      wrapText(doc, row.question, margin + 44, rowStart + 18, 330, 12);
+      doc.text(questionLines, margin + 50, rowStart + 20);
       doc.setTextColor(forest);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
-      wrapText(doc, row.answerLabel, pageWidth - margin - 130, rowStart + 18, 118, 12);
-      y += 68;
+      doc.text(answerLines, pageWidth - margin - 130, rowStart + 20);
+      y += rowHeight + 12;
     }
   }
 

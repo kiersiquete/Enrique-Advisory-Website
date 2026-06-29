@@ -13,10 +13,8 @@ import {
   CircleHelp,
   ClipboardCheck,
   Compass,
-  Copy,
   Handshake,
   Landmark,
-  Link,
   Linkedin,
   Mail,
   Menu,
@@ -57,6 +55,7 @@ const COMPARISON_COLORS = [
 const SCREEN_ROUTES = {
   home: "/",
   about: "/about",
+  services: "/services",
   "assessment-home": "/diagnostic"
 };
 const ROUTE_SCREENS = new Map(Object.entries(SCREEN_ROUTES).map(([screen, path]) => [path, screen]));
@@ -70,13 +69,22 @@ function publicScreenPath(screenName) {
   return SCREEN_ROUTES[screenName] ?? null;
 }
 
-function updateBrowserRoute(screenName, mode = "push") {
+function updateBrowserRoute(screenName, mode = "push", search = "") {
   if (typeof window === "undefined") return;
   const path = publicScreenPath(screenName);
   if (!path) return;
-  const nextUrl = path;
+  const nextUrl = `${path}${search}`;
   if (nextUrl === `${window.location.pathname}${window.location.search}`) return;
   window.history[mode === "replace" ? "replaceState" : "pushState"]({}, "", nextUrl);
+}
+
+function buildDiagnosticSearch(groupId, language, view = "") {
+  const params = new URLSearchParams();
+  if (groupId) params.set("group", groupId);
+  if (language) params.set("lang", language);
+  if (view) params.set("view", view);
+  const query = params.toString();
+  return query ? `?${query}` : "";
 }
 
 function useViewportMatch(query) {
@@ -1055,22 +1063,24 @@ export default function App() {
     }
 
     const linkLanguage = params.get("lang") === "es" ? "es" : "en";
+    const requestedComparison = params.get("view") === "comparison";
     const existingGroup = getStoredGroup(groupId);
     setLanguage(linkLanguage);
     setPendingGroupId(groupId);
     setActiveMode("full");
 
-    if (existingGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
+    if (requestedComparison && existingGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
       setActiveComparisonGroup(existingGroup);
       setScreen("comparison");
       return;
     }
 
-    setScreen("assessment");
+    setActiveComparisonGroup(null);
+    setScreen("assessment-home");
     fetchComparisonGroup(groupId).then((group) => {
       if (!group?.participants?.length) return;
       setGroupRefresh((value) => value + 1);
-      if (group.participants.length >= MIN_COMPARISON_PARTICIPANTS) {
+      if (requestedComparison && group.participants.length >= MIN_COMPARISON_PARTICIPANTS) {
         setActiveComparisonGroup(group);
         setScreen("comparison");
       }
@@ -1100,14 +1110,16 @@ export default function App() {
   }, [latestResult]);
 
   function startMode(mode) {
+    const groupIdForRun = pendingGroupId;
+    const diagnosticSearch = groupIdForRun ? buildDiagnosticSearch(groupIdForRun, language) : "";
     clearAssessmentDraft();
     setAssessmentDraft(null);
     setShowResumePrompt(false);
-    setPendingGroupId(null);
+    setPendingGroupId(groupIdForRun ?? null);
     setActiveComparisonGroup(null);
     setActiveMode(mode);
     setScreen("assessment");
-    updateBrowserRoute("assessment-home");
+    updateBrowserRoute("assessment-home", "push", diagnosticSearch);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1175,15 +1187,18 @@ export default function App() {
   function resumeAssessmentDraft() {
     const draft = assessmentDraft ?? loadAssessmentDraft();
     if (!draft) return;
+    const draftLanguage = draft.language === "es" ? "es" : "en";
+    const draftGroupId = draft.pendingGroupId ?? null;
+    const diagnosticSearch = draftGroupId ? buildDiagnosticSearch(draftGroupId, draftLanguage) : "";
 
-    setLanguage(draft.language === "es" ? "es" : "en");
+    setLanguage(draftLanguage);
     setActiveComparisonGroup(null);
-    setPendingGroupId(draft.pendingGroupId ?? null);
+    setPendingGroupId(draftGroupId);
     setActiveMode(draft.mode ?? "full");
     setAssessmentDraft(draft);
     setShowResumePrompt(false);
     setScreen("assessment");
-    updateBrowserRoute("assessment-home");
+    updateBrowserRoute("assessment-home", "push", diagnosticSearch);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1225,11 +1240,15 @@ export default function App() {
       if (comparisonGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
         setActiveComparisonGroup(comparisonGroup);
         setScreen("comparison");
-        const params = new URLSearchParams({
-          group: comparisonGroup.id,
-          lang: resultPackage.language || language
-        });
-        window.history.pushState({}, "", `${SCREEN_ROUTES["assessment-home"]}?${params.toString()}`);
+        window.history.pushState(
+          {},
+          "",
+          `${SCREEN_ROUTES["assessment-home"]}${buildDiagnosticSearch(
+            comparisonGroup.id,
+            resultPackage.language || language,
+            "comparison"
+          )}`
+        );
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
@@ -1280,12 +1299,34 @@ export default function App() {
       setGroupRefresh((value) => value + 1);
     }
 
-    const savedGroup = getStoredGroup(group.id) ?? group;
+    const response = await persistResult(updatedResult);
+    const serverGroup = response.group ? saveStoredGroup(response.group) : null;
+    const savedGroup = saveStoredGroup({
+      ...group,
+      ...(serverGroup ?? {}),
+      inviteLink: inviteLink || serverGroup?.inviteLink || group.inviteLink || ""
+    });
+    if (commitToLatest) {
+      setGroupRefresh((value) => value + 1);
+    }
+
+    let invitationEmail = null;
+    if (updatedResult.inviteEmail) {
+      invitationEmail = await sendInvitationEmail({
+        invitedEmail: updatedResult.inviteEmail,
+        inviteLink,
+        groupId: group.id,
+        language: updatedResult.language || language,
+        inviterName: updatedResult.profile?.name,
+        inviterEmail: updatedResult.profile?.email
+      });
+    }
 
     return {
-      group: savedGroup,
+      group: savedGroup ?? serverGroup ?? group,
       inviteLink,
-      resultPackage: updatedResult
+      resultPackage: updatedResult,
+      invitationEmail
     };
   }
 
@@ -1298,8 +1339,11 @@ export default function App() {
     }
     setActiveComparisonGroup(group);
     setScreen("comparison");
-    const params = new URLSearchParams({ group: group.id, lang: language });
-    window.history.pushState({}, "", `${SCREEN_ROUTES["assessment-home"]}?${params.toString()}`);
+    window.history.pushState(
+      {},
+      "",
+      `${SCREEN_ROUTES["assessment-home"]}${buildDiagnosticSearch(group.id, language, "comparison")}`
+    );
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1331,6 +1375,13 @@ export default function App() {
         <AboutPage
           copy={copy}
           language={language}
+          onNavigate={navigate}
+        />
+      )}
+
+      {screen === "services" && (
+        <ServicesPage
+          copy={copy}
           onNavigate={navigate}
         />
       )}
@@ -1382,7 +1433,7 @@ export default function App() {
         />
       )}
 
-      {["home", "about", "assessment-home", "results", "comparison"].includes(screen) && (
+      {["home", "about", "services", "assessment-home", "results", "comparison"].includes(screen) && (
         <SiteFooter
           copy={copy}
           language={language}
@@ -1429,6 +1480,7 @@ function SiteHeader({
   const navItems = [
     { id: "home", label: copy.nav.home },
     { id: "about", label: copy.nav.about },
+    { id: "services", label: copy.nav.services },
     { id: "assessment-home", label: copy.nav.assessment, secondary: true }
   ];
 
@@ -1766,12 +1818,18 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
       label: language === "es" ? "años dentro de empresa familiar" : "years inside family enterprise"
     },
     {
-      value: "3",
-      label: language === "es" ? "roles vividos: familia, propiedad, consejo" : "lived roles: family, owner, board"
+      value: "4",
+      label:
+        language === "es"
+          ? "espacios vividos: familia, propiedad, consejo, liderazgo"
+          : "lived spaces: family, ownership, board, leadership"
     },
     {
-      value: "EN/ES",
-      label: language === "es" ? "asesoría bilingüe" : "bilingual advisory"
+      value: "NextGen",
+      label:
+        language === "es"
+          ? "conecta generaciones senior y siguiente generación"
+          : "bridges senior and next-generation perspectives"
     }
   ];
 
@@ -1843,6 +1901,10 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
       </section>
 
       <VideoPlaceholderSection video={copy.home.video} language={language} />
+
+      <HomeChallengeSection copy={copy} />
+
+      <HomeServicesPreview copy={copy} onNavigate={onNavigate} />
 
       <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-[1.18fr_0.82fr]">
@@ -1987,6 +2049,222 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
         </div>
       </section>
     </section>
+  );
+}
+
+function HomeServicesPreview({ copy, onNavigate }) {
+  const icons = [Compass, Landmark, Handshake, UsersRound];
+
+  return (
+    <section className="border-b border-forest/10 bg-parchment/42 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto max-w-[1400px]">
+        <div className="grid gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-end">
+          <div className="max-w-3xl">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+              {copy.services.previewLabel}
+            </p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+              {copy.services.previewTitle}
+            </h2>
+            <p className="mt-4 text-base leading-8 text-ink/74 sm:text-lg">
+              {copy.services.previewBody}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99] lg:justify-self-end"
+            onClick={() => onNavigate("services")}
+          >
+            {copy.services.previewCta}
+            <ArrowRight aria-hidden="true" size={18} />
+          </button>
+        </div>
+
+        <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {copy.services.items.map((service, index) => {
+            const Icon = icons[index] ?? Compass;
+
+            return (
+              <article
+                key={service.title}
+                className="flex min-h-[230px] flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
+              >
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
+                  <Icon aria-hidden="true" size={20} />
+                </div>
+                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
+                  {service.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-ink/72">{service.summary}</p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeChallengeSection({ copy }) {
+  const icons = [Landmark, CalendarDays, Scale, UsersRound, Compass, ShieldCheck];
+
+  return (
+    <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-start">
+        <div className="max-w-2xl lg:sticky lg:top-28">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {copy.home.valueTitle}
+          </p>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+            {copy.home.challengeTitle}
+          </h2>
+          <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg">
+            {copy.home.challengeIntro}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {copy.home.challengeItems.map((item, index) => {
+            const Icon = icons[index] ?? Compass;
+
+            return (
+              <article
+                key={item.title}
+                className="rounded-lg border border-forest/10 bg-parchment/44 p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:bg-parchment/62 hover:shadow-soft sm:p-6"
+              >
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
+                  <Icon aria-hidden="true" size={20} />
+                </div>
+                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">
+                  {item.body}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ServicesPage({ copy, onNavigate }) {
+  const serviceIcons = [Compass, Landmark, Handshake, UsersRound];
+
+  return (
+    <section className="w-full">
+      <section className="border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#f4efe6_48%,#e7ddcf_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-end">
+          <div className="max-w-4xl">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+              {copy.services.label}
+            </p>
+            <h1 className="mt-4 font-display text-[2.65rem] font-semibold leading-[1.04] tracking-tight text-forest sm:text-6xl xl:text-7xl">
+              {copy.services.title}
+            </h1>
+            <p className="mt-6 max-w-3xl text-base leading-8 text-ink/74 sm:text-lg sm:leading-9">
+              {copy.services.intro}
+            </p>
+          </div>
+
+          <aside className="rounded-lg border border-forest/10 bg-white/76 p-6 shadow-line backdrop-blur sm:p-8">
+            <h2 className="font-display text-3xl font-semibold leading-tight text-forest">
+              {copy.services.promiseTitle}
+            </h2>
+            <p className="mt-4 text-base leading-8 text-ink/72">
+              {copy.services.promiseBody}
+            </p>
+          </aside>
+        </div>
+      </section>
+
+      <section className="bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-2">
+          {copy.services.items.map((service, index) => {
+            const Icon = serviceIcons[index] ?? Compass;
+            return (
+              <ServiceDetailCard
+                key={service.title}
+                service={service}
+                icon={Icon}
+                labels={copy.services}
+                index={index}
+              />
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-8 rounded-lg bg-forest p-6 text-white shadow-soft sm:p-10 lg:grid-cols-[0.72fr_0.28fr] lg:items-center">
+          <div>
+            <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+              {copy.services.ctaTitle}
+            </h2>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-white/76 sm:text-lg">
+              {copy.services.ctaBody}
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <button
+              type="button"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99]"
+              onClick={() => onNavigate("assessment-home")}
+            >
+              {copy.services.diagnosticCta}
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/24 px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
+              onClick={() => onNavigate("about")}
+            >
+              {copy.services.aboutCta}
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+          </div>
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function ServiceDetailCard({ service, icon: Icon, labels, index }) {
+  return (
+    <article
+      className="rounded-lg border border-forest/10 bg-parchment/46 p-6 shadow-line transition duration-200 hover:-translate-y-1 hover:bg-parchment/62 hover:shadow-soft sm:p-8"
+      style={{ "--index": index }}
+    >
+      <div className="flex items-start justify-between gap-5">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-forest text-white">
+          <Icon aria-hidden="true" size={22} />
+        </div>
+        <span className="font-display text-5xl font-semibold leading-none text-copper/30">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      </div>
+      <h2 className="mt-6 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
+        {service.title}
+      </h2>
+      <p className="mt-4 text-base leading-8 text-ink/74">{service.summary}</p>
+
+      <div className="mt-6 grid gap-4">
+        <ServiceDetail label={labels.forLabel} body={service.forWhom} />
+        <ServiceDetail label={labels.helpsLabel} body={service.helpsWith} />
+        <ServiceDetail label={labels.outcomeLabel} body={service.outcome} />
+      </div>
+    </article>
+  );
+}
+
+function ServiceDetail({ label, body }) {
+  return (
+    <div className="rounded-md border border-forest/10 bg-white/76 p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">{label}</p>
+      <p className="mt-2 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">{body}</p>
+    </div>
   );
 }
 
@@ -2275,6 +2553,8 @@ function AboutPage({ copy, language, onNavigate }) {
         </div>
       </section>
 
+      <AboutContextSection copy={copy} />
+
       <section className="border-y border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px]">
           <div className="grid gap-5 lg:grid-cols-2">
@@ -2342,6 +2622,51 @@ function AboutPage({ copy, language, onNavigate }) {
         </div>
       </section>
 
+    </section>
+  );
+}
+
+function AboutContextSection({ copy }) {
+  const icons = [UsersRound, Landmark, Compass, ShieldCheck];
+
+  return (
+    <section className="border-y border-forest/10 bg-parchment/46 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.43fr_0.57fr] lg:items-start">
+        <div className="max-w-3xl lg:sticky lg:top-28">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {copy.about.contextLabel}
+          </p>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+            {copy.about.contextTitle}
+          </h2>
+          <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg">
+            {copy.about.contextBody}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          {copy.about.contextItems.map((item, index) => {
+            const Icon = icons[index] ?? Compass;
+
+            return (
+              <article
+                key={item.title}
+                className="rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
+              >
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
+                  <Icon aria-hidden="true" size={20} />
+                </div>
+                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">
+                  {item.body}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
@@ -3486,20 +3811,15 @@ function ResultsScreen({
   onRefreshGroup
 }) {
   const [invitePromptOpen, setInvitePromptOpen] = useState(false);
-  const [inviteLinkModalOpen, setInviteLinkModalOpen] = useState(false);
-  const [inviteLinkModalLink, setInviteLinkModalLink] = useState(
-    resultPackage.groupId ? getInviteUrl(resultPackage.groupId, language) : ""
-  );
-  const [inviteLinkPending, setInviteLinkPending] = useState(false);
-  const [inviteLinkCopied, setInviteLinkCopied] = useState(false);
-  const [inviteLinkError, setInviteLinkError] = useState("");
+  const [inviteSentEmail, setInviteSentEmail] = useState("");
+  const [inviteSentShouldSave, setInviteSentShouldSave] = useState(false);
   const [submitPending, setSubmitPending] = useState(false);
   const [submitted, setSubmitted] = useState(
     () => Boolean(resultPackage.finalizedAt || resultPackage.reportRequest?.status === "requested")
   );
-  const [inviteReadyResultPackage, setInviteReadyResultPackage] = useState(null);
+  const [resultPackageForSave, setResultPackageForSave] = useState(resultPackage);
+  const [currentGroup, setCurrentGroup] = useState(group);
   const invitePanelRef = useRef(null);
-  const resultPackageForSave = inviteReadyResultPackage ?? resultPackage;
   const { result } = resultPackageForSave;
   const stage = result.stage;
   const unknownCount = result.transparency?.unknownCount ?? 0;
@@ -3528,8 +3848,27 @@ function ResultsScreen({
   const finalCopy = getFinalActionCopy(language);
   const hasInvite = Boolean(resultPackageForSave.groupId);
   const [submitError, setSubmitError] = useState("");
+  const [invitePromptEmail, setInvitePromptEmail] = useState("");
+  const [invitePromptError, setInvitePromptError] = useState("");
+  const [invitePromptPending, setInvitePromptPending] = useState(false);
+  const submitInFlightRef = useRef(false);
+  const knownParticipantCount = currentGroup?.participants?.length ?? 0;
+  const isCompletingFullGroup =
+    Boolean(resultPackageForSave.groupId) &&
+    !submitted &&
+    knownParticipantCount >= MAX_GROUP_PARTICIPANTS;
+
+  useEffect(() => {
+    setResultPackageForSave(resultPackage);
+  }, [resultPackage]);
+
+  useEffect(() => {
+    setCurrentGroup(group);
+  }, [group]);
 
   async function submitResult({ allowWithoutInvite = false } = {}) {
+    if (submitInFlightRef.current || submitted) return;
+
     if (!hasInvite && !allowWithoutInvite) {
       setInvitePromptOpen(true);
       return;
@@ -3537,6 +3876,7 @@ function ResultsScreen({
 
     setSubmitError("");
     setSubmitPending(true);
+    submitInFlightRef.current = true;
     try {
       const submittedAt = new Date().toISOString();
       const advisorPillarNotes = buildPillarBreakdowns(
@@ -3581,34 +3921,56 @@ function ResultsScreen({
     } catch (error) {
       setSubmitError(getSaveErrorMessage(error, finalCopy));
     } finally {
+      submitInFlightRef.current = false;
       setSubmitPending(false);
     }
   }
 
-  async function createInviteLinkFromModal() {
-    setInviteLinkPending(true);
-    setInviteLinkError("");
+  function requestSummaryReport() {
+    if (isCompletingFullGroup) {
+      submitResult({ allowWithoutInvite: true });
+      return;
+    }
+
+    setInvitePromptOpen(true);
+  }
+
+  function closeInvitePrompt() {
+    setInvitePromptOpen(false);
+    setInvitePromptError("");
+  }
+
+  async function sendPromptInvite() {
+    const nextInviteEmail = invitePromptEmail.trim();
+    if (!nextInviteEmail) {
+      setInvitePromptError(copy.comparison.inviteEmailRequired);
+      return;
+    }
+
+    setInvitePromptPending(true);
+    setInvitePromptError("");
     try {
-      const next = await onCreateInvite(resultPackage, "", { commitToLatest: false });
-      setInviteLinkModalLink(next.inviteLink);
-      setInviteReadyResultPackage(next.resultPackage ?? null);
-    } catch {
-      setInviteLinkError(finalCopy.inviteLinkError);
+      const next = await onCreateInvite(resultPackageForSave, nextInviteEmail);
+      if (next?.resultPackage) setResultPackageForSave(next.resultPackage);
+      if (next?.group) setCurrentGroup(next.group);
+      setInvitePromptEmail("");
+      setInvitePromptOpen(false);
+      setInviteSentShouldSave(true);
+      setInviteSentEmail(nextInviteEmail);
+    } catch (error) {
+      setInvitePromptError(copy.comparison.inviteSendError);
     } finally {
-      setInviteLinkPending(false);
+      setInvitePromptPending(false);
     }
   }
 
-  async function copyModalInviteLink() {
-    if (!inviteLinkModalLink) return;
-    await navigator.clipboard.writeText(inviteLinkModalLink);
-    setInviteLinkCopied(true);
-    window.setTimeout(() => setInviteLinkCopied(false), 1600);
-  }
+  async function closeInviteSentModal({ save = false } = {}) {
+    if (save && !submitted) {
+      await submitResult({ allowWithoutInvite: true });
+    }
 
-  async function finishAfterInviteLink() {
-    setInviteLinkModalOpen(false);
-    await submitResult({ allowWithoutInvite: true });
+    setInviteSentEmail("");
+    setInviteSentShouldSave(false);
   }
 
   return (
@@ -3768,18 +4130,28 @@ function ResultsScreen({
             <InviteFamilyPanel
               copy={copy}
               language={language}
-              resultPackage={resultPackage}
-              group={group}
-              onCreateInvite={onCreateInvite}
+              resultPackage={resultPackageForSave}
+              group={currentGroup}
+              onCreateInvite={async (...args) => {
+                const next = await onCreateInvite(...args);
+                if (next?.resultPackage) setResultPackageForSave(next.resultPackage);
+                if (next?.group) setCurrentGroup(next.group);
+                return next;
+              }}
               onViewComparison={onViewComparison}
               onRefreshGroup={onRefreshGroup}
+              onInviteSent={(email) => {
+                setInviteSentShouldSave(false);
+                setInviteSentEmail(email);
+              }}
+              resultIsSaved={submitted}
               panelRef={invitePanelRef}
               embedded
             >
               <button
                 type="button"
                 className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
-                onClick={() => setInvitePromptOpen(true)}
+                onClick={requestSummaryReport}
                 disabled={submitPending || submitted}
               >
                 {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
@@ -3814,7 +4186,7 @@ function ResultsScreen({
               <button
                 type="button"
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/12 text-forest hover:border-copper"
-                onClick={() => setInvitePromptOpen(false)}
+                onClick={closeInvitePrompt}
                 aria-label={finalCopy.close}
               >
                 <X aria-hidden="true" size={18} />
@@ -3825,17 +4197,36 @@ function ResultsScreen({
               <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
               <p>{finalCopy.invitePrivacyNote}</p>
             </div>
+            <label className="mt-5 block">
+              <span className="mb-2 block text-sm font-semibold text-forest">
+                {copy.comparison.inviteEmail}
+              </span>
+              <input
+                className="min-h-12 w-full rounded-md border border-forest/15 bg-white px-3 text-sm text-ink outline-none transition focus:border-copper"
+                value={invitePromptEmail}
+                onChange={(event) => {
+                  setInvitePromptEmail(event.target.value);
+                  setInvitePromptError("");
+                }}
+                placeholder={copy.comparison.inviteEmailPlaceholder}
+                type="email"
+                autoComplete="email"
+              />
+            </label>
+            {invitePromptError && (
+              <p className="mt-3 text-sm font-semibold text-copper" role="alert">
+                {invitePromptError}
+              </p>
+            )}
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2"
-                onClick={() => {
-                  setInvitePromptOpen(false);
-                  setInviteLinkModalOpen(true);
-                }}
+                className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/60"
+                onClick={sendPromptInvite}
+                disabled={invitePromptPending}
               >
-                {finalCopy.inviteFirst}
-                <UsersRound aria-hidden="true" size={18} />
+                {invitePromptPending ? copy.comparison.sendingInvite : copy.comparison.generateInvite}
+                <Send aria-hidden="true" size={18} />
               </button>
               <button
                 type="button"
@@ -3850,79 +4241,41 @@ function ResultsScreen({
           </div>
         </ResultModalOverlay>
       )}
-      {inviteLinkModalOpen && (
+      {inviteSentEmail && (
         <ResultModalOverlay>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
             <div className="flex items-start justify-between gap-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-                  {finalCopy.inviteLinkLabel}
+                  {copy.comparison.inviteSent}
                 </p>
                 <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest">
-                  {finalCopy.inviteLinkTitle}
+                  {copy.comparison.inviteSentModalTitle}
                 </h2>
               </div>
               <button
                 type="button"
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/12 text-forest hover:border-copper"
-                onClick={() => setInviteLinkModalOpen(false)}
+                onClick={() => closeInviteSentModal()}
                 aria-label={finalCopy.close}
               >
                 <X aria-hidden="true" size={18} />
               </button>
             </div>
-            <p className="mt-4 text-base leading-7 text-ink/72">{finalCopy.inviteLinkBody}</p>
+            <p className="mt-4 text-base leading-7 text-ink/72">
+              {copy.comparison.inviteSentModalBody.replace("{email}", inviteSentEmail)}
+            </p>
             <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/72">
               <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
-              <p>{finalCopy.invitePrivacyNote}</p>
+              <p>{copy.comparison.invitePrivacyNote}</p>
             </div>
-
-            {inviteLinkModalLink ? (
-              <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
-                  {copy.comparison.inviteReady}
-                </p>
-                <p className="mt-3 break-all rounded-md bg-white px-3 py-3 text-sm leading-6 text-ink/78">
-                  {inviteLinkModalLink}
-                </p>
-                <p className="mt-3 text-sm leading-6 text-ink/70">{finalCopy.inviteShareContext}</p>
-                <p className="mt-3 rounded-md border border-copper/20 bg-copper/10 px-3 py-2 text-sm font-semibold leading-6 text-forest">
-                  {finalCopy.inviteSaveReminder}
-                </p>
-                <button
-                  type="button"
-                  className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
-                  onClick={copyModalInviteLink}
-                >
-                  <Copy aria-hidden="true" size={16} />
-                  {inviteLinkCopied ? copy.comparison.copied : copy.comparison.copyInvite}
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/60"
-                onClick={createInviteLinkFromModal}
-                disabled={inviteLinkPending}
-              >
-                {inviteLinkPending ? finalCopy.creatingInviteLink : finalCopy.createInviteLink}
-                <Link aria-hidden="true" size={18} />
-              </button>
-            )}
-
-            {inviteLinkError && (
-              <p className="mt-4 rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
-                {inviteLinkError}
-              </p>
-            )}
-
             <button
               type="button"
-              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/16 bg-white px-4 text-sm font-semibold text-forest transition hover:border-copper"
-              onClick={finishAfterInviteLink}
-              disabled={submitPending || !inviteLinkModalLink}
+              className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/60"
+              onClick={() => closeInviteSentModal({ save: inviteSentShouldSave })}
+              disabled={submitPending}
             >
-              {submitPending ? finalCopy.saving : finalCopy.done}
+              {submitPending ? finalCopy.saving : copy.comparison.inviteSentModalDone}
             </button>
           </div>
         </ResultModalOverlay>
@@ -4011,17 +4364,22 @@ function InviteFamilyPanel({
   panelRef,
   wide = false,
   embedded = false,
+  onInviteSent,
+  resultIsSaved = false,
   children
 }) {
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteLink, setInviteLink] = useState(
-    resultPackage.groupId ? getInviteUrl(resultPackage.groupId, language) : ""
-  );
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [invitedEmail, setInvitedEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const [invitePending, setInvitePending] = useState(false);
   const comparisonCopy = copy.comparison;
-  const participantCount = group?.participants?.length ?? 1;
-  const canCompare = Boolean(group?.participants?.length >= 2);
+  const savedParticipantCount = group?.participants?.length ?? 0;
+  const participantCount = Math.min(
+    MAX_GROUP_PARTICIPANTS,
+    Math.max(savedParticipantCount, resultPackage.groupId ? 1 : 0)
+  );
+  const canCompare = savedParticipantCount >= MIN_COMPARISON_PARTICIPANTS;
+  const canViewComparison = canCompare && resultIsSaved;
   const isFull = participantCount >= MAX_GROUP_PARTICIPANTS;
 
   useEffect(() => {
@@ -4034,21 +4392,24 @@ function InviteFamilyPanel({
   }, [canCompare, resultPackage.groupId]);
 
   async function createInvite() {
+    const nextInviteEmail = inviteEmail.trim();
+    if (!nextInviteEmail) {
+      setInviteError(comparisonCopy.inviteEmailRequired);
+      return;
+    }
+
     setInvitePending(true);
+    setInviteError("");
     try {
-      const next = await onCreateInvite(resultPackage, inviteEmail);
-      setInviteLink(next.inviteLink);
+      const next = await onCreateInvite(resultPackage, nextInviteEmail);
+      setInvitedEmail(nextInviteEmail);
       setInviteEmail("");
+      onInviteSent?.(nextInviteEmail);
+    } catch (error) {
+      setInviteError(comparisonCopy.inviteSendError);
     } finally {
       setInvitePending(false);
     }
-  }
-
-  async function copyInviteLink() {
-    if (!inviteLink) return;
-    await navigator.clipboard.writeText(inviteLink);
-    setLinkCopied(true);
-    window.setTimeout(() => setLinkCopied(false), 1600);
   }
 
   return (
@@ -4113,11 +4474,19 @@ function InviteFamilyPanel({
                 <input
                   className="min-h-11 w-full rounded-md border border-forest/15 bg-white px-3 text-sm text-ink outline-none transition focus:border-copper"
                   value={inviteEmail}
-                  onChange={(event) => setInviteEmail(event.target.value)}
+                  onChange={(event) => {
+                    setInviteEmail(event.target.value);
+                    setInviteError("");
+                  }}
                   placeholder={comparisonCopy.inviteEmailPlaceholder}
                   type="email"
                 />
               </label>
+              {inviteError && (
+                <p className="text-sm font-semibold text-copper" role="alert">
+                  {inviteError}
+                </p>
+              )}
               <button
                 type="button"
                 className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
@@ -4125,30 +4494,23 @@ function InviteFamilyPanel({
                 disabled={invitePending}
               >
                 <Send aria-hidden="true" size={17} />
-                {invitePending ? copy.saving : comparisonCopy.generateInvite}
+                {invitePending ? comparisonCopy.sendingInvite : comparisonCopy.generateInvite}
               </button>
             </>
           )}
 
-          {inviteLink && (
+          {invitedEmail && (
             <div className="rounded-lg border border-forest/12 bg-parchment/45 p-3">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
-                {comparisonCopy.inviteReady}
+                {comparisonCopy.inviteSent}
               </p>
-              <p className="mt-2 break-all text-xs leading-5 text-ink/68">{inviteLink}</p>
-              <p className="mt-2 text-xs leading-5 text-muted">{comparisonCopy.inviteNote}</p>
-              <button
-                type="button"
-                className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-forest/16 bg-white px-3 text-sm font-semibold text-forest transition hover:border-copper"
-                onClick={copyInviteLink}
-              >
-                <Copy aria-hidden="true" size={16} />
-                {linkCopied ? comparisonCopy.copied : comparisonCopy.copyInvite}
-              </button>
+              <p className="mt-2 text-xs leading-5 text-muted">
+                {comparisonCopy.inviteSentBody.replace("{email}", invitedEmail)}
+              </p>
             </div>
           )}
 
-          {canCompare && (
+          {canViewComparison && (
             <button
               type="button"
               className="inline-flex min-h-11 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
@@ -4157,6 +4519,12 @@ function InviteFamilyPanel({
               {comparisonCopy.viewComparison}
               <ArrowRight aria-hidden="true" size={17} />
             </button>
+          )}
+
+          {canCompare && !resultIsSaved && resultPackage.groupId && (
+            <p className="rounded-lg border border-copper/20 bg-copper/10 px-3 py-2 text-xs font-semibold leading-5 text-forest">
+              {comparisonCopy.saveBeforeComparison}
+            </p>
           )}
 
           {children}
@@ -4750,17 +5118,17 @@ function getFinalActionCopy(language) {
         "La comparación solo mostrará diferencias por pilar. No compartirá respuestas individuales ni detalles pregunta por pregunta.",
       inviteFirst: "Invitar primero",
       continueAnyway: "Enviar reporte sin invitar",
-      inviteLinkLabel: "Crear liga de invitación",
-      inviteLinkTitle: "Crea una liga para compartir",
+      inviteLinkLabel: "Email de invitación",
+      inviteLinkTitle: "Enviar invitación por email",
       inviteLinkBody:
-        "Por ahora, genera una liga privada y compártela manualmente con la persona que quieres invitar.",
+        "Ingresa el email de la persona que quieres invitar y le enviaremos la liga privada del grupo.",
       inviteShareContext:
-        "Al compartirla, explica que sus respuestas se mantienen privadas y que la comparación solo ayuda a ver temas donde la familia percibe cosas distintas.",
+        "El email incluirá la liga privada para completar el diagnóstico dentro del mismo grupo de comparación.",
       inviteSaveReminder:
-        "Haz clic en Listo para guardar tu diagnóstico y dejar activa esta liga en el registro.",
-      createInviteLink: "Crear liga de invitación",
-      creatingInviteLink: "Creando liga...",
-      inviteLinkError: "No se pudo crear la liga de invitación. Inténtalo de nuevo.",
+        "Después de enviar la invitación, podrás guardar tu diagnóstico y solicitar tu reporte resumen.",
+      createInviteLink: "Enviar invitación por email",
+      creatingInviteLink: "Enviando invitación...",
+      inviteLinkError: "No pudimos enviar la invitación. Intenta de nuevo.",
       error: "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
       apiErrors: {
         "Unable to save assessment result":
@@ -4794,17 +5162,17 @@ function getFinalActionCopy(language) {
       "The comparison only shows pillar-level differences. It will not share individual answers or question-by-question details.",
     inviteFirst: "Invite first",
     continueAnyway: "Send report without inviting",
-    inviteLinkLabel: "Create invitation link",
-    inviteLinkTitle: "Create a link to share",
+    inviteLinkLabel: "Invitation email",
+    inviteLinkTitle: "Send an invitation email",
     inviteLinkBody:
-      "For now, generate a private invitation link and share it manually with the person you want to invite.",
+      "Enter the email of the person you want to invite and we will send them the private group link.",
     inviteShareContext:
-      "When you share it, explain that their answers stay private and the comparison only helps reveal topics where the family sees things differently.",
+      "The email includes the private link to complete the diagnostic in the same comparison group.",
     inviteSaveReminder:
-      "Click Done to save your assessment and keep this invitation link active in the record.",
-    createInviteLink: "Create invitation link",
-    creatingInviteLink: "Creating link...",
-    inviteLinkError: "We could not create the invitation link. Please try again.",
+      "After sending the invitation, you can save your diagnostic and request your summary report.",
+    createInviteLink: "Send invitation email",
+    creatingInviteLink: "Sending invitation...",
+    inviteLinkError: "We could not send the invitation. Please try again.",
     error: "We could not save the assessment. Check the Airtable settings in Vercel and try again.",
     apiErrors: {
       "Unable to save assessment result":
@@ -5008,4 +5376,20 @@ async function persistResult(resultPackage) {
   }
 
   return data;
+}
+
+async function sendInvitationEmail(payload) {
+  const response = await fetch("/api/invitations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.ok !== true) {
+    throw new Error(data.error || "Unable to send invitation email");
+  }
+
+  return data.email;
 }

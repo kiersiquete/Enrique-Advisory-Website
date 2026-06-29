@@ -685,6 +685,7 @@ export const COPY = {
     nav: {
       home: "Home",
       about: "About",
+      services: "Services",
       assessment: "Diagnostic"
     },
     booking: {
@@ -720,11 +721,11 @@ export const COPY = {
       }
     },
     home: {
-      title: "Gilbert helps business families turn sensitive conversations into clear decisions",
+      title: "Gilbert Devlyn Family Enterprise Advisory",
       subtitle:
-        "Advisory for family enterprises navigating ownership, succession, governance, and next-generation roles.",
+        "Guidance for business families navigating ownership, succession, governance, and next-generation roles before pressure turns into conflict.",
       body:
-        "Gilbert Devlyn brings lived experience as a family member, owner, executive, and board participant inside a multigenerational enterprise. He helps families name what is hard to say, organize the conversation, and move toward agreements that can hold under pressure.",
+        "Gilbert Devlyn brings lived experience as a family member, owner, executive, and board participant inside a multigenerational enterprise. He helps families name the conversations that are being avoided, organize who needs to be involved, and move toward agreements that can hold under pressure.",
       gilbertTitle: "Who is Gilbert?",
       gilbertBody:
         "Gilbert Devlyn brings firsthand experience from within a leading third generation family business group. As a family member, owner, and board member, he has been directly involved in decisions that shape continuity across generations.",
@@ -736,20 +737,55 @@ export const COPY = {
         duration: "45 sec video",
         embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
       },
-      primaryCta: "Meet Gilbert",
+      primaryCta: "Learn about Gilbert",
       secondaryCta: "Explore the diagnostic",
       valueTitle: "Why the advisory matters",
       valueBody:
-        "Family business decisions carry more than operational weight: they affect trust, continuity, ownership, and future roles. Gilbert gives families a neutral space to name what is hard to say, align around priorities, and turn sensitive conversations into workable agreements.",
-      businessTitle: "What his consultancy focuses on",
+        "Family business decisions carry more than operational weight. They affect trust, continuity, ownership, and future roles. Gilbert gives families a neutral space to separate the issues, align around priorities, and turn sensitive conversations into workable agreements.",
+      businessTitle: "What Gilbert helps families clarify",
       businessBody:
-        "Gilbert works with families at the intersection of ownership, leadership, and family dynamics, helping move from implicit tensions to clear agreements.",
-      helpingTitle: "Who this is for",
+        "The work sits at the intersection of ownership, leadership, board governance, and family dynamics. The goal is not more theory. It is a clearer path for decisions the family actually has to make.",
+      helpingTitle: "Families usually reach out when",
       helpingItems: [
-        "Founders and senior generations thinking about continuity",
-        "Next-generation members preparing for future roles",
-        "Family shareholders seeking clarity on roles and responsibilities",
-        "Boards navigating the intersection of family and business"
+        "A founder or senior generation wants continuity but has not aligned the family around what comes next",
+        "The next generation wants to participate but roles, expectations, or timing are unclear",
+        "Shareholders need clearer rights, responsibilities, information flow, and decision rules",
+        "A board, family council, or ownership group needs a better way to handle sensitive topics"
+      ],
+      challengeTitle: "The real work is not only governance. It is the conversation behind it.",
+      challengeIntro:
+        "Ownership, succession, board roles, family councils, employment expectations, wealth, and next-generation participation each carry emotion and business consequences. Gilbert helps families separate the issues, decide who belongs in the room, and move from tension to agreements.",
+      challengeItems: [
+        {
+          title: "Ownership",
+          body:
+            "Clarify rights, responsibilities, information flow, and how owners make decisions together."
+        },
+        {
+          title: "Succession",
+          body:
+            "Move from general concern to practical conversations about readiness, timing, criteria, and trust."
+        },
+        {
+          title: "Governance",
+          body:
+            "Make family, ownership, board, and executive roles distinct enough that decisions do not blur."
+        },
+        {
+          title: "Next-generation roles",
+          body:
+            "Create a responsible path for learning, participation, voice, and future leadership."
+        },
+        {
+          title: "Family decision-making",
+          body:
+            "Define who participates, how disagreement is handled, and what rhythm keeps decisions moving."
+        },
+        {
+          title: "Sensitive conversations",
+          body:
+            "Bring difficult topics into a structured setting before silence turns into mistrust."
+        }
       ],
       evidence: {
         label: "Why this matters",
@@ -893,11 +929,11 @@ export const COPY = {
             "Clear roles, responsibilities, and rhythms so decisions endure."
         }
       ],
-      toolTitle: "A diagnostic when the family is ready",
+      toolTitle: "The diagnostic is a first read, not the full advisory work",
       toolParagraphs: [
         "The diagnostic is a light starting point, not the center of the relationship.",
         "It helps a family see where roles, expectations, decisions, and succession conversations may need more structure.",
-        "When used at the right moment, it gives Gilbert and the family a shared language for the first conversation."
+        "When used at the right moment, it gives Gilbert and the family a shared language for the first advisory conversation."
       ],
       toolCta: "See how the diagnostic works",
       ctaTitle: "Learn how Gilbert works with families",
@@ -906,13 +942,81 @@ export const COPY = {
       ctaButton: "Learn about Gilbert",
       ctaNote: "The diagnostic is available when the family is ready for a structured first read."
     },
+    services: {
+      label: "Services",
+      title: "How Gilbert works with business families",
+      intro:
+        "Different families need different kinds of support. Some need a focused project to clarify governance or succession. Others need a board voice, executive coaching, or a private advisory space for one person carrying a sensitive role.",
+      promiseTitle: "Advisory shaped around the decision in front of the family",
+      promiseBody:
+        "The work starts by understanding the family system, the business context, and the conversation that has become difficult to hold. From there, Gilbert helps structure the right forum, sequence the work, and keep the family moving toward decisions it can use.",
+      previewLabel: "How I Help",
+      previewTitle: "Four ways to work with Gilbert",
+      previewBody:
+        "The advisory relationship can be structured as a project, a board role, executive coaching, or a private 1:1 advisory space depending on what the family needs to decide.",
+      previewCta: "Explore services",
+      forLabel: "Who it is for",
+      helpsLabel: "What Gilbert helps with",
+      outcomeLabel: "Likely outcome",
+      items: [
+        {
+          title: "Consulting projects",
+          summary:
+            "Focused advisory projects for families that need structure around governance, succession, ownership, or family decision-making.",
+          forWhom:
+            "Families, ownership groups, family councils, or leadership teams facing a specific transition, unresolved topic, or governance gap.",
+          helpsWith:
+            "Clarifying the issue, mapping who needs to be involved, designing the conversation process, facilitating key sessions, and turning agreements into practical next steps.",
+          outcome:
+            "A clearer decision path, documented agreements or priorities, and a practical rhythm for continuing the work after the project."
+        },
+        {
+          title: "Board service",
+          summary:
+            "Independent board participation for family enterprises that need a voice able to connect business strategy with family context.",
+          forWhom:
+            "Family-owned companies, advisory boards, or boards working through governance maturity, succession, professionalization, or owner alignment.",
+          helpsWith:
+            "Bringing family-enterprise perspective into board discussion, clarifying roles, improving decision preparation, and helping the board understand family dynamics without becoming trapped by them.",
+          outcome:
+            "A board conversation that better separates ownership, management, family, and long-term continuity decisions."
+        },
+        {
+          title: "Executive coaching",
+          summary:
+            "Coaching for leaders operating inside family-business complexity, especially when authority, family expectations, and business performance overlap.",
+          forWhom:
+            "Family executives, non-family executives, successors, or senior leaders who need to lead with clarity while navigating family dynamics.",
+          helpsWith:
+            "Strengthening leadership judgment, preparing for sensitive conversations, managing role boundaries, and translating tension into clearer choices.",
+          outcome:
+            "A leader who can act with more clarity, communicate with more discipline, and handle family-business pressure without avoiding the hard conversation."
+        },
+        {
+          title: "1:1 advisory",
+          summary:
+            "Private advisory for owners, next-generation members, founders, or family leaders who need a confidential thinking partner.",
+          forWhom:
+            "Individuals carrying a sensitive family-business role or preparing for a conversation that affects ownership, succession, leadership, or family trust.",
+          helpsWith:
+            "Thinking through the situation, separating personal and business concerns, preparing the conversation, and deciding what should happen next.",
+          outcome:
+            "A clearer personal position, a more considered next move, and a better chance that the conversation happens with structure instead of impulse."
+        }
+      ],
+      ctaTitle: "Start with the kind of support the moment requires",
+      ctaBody:
+        "Some families begin with a diagnostic. Others begin with a conversation about a specific decision, transition, or governance question.",
+      diagnosticCta: "Use the diagnostic",
+      aboutCta: "Learn about Gilbert"
+    },
     about: {
       label: "About Gilbert",
-      title: "Helping families have the conversations that shape what comes next",
+      title: "Lived family-enterprise experience, used with discretion",
       bio: [
-        "Gilbert Devlyn comes from a multigenerational family business and has worked within the complexity that comes with it: a cousin consortium, a board, a family council, shareholders, and multiple decision-making spaces that do not always align.",
+        "Gilbert Devlyn comes from a multigenerational family business and has worked inside the complexity that often sits behind continuity: a cousin consortium, a board, a family council, shareholders, executives, and multiple decision-making spaces that do not always align.",
         "Across that system, different generations, perspectives, and life stages coexist: founders, siblings, cousins, and next-generation members looking to step in and take a role. Each brings valid expectations, but not always the same timeline or view of the future.",
-        "As a family member, owner, and board participant, he experienced what it takes to operate in that environment, where tensions are real, alignment is often implicit, and progress depends on how conversations are handled.",
+        "As a family member, owner, executive, and board participant, he experienced what it takes to operate in that environment, where tensions are real, alignment is often implicit, and progress depends on how conversations are handled.",
         "He chaired the Family Council and the NextGen Committee, and spent over 12 years working inside the family business, most recently as Human Capital Director. Working across family, ownership, and leadership roles, he learned how to navigate complexity, make conflict more productive, and turn it into decisions that move things forward.",
         "At under 40, he sits close enough to the next generation to understand their perspective and their drive to step in, while also having built experience within the system they are entering. This allows him to work across generations with credibility, helping turn tension into progress rather than friction.",
         "Today, he works with other business families facing similar dynamics, helping them make sense of what is already happening, bring the right conversations to the surface, and move forward with clarity."
@@ -926,6 +1030,32 @@ export const COPY = {
         embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
       },
       heroCta: "See the diagnostic approach",
+      contextLabel: "Why lived experience matters",
+      contextTitle: "He understands the system from more than one seat",
+      contextBody:
+        "Family-enterprise work is rarely about one issue. A succession conversation can touch ownership rights, sibling trust, board authority, employment expectations, wealth, and next-generation identity at the same time. Gilbert's value is not only that he has studied those dynamics. He has lived inside them and learned how to turn them into structured conversations.",
+      contextItems: [
+        {
+          title: "Credibility across generations",
+          body:
+            "Gilbert can relate to senior generations protecting continuity and to next-generation members trying to find a responsible role."
+        },
+        {
+          title: "Strategic, not theoretical",
+          body:
+            "He knows the difference between governance that exists on paper and governance that families actually trust and use."
+        },
+        {
+          title: "Neutral rooms for hard topics",
+          body:
+            "He helps families slow the conversation down, separate the issues, and keep sensitive topics specific enough to move forward."
+        },
+        {
+          title: "Discretion as a working rule",
+          body:
+            "The work often involves private family concerns, owner expectations, and leadership questions. Trust and confidentiality shape the process from the beginning."
+        }
+      ],
       educationTitle: "Education & Certifications",
       educationItems: [
         "International MBA (IMBA), University of Denver — Focus in Family Business Consulting",
@@ -954,7 +1084,8 @@ export const COPY = {
         "Siblings aligning after a founder transition",
         "Shareholders clarifying roles, rights, and expectations",
         "Family councils that exist but are not being fully used",
-        "Important decisions that feel stuck because the conversation hasn't happened"
+        "A board or leadership group trying to separate family concerns from business decisions",
+        "Important decisions that feel stuck because the conversation has not happened"
       ],
       toolTitle: "Why this self-assessment matters",
       toolBody:
@@ -968,9 +1099,9 @@ export const COPY = {
       toolCta: "See how the diagnostic works"
     },
     cookieConsent: {
-      title: "Cookies are required to use the diagnostic",
+      title: "We value your privacy",
       body:
-        "This assessment uses cookies to keep your progress, connect your result to the comparison flow, and support result capture. Please accept cookies before starting or continuing the assessment.",
+        "This site uses cookies to keep your diagnostic progress, connect your result to the comparison flow, and support result capture.",
       privacyLink: "Read the Privacy Policy",
       accept: "Accept cookies",
       reject: "Reject"
@@ -1358,21 +1489,32 @@ export const COPY = {
     comparison: {
       inviteTitle: "Invite another family member",
       inviteBody:
-        "Create a private group link so another person can complete the diagnostic and compare perspectives.",
+        "Enter their email and we will send a private invitation so they can complete the diagnostic and compare perspectives.",
       invitePrivacyNote:
         "Only pillar-level differences are compared. Individual answers are not shared question by question.",
       inviteEmail: "Family member email",
       inviteEmailPlaceholder: "family@example.com",
-      generateInvite: "Generate invite link",
-      copyInvite: "Copy invite link",
+      generateInvite: "Send invitation email",
+      sendingInvite: "Sending invitation...",
+      copyInvite: "Copy email invitation",
       copied: "Link copied",
-      inviteReady: "Invitation link ready",
+      inviteReady: "Invitation email ready",
+      inviteSent: "Invitation sent",
+      inviteSentBody: "We sent the private group link to {email}.",
+      inviteSentModalTitle: "Invitation email sent",
+      inviteSentModalBody:
+        "We sent the private group link to {email}. They can open the email and complete the diagnostic from the same comparison group.",
+      inviteSentModalDone: "Done, save assessment",
       inviteNote:
-        "Email sending will be connected later. For now, share this link directly.",
+        "The invited person will receive the private group link by email.",
+      inviteEmailRequired: "Enter an email address before sending the invitation.",
+      inviteSendError: "We could not send the invitation. Please try again.",
       participantCount: "Completed perspectives",
       maxNote: "Up to 3 people can be compared in this version.",
       inviteLimit: "This comparison group already has 3 completed perspectives.",
       viewComparison: "View group comparison",
+      saveBeforeComparison:
+        "Save this result by requesting your summary report before viewing the group comparison.",
       waitingTitle: "Waiting for another perspective",
       waitingBody:
         "The comparison will open automatically once a second person completes the assessment through this link.",
@@ -1411,6 +1553,7 @@ export const COPY = {
     nav: {
       home: "Inicio",
       about: "Acerca de",
+      services: "Servicios",
       assessment: "Diagnóstico"
     },
     booking: {
@@ -1446,11 +1589,11 @@ export const COPY = {
       }
     },
     home: {
-      title: "Gilbert ayuda a familias empresarias a convertir conversaciones sensibles en decisiones claras",
+      title: "Gilbert Devlyn Asesoría para Empresas Familiares",
       subtitle:
-        "Asesoría para empresas familiares que navegan propiedad, sucesión, gobierno y roles de siguiente generación.",
+        "Acompañamiento para familias empresarias que navegan propiedad, sucesión, gobierno y roles de siguiente generación antes de que la presión se convierta en conflicto.",
       body:
-        "Gilbert Devlyn aporta experiencia vivida como miembro de familia, propietario, ejecutivo y consejero dentro de una empresa multigeneracional. Ayuda a las familias a nombrar lo difícil, ordenar la conversación y avanzar hacia acuerdos que resistan la presión.",
+        "Gilbert Devlyn aporta experiencia vivida como miembro de familia, propietario, ejecutivo y consejero dentro de una empresa multigeneracional. Ayuda a las familias a nombrar las conversaciones que se están evitando, ordenar quiénes deben participar y avanzar hacia acuerdos que resistan la presión.",
       gilbertTitle: "¿Quién es Gilbert?",
       gilbertBody:
         "Gilbert Devlyn aporta experiencia directa desde dentro de un grupo empresarial familiar de tercera generación. Como miembro de familia, propietario y consejero, ha participado directamente en decisiones que dan forma a la continuidad entre generaciones.",
@@ -1466,16 +1609,51 @@ export const COPY = {
       secondaryCta: "Explorar diagnóstico",
       valueTitle: "Por qué importa la asesoría",
       valueBody:
-        "Las decisiones de una empresa familiar tienen más peso que lo operativo: afectan la confianza, la continuidad, la propiedad y los roles futuros. La asesoría ofrece un espacio neutral para nombrar lo difícil, alinear prioridades y convertir conversaciones sensibles en acuerdos posibles.",
-      businessTitle: "Qué hace la asesoría",
+        "Las decisiones de una empresa familiar pesan más que lo operativo. Afectan la confianza, la continuidad, la propiedad y los roles futuros. Gilbert ofrece un espacio neutral para separar los temas, alinear prioridades y convertir conversaciones sensibles en acuerdos posibles.",
+      businessTitle: "Lo que Gilbert ayuda a aclarar",
       businessBody:
-        "Gilbert trabaja con familias en el cruce entre propiedad, liderazgo y dinámica familiar, ayudándolas a pasar de tensiones implícitas a acuerdos claros.",
-      helpingTitle: "A quién ayuda",
+        "El trabajo vive en el cruce entre propiedad, liderazgo, consejo y dinámica familiar. El objetivo no es más teoría, sino un camino más claro para las decisiones que la familia realmente necesita tomar.",
+      helpingTitle: "Las familias suelen buscar apoyo cuando",
       helpingItems: [
-        "Fundadores y generaciones senior que reflexionan sobre continuidad",
-        "Miembros de la siguiente generación que se preparan para futuros roles",
-        "Accionistas familiares que necesitan mayor claridad sobre derechos, responsabilidades y comunicación",
-        "Consejos y equipos directivos que gestionan el cruce entre familia y empresa"
+        "Un fundador o generación senior quiere continuidad, pero la familia no ha alineado qué sigue",
+        "La siguiente generación quiere participar, pero los roles, expectativas o tiempos no están claros",
+        "Los accionistas necesitan mayor claridad sobre derechos, responsabilidades, información y reglas de decisión",
+        "Un consejo, consejo de familia o grupo de propietarios necesita una mejor forma de tratar temas sensibles"
+      ],
+      challengeTitle: "El trabajo real no es solo gobierno. Es la conversación detrás del gobierno.",
+      challengeIntro:
+        "Propiedad, sucesión, roles de consejo, consejos de familia, expectativas laborales, patrimonio y participación de la siguiente generación cargan emociones y consecuencias empresariales. Gilbert ayuda a separar los temas, definir quién debe estar en la conversación y pasar de tensión a acuerdos.",
+      challengeItems: [
+        {
+          title: "Propiedad",
+          body:
+            "Aclarar derechos, responsabilidades, flujo de información y cómo los propietarios toman decisiones juntos."
+        },
+        {
+          title: "Sucesión",
+          body:
+            "Pasar de una preocupación general a conversaciones prácticas sobre preparación, tiempos, criterios y confianza."
+        },
+        {
+          title: "Gobierno",
+          body:
+            "Distinguir roles de familia, propiedad, consejo y dirección para que las decisiones no se confundan."
+        },
+        {
+          title: "Roles de siguiente generación",
+          body:
+            "Crear un camino responsable para aprendizaje, participación, voz y liderazgo futuro."
+        },
+        {
+          title: "Decisión familiar",
+          body:
+            "Definir quién participa, cómo se maneja el desacuerdo y qué ritmo mantiene las decisiones en movimiento."
+        },
+        {
+          title: "Conversaciones sensibles",
+          body:
+            "Llevar temas difíciles a un espacio estructurado antes de que el silencio se convierta en desconfianza."
+        }
       ],
       evidence: {
         label: "Por qué importa",
@@ -1619,11 +1797,11 @@ export const COPY = {
             "Después de la reunión, el trabajo continúa con pasos concretos: acuerdos claros, responsables definidos y un ritmo familiar protegido para que las decisiones sobrevivan más allá de una buena conversación."
         }
       ],
-      toolTitle: "Un diagnóstico cuando la familia está lista",
+      toolTitle: "El diagnóstico es una primera lectura, no todo el trabajo de asesoría",
       toolParagraphs: [
         "El diagnóstico es un punto de partida ligero, no el centro de la relación.",
         "Ayuda a ver dónde los roles, expectativas, decisiones y conversaciones de sucesión pueden necesitar más estructura.",
-        "Usado en el momento correcto, le da a Gilbert y a la familia un lenguaje compartido para la primera conversación."
+        "Usado en el momento correcto, le da a Gilbert y a la familia un lenguaje compartido para la primera conversación de asesoría."
       ],
       toolCta: "Ver cómo funciona el diagnóstico",
       ctaTitle: "Conoce cómo trabaja Gilbert con las familias",
@@ -1632,11 +1810,79 @@ export const COPY = {
       ctaButton: "Aprender sobre Gilbert",
       ctaNote: "El diagnóstico está disponible cuando la familia esté lista para una primera lectura estructurada."
     },
+    services: {
+      label: "Servicios",
+      title: "Cómo trabaja Gilbert con familias empresarias",
+      intro:
+        "Cada familia necesita un tipo distinto de apoyo. Algunas necesitan un proyecto concreto para aclarar gobierno o sucesión. Otras necesitan una voz en el consejo, coaching ejecutivo o un espacio privado de asesoría para una persona que carga un rol sensible.",
+      promiseTitle: "Asesoría diseñada alrededor de la decisión que la familia tiene enfrente",
+      promiseBody:
+        "El trabajo empieza por entender el sistema familiar, el contexto del negocio y la conversación que se ha vuelto difícil de sostener. Desde ahí, Gilbert ayuda a estructurar el foro correcto, ordenar el proceso y mantener a la familia avanzando hacia decisiones útiles.",
+      previewLabel: "Cómo ayudo",
+      previewTitle: "Cuatro formas de trabajar con Gilbert",
+      previewBody:
+        "La relación de asesoría puede tomar forma de proyecto, rol de consejo, coaching ejecutivo o espacio privado 1:1 según lo que la familia necesite decidir.",
+      previewCta: "Explorar servicios",
+      forLabel: "Para quién es",
+      helpsLabel: "En qué ayuda Gilbert",
+      outcomeLabel: "Resultado probable",
+      items: [
+        {
+          title: "Proyectos de consultoría",
+          summary:
+            "Proyectos enfocados para familias que necesitan estructura alrededor de gobierno, sucesión, propiedad o toma de decisiones familiares.",
+          forWhom:
+            "Familias, grupos de propietarios, consejos de familia o equipos de liderazgo frente a una transición, tema no resuelto o brecha de gobierno.",
+          helpsWith:
+            "Aclarar el tema, mapear quién debe participar, diseñar el proceso de conversación, facilitar sesiones clave y convertir acuerdos en siguientes pasos prácticos.",
+          outcome:
+            "Un camino de decisión más claro, acuerdos o prioridades documentadas y un ritmo práctico para continuar el trabajo después del proyecto."
+        },
+        {
+          title: "Servicio de consejo",
+          summary:
+            "Participación independiente en consejo para empresas familiares que necesitan una voz capaz de conectar estrategia de negocio con contexto familiar.",
+          forWhom:
+            "Empresas familiares, consejos consultivos o consejos que trabajan madurez de gobierno, sucesión, profesionalización o alineación de propietarios.",
+          helpsWith:
+            "Llevar perspectiva de empresa familiar a la conversación de consejo, aclarar roles, mejorar la preparación de decisiones y ayudar al consejo a entender la dinámica familiar sin quedar atrapado por ella.",
+          outcome:
+            "Una conversación de consejo que separa mejor propiedad, dirección, familia y decisiones de continuidad de largo plazo."
+        },
+        {
+          title: "Coaching ejecutivo",
+          summary:
+            "Coaching para líderes que operan dentro de la complejidad de la empresa familiar, especialmente cuando autoridad, expectativas familiares y desempeño se cruzan.",
+          forWhom:
+            "Ejecutivos familiares, ejecutivos no familiares, sucesores o líderes senior que necesitan liderar con claridad mientras navegan dinámica familiar.",
+          helpsWith:
+            "Fortalecer juicio de liderazgo, preparar conversaciones sensibles, manejar límites de rol y traducir tensión en decisiones más claras.",
+          outcome:
+            "Un líder que actúa con más claridad, comunica con más disciplina y maneja la presión familiar-empresarial sin evitar la conversación difícil."
+        },
+        {
+          title: "Asesoría 1:1",
+          summary:
+            "Asesoría privada para propietarios, miembros de la siguiente generación, fundadores o líderes familiares que necesitan un espacio confidencial para pensar.",
+          forWhom:
+            "Personas que cargan un rol sensible dentro de la empresa familiar o se preparan para una conversación que afecta propiedad, sucesión, liderazgo o confianza familiar.",
+          helpsWith:
+            "Pensar la situación, separar preocupaciones personales y empresariales, preparar la conversación y decidir qué debe pasar después.",
+          outcome:
+            "Una posición personal más clara, un siguiente movimiento más cuidado y mayor posibilidad de que la conversación ocurra con estructura, no por impulso."
+        }
+      ],
+      ctaTitle: "Empieza con el tipo de apoyo que el momento requiere",
+      ctaBody:
+        "Algunas familias empiezan con el diagnóstico. Otras empiezan con una conversación sobre una decisión, transición o pregunta de gobierno específica.",
+      diagnosticCta: "Usar el diagnóstico",
+      aboutCta: "Conocer a Gilbert"
+    },
     about: {
       label: "Acerca de Gilbert",
-      title: "Ayudando a las familias a tener las conversaciones que definen lo que sigue",
+      title: "Experiencia vivida en empresa familiar, usada con discreción",
       bio: [
-        "Gilbert Devlyn creció en una de las familias empresarias más grandes de México. Como miembro, propietario y consejero de Grupo Devlyn, vivió de primera mano lo que significa gestionar la relación entre familia y empresa: las tensiones, las decisiones difíciles y la responsabilidad de proteger un legado que trasciende generaciones.",
+        "Gilbert Devlyn creció en una de las familias empresarias más grandes de México. Como miembro, propietario, ejecutivo y consejero de Grupo Devlyn, vivió de primera mano lo que significa gestionar la relación entre familia y empresa: las tensiones, las decisiones difíciles y la responsabilidad de proteger un legado que trasciende generaciones.",
         "Fue Presidente del Consejo de Familia y del Consejo NextGen de la Familia Devlyn, y pasó más de 12 años trabajando dentro del grupo, más recientemente como Chief Human Capital Officer. Desde roles familiares, de propiedad, liderazgo y consejo, aprendió a navegar complejidad, hacer el conflicto más productivo y convertirlo en decisiones que mueven a la familia hacia adelante.",
         "Con menos de 40 años, está lo suficientemente cerca de la siguiente generación para entender su perspectiva y su deseo de participar, pero también ha construido experiencia dentro del sistema al que esa generación está entrando. Eso le permite trabajar entre generaciones con credibilidad.",
         "Hoy guía a otras familias empresarias en momentos de transición, ayudándolas a entender lo que ya está pasando, traer las conversaciones correctas a la superficie y avanzar con claridad. Gilbert no es un consultor que solo estudió el tema; lo vivió y decidió acompañar a otros en el mismo camino."
@@ -1650,6 +1896,32 @@ export const COPY = {
         embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
       },
       heroCta: "Ver enfoque del diagnóstico",
+      contextLabel: "Por qué importa la experiencia vivida",
+      contextTitle: "Entiende el sistema desde más de un asiento",
+      contextBody:
+        "El trabajo con empresas familiares rara vez trata de un solo tema. Una conversación de sucesión puede tocar derechos de propiedad, confianza entre hermanos, autoridad del consejo, expectativas laborales, patrimonio e identidad de la siguiente generación al mismo tiempo. El valor de Gilbert no está solo en haber estudiado esas dinámicas. Las ha vivido desde dentro y aprendió a convertirlas en conversaciones estructuradas.",
+      contextItems: [
+        {
+          title: "Credibilidad entre generaciones",
+          body:
+            "Gilbert puede entender a generaciones senior que protegen la continuidad y a miembros de la siguiente generación que buscan un rol responsable."
+        },
+        {
+          title: "Estratégico, no teórico",
+          body:
+            "Conoce la diferencia entre el gobierno que existe en papel y el gobierno que la familia realmente usa y en el que confía."
+        },
+        {
+          title: "Espacios neutrales para temas difíciles",
+          body:
+            "Ayuda a bajar la velocidad de la conversación, separar los temas y mantener asuntos sensibles lo suficientemente concretos para avanzar."
+        },
+        {
+          title: "Discreción como regla de trabajo",
+          body:
+            "El trabajo suele involucrar preocupaciones familiares privadas, expectativas de propietarios y preguntas de liderazgo. La confianza y la confidencialidad ordenan el proceso desde el inicio."
+        }
+      ],
       educationTitle: "Educación y Certificaciones",
       educationItems: [
         "International MBA (IMBA), University of Denver — Enfoque en consultoría para empresas familiares",
@@ -1678,6 +1950,7 @@ export const COPY = {
         "Hermanos alineándose después de una transición del fundador",
         "Accionistas aclarando roles, derechos y expectativas",
         "Consejos de familia que existen pero no se aprovechan plenamente",
+        "Un consejo o equipo de liderazgo intentando separar preocupaciones familiares de decisiones empresariales",
         "Decisiones importantes que se sienten estancadas porque la conversación no ha ocurrido"
       ],
       toolTitle: "Por qué importa esta autoevaluación",
@@ -1692,9 +1965,9 @@ export const COPY = {
       toolCta: "Ver cómo funciona el diagnóstico"
     },
     cookieConsent: {
-      title: "Las cookies son necesarias para usar el diagnóstico",
+      title: "Valoramos tu privacidad",
       body:
-        "Este diagnóstico usa cookies para guardar tu avance, conectar tu resultado con el flujo de comparación y apoyar la captura de resultados. Acepta las cookies antes de iniciar o continuar el diagnóstico.",
+        "Este sitio usa cookies para guardar tu avance en el diagnóstico, conectar tu resultado con el flujo de comparación y apoyar la captura de resultados.",
       privacyLink: "Leer la Política de Privacidad",
       accept: "Aceptar cookies",
       reject: "Rechazar"
@@ -2082,21 +2355,32 @@ export const COPY = {
     comparison: {
       inviteTitle: "Invitar a otro familiar",
       inviteBody:
-        "Crea una liga privada de grupo para que otra persona complete el diagnóstico y comparen perspectivas.",
+        "Ingresa su email y enviaremos una invitación privada para que complete el diagnóstico y comparen perspectivas.",
       invitePrivacyNote:
         "Solo se comparan diferencias por pilar. Las respuestas individuales no se comparten pregunta por pregunta.",
       inviteEmail: "Email del familiar",
       inviteEmailPlaceholder: "familiar@correo.com",
-      generateInvite: "Generar liga de invitación",
-      copyInvite: "Copiar liga",
+      generateInvite: "Enviar invitación por email",
+      sendingInvite: "Enviando invitación...",
+      copyInvite: "Copiar invitación",
       copied: "Liga copiada",
-      inviteReady: "Liga de invitación lista",
+      inviteReady: "Email de invitación listo",
+      inviteSent: "Invitación enviada",
+      inviteSentBody: "Enviamos la liga privada de grupo a {email}.",
+      inviteSentModalTitle: "Invitación enviada por email",
+      inviteSentModalBody:
+        "Enviamos la liga privada de grupo a {email}. Esa persona puede abrir el email y completar el diagnóstico dentro del mismo grupo de comparación.",
+      inviteSentModalDone: "Listo, guardar diagnóstico",
       inviteNote:
-        "El envío por email se conectará después. Por ahora, comparte esta liga directamente.",
+        "La persona invitada recibirá la liga privada de grupo por email.",
+      inviteEmailRequired: "Ingresa un email antes de enviar la invitación.",
+      inviteSendError: "No pudimos enviar la invitación. Intenta de nuevo.",
       participantCount: "Perspectivas completadas",
       maxNote: "Hasta 3 personas pueden compararse en esta versión.",
       inviteLimit: "Este grupo ya tiene 3 perspectivas completadas.",
       viewComparison: "Ver comparación del grupo",
+      saveBeforeComparison:
+        "Guarda este resultado solicitando tu reporte resumen antes de ver la comparación del grupo.",
       waitingTitle: "Esperando otra perspectiva",
       waitingBody:
         "La comparación se abrirá automáticamente cuando una segunda persona complete el diagnóstico desde esta liga.",

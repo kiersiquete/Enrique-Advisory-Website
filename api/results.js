@@ -24,11 +24,15 @@ export default async function handler(req, res) {
   try {
     const result = await persistAssessmentToAirtable(body);
     let email;
-    try {
-      email = await sendSummaryReportEmails(body, result, { baseUrl: requestBaseUrl(req) });
-    } catch (emailError) {
-      console.error("Summary email delivery failed", emailError);
-      email = { sent: false, error: "summary-email-delivery-failed" };
+    if (body.reportRequest?.status === "requested") {
+      try {
+        email = await sendSummaryReportEmails(body, result, { baseUrl: requestBaseUrl(req) });
+      } catch (emailError) {
+        console.error("Summary email delivery failed", emailError);
+        email = { sent: false, error: "summary-email-delivery-failed" };
+      }
+    } else {
+      email = { sent: false, skipped: true };
     }
     return res.status(200).json({ ...result, email });
   } catch (error) {

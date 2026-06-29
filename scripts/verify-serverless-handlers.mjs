@@ -109,6 +109,7 @@ globalThis.fetch = async (url, options = {}) => {
 
 const resultsHandler = (await import("../api/results.js")).default;
 const groupsHandler = (await import("../api/groups.js")).default;
+const invitationsHandler = (await import("../api/invitations.js")).default;
 
 const invalidResultResponse = createResponse();
 await resultsHandler({ method: "POST", body: {} }, invalidResultResponse);
@@ -143,7 +144,8 @@ await resultsHandler(
 );
 assert.equal(validResultResponse.statusCode, 200);
 assert.equal(validResultResponse.body.persistence, "airtable");
-assert.equal(validResultResponse.body.email.reason, "no-summary-report-request");
+assert.equal(validResultResponse.body.email.sent, false);
+assert.equal(validResultResponse.body.email.skipped, true);
 
 const stringBodyResultResponse = createResponse();
 await resultsHandler(
@@ -199,6 +201,27 @@ await resultsHandler(
 assert.equal(summaryRequestResponse.statusCode, 200);
 assert.equal(summaryRequestResponse.body.persistence, "airtable");
 assert.equal(summaryRequestResponse.body.email.reason, "missing-smtp-config");
+
+const inviteMethodResponse = createResponse();
+await invitationsHandler({ method: "GET", body: {} }, inviteMethodResponse);
+assert.equal(inviteMethodResponse.statusCode, 405);
+assert.equal(inviteMethodResponse.headers.Allow, "POST");
+
+const invitationResponse = createResponse();
+await invitationsHandler(
+  {
+    method: "POST",
+    body: {
+      invitedEmail: "family@example.com",
+      inviteLink: "https://gilbertdevlyn.com/diagnostic?group=SERVERLESSGROUP&lang=en",
+      language: "en",
+      inviterName: "Kier"
+    }
+  },
+  invitationResponse
+);
+assert.equal(invitationResponse.statusCode, 200);
+assert.equal(invitationResponse.body.email.reason, "missing-smtp-config");
 
 const missingGroupResponse = createResponse();
 await groupsHandler({ method: "GET", query: {} }, missingGroupResponse);

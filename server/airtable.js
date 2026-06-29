@@ -265,7 +265,7 @@ function validateAssessmentBody(body = {}) {
   }
 }
 
-function respondentFields(body, now) {
+function respondentFields(body, now, assessmentKey = "") {
   const profile = body.profile ?? {};
 
   return {
@@ -282,15 +282,21 @@ function respondentFields(body, now) {
     "Consent Accepted": "Yes",
     Source: "Website Self-Assessment",
     "Created At": formatDateTimeForAirtable(body.createdAt || now),
-    "Last Assessment At": formatDateTimeForAirtable(now)
+    "Last Assessment At": formatDateTimeForAirtable(now),
+    Notes: assessmentKey ? `Assessment key: ${assessmentKey}` : ""
   };
 }
 
-async function upsertRespondent(body, now) {
+async function upsertRespondent(body, now, sessionKey) {
   const email = normalizedEmail(body);
   if (!email) return null;
 
-  return createRecord("respondents", respondentFields(body, now));
+  const assessmentKey = sessionKey || sessionKeyFor(body);
+  return upsertByFormula(
+    "respondents",
+    `{Notes} = '${escapeFormulaValue(`Assessment key: ${assessmentKey}`)}'`,
+    respondentFields(body, now, assessmentKey)
+  );
 }
 
 function sessionFields(body, sessionKey, now) {
@@ -413,7 +419,7 @@ export async function persistAssessmentToAirtable(body) {
   const now = new Date().toISOString();
   const sessionKey = sessionKeyFor(normalizedBody);
 
-  await upsertRespondent(normalizedBody, now);
+  await upsertRespondent(normalizedBody, now, sessionKey);
 
   await upsertByFormula(
     "sessions",
