@@ -51,8 +51,13 @@ const app = createApp({
     if (groupId === "FAIL") throw new Error("Lookup failed");
     return { id: groupId, participants: [] };
   },
-  async sendSummaryEmails(body, result) {
-    calls.push({ type: "email", body, result });
+  async getGroupCount(groupId) {
+    calls.push({ type: "group-count", groupId });
+    if (groupId === "FAIL") throw new Error("Lookup failed");
+    return groupId === "FULLGROUP" ? 3 : 1;
+  },
+  async sendSummaryEmails(body, result, options) {
+    calls.push({ type: "email", body, result, options });
     return { skipped: true, reason: "test-email-sender" };
   },
   async sendInviteEmail(body) {
@@ -76,12 +81,13 @@ console.error = () => {};
 try {
   const saveOk = await requestJson(baseUrl, "/api/results", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Origin: "http://localhost:5173" },
     body: JSON.stringify({ profile: { email: "kier@example.com" } })
   });
   assert.equal(saveOk.response.status, 200);
   assert.equal(saveOk.body.persistence, "airtable");
   assert.equal(saveOk.body.email.reason, "test-email-sender");
+  assert.equal(calls.find((call) => call.type === "email").options.baseUrl, "http://localhost:5173");
 
   const validation = await requestJson(baseUrl, "/api/results", {
     method: "POST",
@@ -122,22 +128,9 @@ try {
   assert.equal(inviteWrongMethod.response.headers.get("allow"), "POST");
   assert.equal(inviteWrongMethod.body.error, "Method not allowed");
 
-  const missingGroup = await requestJson(baseUrl, "/api/groups");
-  assert.equal(missingGroup.response.status, 400);
-  assert.equal(missingGroup.body.error, "Missing comparison group key");
-
-  const groupOk = await requestJson(baseUrl, "/api/groups?group=GROUP123");
-  assert.equal(groupOk.response.status, 200);
-  assert.equal(groupOk.body.group.id, "GROUP123");
-
-  const groupFailure = await requestJson(baseUrl, "/api/groups?group=FAIL");
-  assert.equal(groupFailure.response.status, 500);
-  assert.equal(groupFailure.body.error, "Unable to load comparison group");
-
-  const groupWrongMethod = await requestJson(baseUrl, "/api/groups", { method: "POST" });
-  assert.equal(groupWrongMethod.response.status, 405);
-  assert.equal(groupWrongMethod.response.headers.get("allow"), "GET");
-  assert.equal(groupWrongMethod.body.error, "Method not allowed");
+  const groupsRemoved = await requestText(baseUrl, "/api/groups?group=GROUP123");
+  assert.notEqual(groupsRemoved.response.headers.get("content-type")?.split(";")[0], "application/json");
+  assert.doesNotMatch(groupsRemoved.body, /"participants"/);
 
   const comparisonReady = await requestJson(baseUrl, "/api/results", {
     method: "POST",
@@ -160,6 +153,28 @@ try {
   const comparisonWrongMethod = await requestJson(baseUrl, "/api/comparison", { method: "POST" });
   assert.equal(comparisonWrongMethod.response.status, 405);
   assert.equal(comparisonWrongMethod.response.headers.get("allow"), "GET");
+
+  const missingGroupStatus = await requestJson(baseUrl, "/api/group-status");
+  assert.equal(missingGroupStatus.response.status, 400);
+  assert.equal(missingGroupStatus.body.error, "Missing comparison group key");
+
+  const groupStatusOpen = await requestJson(baseUrl, "/api/group-status?group=OPENGROUP");
+  assert.equal(groupStatusOpen.response.status, 200);
+  assert.equal(groupStatusOpen.body.participantCount, 1);
+  assert.equal(groupStatusOpen.body.maxParticipants, 3);
+  assert.equal(groupStatusOpen.body.group, undefined);
+  assert.equal(groupStatusOpen.body.participants, undefined);
+
+  const groupStatusFull = await requestJson(baseUrl, "/api/group-status?group=FULLGROUP");
+  assert.equal(groupStatusFull.response.status, 200);
+  assert.equal(groupStatusFull.body.participantCount, 3);
+
+  const groupStatusFailure = await requestJson(baseUrl, "/api/group-status?group=FAIL");
+  assert.equal(groupStatusFailure.response.status, 500);
+
+  const groupStatusWrongMethod = await requestJson(baseUrl, "/api/group-status", { method: "POST" });
+  assert.equal(groupStatusWrongMethod.response.status, 405);
+  assert.equal(groupStatusWrongMethod.response.headers.get("allow"), "GET");
 
   const scheduleToken = encodeActionToken({
     name: "Kier",
@@ -215,13 +230,13 @@ try {
       "persist",
       "persist",
       "invite-email",
-      "group",
-      "group",
-      "group",
       "persist",
       "email",
       "comparison-email",
       "group",
+      "group-count",
+      "group-count",
+      "group-count",
       "call-request",
       "call-request"
     ]

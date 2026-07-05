@@ -4031,6 +4031,35 @@ function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHom
   const [invitedEmail, setInvitedEmail] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [invitePending, setInvitePending] = useState(false);
+  const [groupStatus, setGroupStatus] = useState("checking");
+
+  useEffect(() => {
+    let active = true;
+    const storedGroup = loadGroups()[groupId];
+
+    if ((storedGroup?.participants?.length ?? 0) >= MAX_GROUP_PARTICIPANTS) {
+      setGroupStatus("full");
+      return () => {
+        active = false;
+      };
+    }
+
+    setGroupStatus("checking");
+    fetch(`/api/group-status?group=${encodeURIComponent(groupId)}`)
+      .then((response) => response.json().catch(() => ({})))
+      .then((data) => {
+        if (!active) return;
+        const participantCount = data?.participantCount ?? storedGroup?.participants?.length ?? 0;
+        setGroupStatus(participantCount >= MAX_GROUP_PARTICIPANTS ? "full" : "open");
+      })
+      .catch(() => {
+        if (active) setGroupStatus("open");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [groupId]);
 
   async function createInvite() {
     const nextInviteEmail = inviteEmail.trim();
@@ -4107,14 +4136,37 @@ function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHom
         </div>
 
         <div className="mt-8 rounded-xl border border-forest/12 bg-white p-6 shadow-line sm:p-7">
-          <h2 className="font-display text-2xl font-semibold leading-tight text-forest">{pageCopy.formTitle}</h2>
-          <p className="mt-2 text-sm leading-6 text-ink/70">{pageCopy.formBody}</p>
+          <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
+            {groupStatus === "full" ? pageCopy.fullTitle : pageCopy.formTitle}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-ink/70">
+            {groupStatus === "full" ? pageCopy.fullBody : pageCopy.formBody}
+          </p>
           <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/70">
             <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
             <p>{comparisonCopy.invitePrivacyNote}</p>
           </div>
 
-          {invitedEmail ? (
+          {groupStatus === "checking" ? (
+            <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
+              <p className="text-sm font-semibold text-forest">{pageCopy.checkingGroup}</p>
+            </div>
+          ) : groupStatus === "full" ? (
+            <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
+                {pageCopy.fullTitle}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-ink/70">{comparisonCopy.inviteLimit}</p>
+              <button
+                type="button"
+                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
+                onClick={onNavigateHome}
+              >
+                <ArrowLeft aria-hidden="true" size={16} />
+                {pageCopy.backHome}
+              </button>
+            </div>
+          ) : invitedEmail ? (
             <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
                 {comparisonCopy.inviteSent}
@@ -4826,6 +4878,10 @@ function getCompareInviteCopy(language) {
       formTitle: "Invita a alguien ahora",
       formBody:
         "Ingresa su email y le enviaremos una invitación privada para completar la autoevaluación.",
+      checkingGroup: "Revisando el estado del grupo...",
+      fullTitle: "Este grupo ya está completo",
+      fullBody:
+        "Este grupo de comparación ya tiene 3 perspectivas completas, así que no se puede enviar otra invitación desde esta liga.",
       backHome: "Volver al sitio"
     };
   }
@@ -4856,6 +4912,10 @@ function getCompareInviteCopy(language) {
     divergenceExampleLabel: "e.g. Succession readiness",
     formTitle: "Invite someone now",
     formBody: "Enter their email and we will send a private invitation to complete the self-assessment.",
+    checkingGroup: "Checking group status...",
+    fullTitle: "This group is already complete",
+    fullBody:
+      "This comparison group already has 3 completed perspectives, so another invitation cannot be sent from this link.",
     backHome: "Back to the site"
   };
 }

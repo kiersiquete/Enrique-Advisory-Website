@@ -1,7 +1,7 @@
 import { answerValidationMessage, normalizeAssessmentSubmission } from "./scoring.js";
 
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
-const MAX_GROUP_PARTICIPANTS = 3;
+export const MAX_GROUP_PARTICIPANTS = 3;
 
 const TABLES = {
   respondents: {
@@ -337,7 +337,7 @@ function sessionFields(body, sessionKey, now) {
   };
 }
 
-async function getGroupParticipantCount(groupId) {
+export async function getGroupParticipantCount(groupId) {
   if (!groupId) return 0;
   const records = await findRecordsByFormula(
     "sessions",

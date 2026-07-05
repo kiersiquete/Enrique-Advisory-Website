@@ -56,6 +56,7 @@ globalThis.fetch = async (url, options = {}) => {
             id: "rec-session-group",
             fields: {
               "Participant ID": "participant-serverless",
+              "Respondent Email": "serverless@example.com",
               "Completed At": "Jun 20, 2026, 5:05 PM",
               "Overall Score": 72,
               "Raw Result JSON": JSON.stringify({
@@ -112,10 +113,10 @@ globalThis.fetch = async (url, options = {}) => {
 };
 
 const resultsHandler = (await import("../api/results.js")).default;
-const groupsHandler = (await import("../api/groups.js")).default;
 const invitationsHandler = (await import("../api/invitations.js")).default;
 const scheduleCallHandler = (await import("../api/schedule-call.js")).default;
 const comparisonHandler = (await import("../api/comparison.js")).default;
+const groupStatusHandler = (await import("../api/group-status.js")).default;
 const { encodeActionToken } = await import("../server/summary-report.js");
 
 const invalidResultResponse = createResponse();
@@ -230,23 +231,6 @@ await invitationsHandler(
 assert.equal(invitationResponse.statusCode, 200);
 assert.equal(invitationResponse.body.email.reason, "missing-smtp-config");
 
-const missingGroupResponse = createResponse();
-await groupsHandler({ method: "GET", query: {} }, missingGroupResponse);
-assert.equal(missingGroupResponse.statusCode, 400);
-assert.equal(missingGroupResponse.body.error, "Missing comparison group key");
-
-const methodGroupResponse = createResponse();
-await groupsHandler({ method: "POST", query: {} }, methodGroupResponse);
-assert.equal(methodGroupResponse.statusCode, 405);
-assert.equal(methodGroupResponse.headers.Allow, "GET");
-
-const validGroupResponse = createResponse();
-await groupsHandler({ method: "GET", query: { group: "SERVERLESSGROUP" } }, validGroupResponse);
-assert.equal(validGroupResponse.statusCode, 200);
-assert.equal(validGroupResponse.body.group.id, "SERVERLESSGROUP");
-assert.equal(validGroupResponse.body.group.participants.length, 1);
-assert.equal(validGroupResponse.body.group.participants[0].id, "participant-serverless");
-assert.equal(validGroupResponse.body.group.participants[0].result.overall, 72);
 
 const scheduleMethodResponse = createResponse();
 await scheduleCallHandler({ method: "POST", query: {} }, scheduleMethodResponse);
@@ -275,9 +259,29 @@ await comparisonHandler({ method: "GET", query: { data: comparisonToken } }, com
 assert.equal(comparisonOkResponse.statusCode, 200);
 assert.equal(comparisonOkResponse.body.group.id, "SERVERLESSGROUP");
 assert.equal(comparisonOkResponse.body.language, "en");
+assert.equal(comparisonOkResponse.body.group.participants.length, 1);
+assert.equal(comparisonOkResponse.body.group.participants[0].id, "participant-serverless");
+assert.equal(comparisonOkResponse.body.group.participants[0].result.overall, 72);
 
 const comparisonInvalidResponse = createResponse();
 await comparisonHandler({ method: "GET", query: { data: "not-valid-base64url" } }, comparisonInvalidResponse);
 assert.equal(comparisonInvalidResponse.statusCode, 400);
+
+const groupStatusMissingResponse = createResponse();
+await groupStatusHandler({ method: "GET", query: {} }, groupStatusMissingResponse);
+assert.equal(groupStatusMissingResponse.statusCode, 400);
+
+const groupStatusMethodResponse = createResponse();
+await groupStatusHandler({ method: "POST", query: {} }, groupStatusMethodResponse);
+assert.equal(groupStatusMethodResponse.statusCode, 405);
+assert.equal(groupStatusMethodResponse.headers.Allow, "GET");
+
+const groupStatusOkResponse = createResponse();
+await groupStatusHandler({ method: "GET", query: { group: "SERVERLESSGROUP" } }, groupStatusOkResponse);
+assert.equal(groupStatusOkResponse.statusCode, 200);
+assert.equal(groupStatusOkResponse.body.participantCount, 1);
+assert.equal(groupStatusOkResponse.body.maxParticipants, 3);
+assert.equal(groupStatusOkResponse.body.group, undefined);
+assert.equal(groupStatusOkResponse.body.participants, undefined);
 
 console.log("Serverless handler verification passed.");

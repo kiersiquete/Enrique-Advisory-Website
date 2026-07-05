@@ -12,6 +12,7 @@ import {
 const DEFAULT_FROM = "Gilbert <info@gilbertdevlyn.com>";
 const DEFAULT_REPLY_TO = "info@gilbertdevlyn.com";
 const SMTP_TIMEOUT_MS = 15000;
+const MAX_GROUP_PARTICIPANTS = 3;
 
 function smtpCaCertificates() {
   if (process.env.SMTP_USE_SYSTEM_CA === "false" || typeof tls.getCACertificates !== "function") {
@@ -133,9 +134,14 @@ function createScheduleCallUrl(body, savedResult, options = {}) {
   return `${baseUrl}/api/schedule-call?data=${token}`;
 }
 
-function createInviteShareUrl(body, options = {}) {
+function isComparisonGroupFull(savedResult = {}) {
+  const participantCount = savedResult.group?.participants?.length ?? savedResult.groupParticipantCount ?? 0;
+  return participantCount >= MAX_GROUP_PARTICIPANTS;
+}
+
+function createInviteShareUrl(body, savedResult = {}, options = {}) {
   const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (!baseUrl || !body.groupId) return "";
+  if (!baseUrl || !body.groupId || isComparisonGroupFull(savedResult)) return "";
 
   const url = new URL(`${baseUrl}/diagnostic`);
   url.searchParams.set("view", "invite");
@@ -152,7 +158,8 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
   const name = report.name || (language === "es" ? "hola" : "there");
   const pdfUrl = createSummaryPdfUrl(body, savedResult, options);
   const scheduleCallUrl = createScheduleCallUrl(body, savedResult, options);
-  const inviteShareUrl = createInviteShareUrl(body, options);
+  const inviteShareUrl = createInviteShareUrl(body, savedResult, options);
+  const groupIsFull = isComparisonGroupFull(savedResult);
 
   if (language === "es") {
     return [
@@ -168,7 +175,11 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
       "Qué puedes hacer ahora:",
       "1. Descargar tu PDF para guardarlo o compartirlo en una conversación.",
       "2. Pedir una conversación con Gilbert. Con un clic, Gilbert recibe una notificación.",
-      "3. Invitar a alguien de la familia o empresa para comparar perspectivas dentro del mismo grupo.",
+      inviteShareUrl
+        ? "3. Invitar a alguien de la familia o empresa para comparar perspectivas dentro del mismo grupo."
+        : groupIsFull
+          ? "3. Este grupo de comparación ya está completo con 3 perspectivas."
+          : "",
       "",
       pdfUrl ? `Descargar resultados en PDF: ${pdfUrl}` : "",
       scheduleCallUrl ? `Agendar una conversación con Gilbert: ${scheduleCallUrl}` : "",
@@ -197,7 +208,11 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
     "What you can do next:",
     "1. Download your PDF so you can keep it or use it in a conversation.",
     "2. Ask for a conversation with Gilbert. One click sends Gilbert a notification.",
-    "3. Invite someone from the family or company to compare perspectives in the same group.",
+    inviteShareUrl
+      ? "3. Invite someone from the family or company to compare perspectives in the same group."
+      : groupIsFull
+        ? "3. This comparison group is already complete with 3 perspectives."
+        : "",
     "",
     pdfUrl ? `Download results as a PDF: ${pdfUrl}` : "",
     scheduleCallUrl ? `Schedule a conversation with Gilbert: ${scheduleCallUrl}` : "",
@@ -351,7 +366,8 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
   const language = body.language === "es" ? "es" : "en";
   const pdfUrl = createSummaryPdfUrl(body, savedResult, options);
   const scheduleCallUrl = createScheduleCallUrl(body, savedResult, options);
-  const inviteShareUrl = createInviteShareUrl(body, options);
+  const inviteShareUrl = createInviteShareUrl(body, savedResult, options);
+  const groupIsFull = isComparisonGroupFull(savedResult);
   const name = escapeHtml(report.name || (language === "es" ? "hola" : "there"));
   const focusAreas = (report.focusAreas || []).slice(0, 3);
 
@@ -369,8 +385,9 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           disclaimer:
             "Este resumen es un punto de partida para la reflexión y la conversación. No es una calificación ni un veredicto, y las respuestas individuales pregunta por pregunta no se comparten en la vista de comparación.",
           nextStepsLabel: "Qué puedes hacer ahora",
-          nextStepsIntro:
-            "Elige el siguiente paso que mejor se ajuste a tu situación. Puedes guardar tu PDF, pedir una conversación con Gilbert o invitar a otra persona para comparar perspectivas.",
+          nextStepsIntro: inviteShareUrl
+            ? "Elige el siguiente paso que mejor se ajuste a tu situación. Puedes guardar tu PDF, pedir una conversación con Gilbert o invitar a otra persona para comparar perspectivas."
+            : "Elige el siguiente paso que mejor se ajuste a tu situación. Puedes guardar tu PDF o pedir una conversación con Gilbert.",
           downloadPdf: "Descargar resultados en PDF",
           downloadPdfHelp: "Guarda una copia clara de tu resultado individual.",
           scheduleCall: "Agendar una conversación con Gilbert",
@@ -378,8 +395,12 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           inviteSomeone: "Invitar a un familiar o colega",
           inviteSomeoneHelp:
             "La persona invitada completa la misma autoevaluación de forma privada para crear una comparación por tema.",
-          comparisonNote:
-            "La comparación ayuda a ver dónde coinciden las perspectivas y dónde conviene conversar primero. No muestra respuestas individuales pregunta por pregunta.",
+          groupComplete: "Grupo de comparación completo",
+          groupCompleteHelp:
+            "Este grupo ya tiene 3 perspectivas completas, así que no se necesitan más invitaciones.",
+          comparisonNote: groupIsFull
+            ? "Este grupo ya alcanzó el límite de 3 perspectivas. La comparación ayuda a ver dónde coinciden las perspectivas y dónde conviene conversar primero."
+            : "La comparación ayuda a ver dónde coinciden las perspectivas y dónde conviene conversar primero. No muestra respuestas individuales pregunta por pregunta.",
           footerNote: "Si solicitas una conversación, Gilbert recibe una notificación automáticamente.",
           footerName: "Gilbert Devlyn",
           footerLine: "Asesoría discreta y confidencial para empresas familiares."
@@ -396,8 +417,9 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           disclaimer:
             "This summary is a starting point for reflection and conversation. It is not a grade or verdict, and individual question-by-question answers are not shared in the comparison view.",
           nextStepsLabel: "What you can do next",
-          nextStepsIntro:
-            "Choose the next step that fits your situation. You can save your PDF, ask Gilbert for a conversation, or invite someone else to compare perspectives.",
+          nextStepsIntro: inviteShareUrl
+            ? "Choose the next step that fits your situation. You can save your PDF, ask Gilbert for a conversation, or invite someone else to compare perspectives."
+            : "Choose the next step that fits your situation. You can save your PDF or ask Gilbert for a conversation.",
           downloadPdf: "Download results as a PDF",
           downloadPdfHelp: "Keep a clear copy of your individual result.",
           scheduleCall: "Schedule a conversation with Gilbert",
@@ -405,8 +427,12 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           inviteSomeone: "Invite a family member or colleague",
           inviteSomeoneHelp:
             "The invited person completes the same self-assessment privately so a topic-level comparison can be created.",
-          comparisonNote:
-            "Comparison helps show where perspectives align and where the first useful conversation may be. It does not show individual question-by-question answers.",
+          groupComplete: "Comparison group complete",
+          groupCompleteHelp:
+            "This group already has 3 completed perspectives, so no additional invitation is needed.",
+          comparisonNote: groupIsFull
+            ? "This group has reached the 3-person comparison limit. The comparison can now show where perspectives align and where the first useful conversation may be."
+            : "Comparison helps show where perspectives align and where the first useful conversation may be. It does not show individual question-by-question answers.",
           footerNote: "If you request a conversation, Gilbert receives an automatic notification.",
           footerName: "Gilbert Devlyn",
           footerLine: "Discreet, confidentiality-first advisory for family enterprises."
@@ -488,14 +514,27 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                         <strong style="color:#1c3d2e;">${escapeHtml(text.scheduleCall)}</strong><br>${escapeHtml(text.scheduleCallHelp)}
                       </td>
                     </tr>
-                    <tr>
-                      <td style="width:34px; vertical-align:top; padding:0;">
-                        <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#EF563D; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
-                      </td>
-                      <td style="padding:0; color:#454943; font-size:14px; line-height:1.55;">
-                        <strong style="color:#1c3d2e;">${escapeHtml(text.inviteSomeone)}</strong><br>${escapeHtml(text.inviteSomeoneHelp)}
-                      </td>
-                    </tr>
+                    ${
+                      inviteShareUrl
+                        ? `<tr>
+                            <td style="width:34px; vertical-align:top; padding:0;">
+                              <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#EF563D; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
+                            </td>
+                            <td style="padding:0; color:#454943; font-size:14px; line-height:1.55;">
+                              <strong style="color:#1c3d2e;">${escapeHtml(text.inviteSomeone)}</strong><br>${escapeHtml(text.inviteSomeoneHelp)}
+                            </td>
+                          </tr>`
+                        : groupIsFull
+                          ? `<tr>
+                              <td style="width:34px; vertical-align:top; padding:0;">
+                                <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#EF563D; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
+                              </td>
+                              <td style="padding:0; color:#454943; font-size:14px; line-height:1.55;">
+                                <strong style="color:#1c3d2e;">${escapeHtml(text.groupComplete)}</strong><br>${escapeHtml(text.groupCompleteHelp)}
+                              </td>
+                            </tr>`
+                          : ""
+                    }
                   </table>
                 </div>
 

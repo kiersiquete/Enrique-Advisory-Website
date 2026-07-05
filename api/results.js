@@ -1,6 +1,7 @@
 import { persistAssessmentToAirtable } from "../server/airtable.js";
 import { sendComparisonReadyEmail, sendSummaryReportEmails } from "../server/email.js";
 import { normalizeAssessmentSubmission } from "../server/scoring.js";
+import { publicBaseUrl } from "../server/url.js";
 
 function readBody(req) {
   if (!req.body) return {};
@@ -59,9 +60,5 @@ export default async function handler(req, res) {
 }
 
 function requestBaseUrl(req) {
-  if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/$/, "");
-  const headers = req.headers || {};
-  const protocol = headers["x-forwarded-proto"] || "https";
-  const host = headers["x-forwarded-host"] || headers.host;
-  return host ? `${protocol}://${host}` : "";
+  return publicBaseUrl(req, "https");
 }
