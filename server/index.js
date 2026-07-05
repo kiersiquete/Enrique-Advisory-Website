@@ -6,6 +6,7 @@ import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./a
 import {
   renderScheduleCallConfirmationPage,
   sendCallRequestNotification,
+  sendComparisonReadyEmail,
   sendInvitationEmail,
   sendSummaryReportEmails
 } from "./email.js";
@@ -44,7 +45,9 @@ export function createApp({
   persistAssessment = persistAssessmentToAirtable,
   getComparisonGroup = getComparisonGroupFromAirtable,
   sendInviteEmail = sendInvitationEmail,
-  sendSummaryEmails = sendSummaryReportEmails
+  sendSummaryEmails = sendSummaryReportEmails,
+  sendCallRequest = sendCallRequestNotification,
+  sendComparisonEmail = sendComparisonReadyEmail
 } = {}) {
   const app = express();
 
@@ -62,6 +65,18 @@ export function createApp({
         console.error("Summary email delivery failed", emailError);
         email = { sent: false, error: "summary-email-delivery-failed" };
       }
+
+      if ((result.group?.participants?.length ?? 0) >= 2) {
+        try {
+          await sendComparisonEmail(result.group, {
+            baseUrl: requestBaseUrl(req),
+            language: body.language
+          });
+        } catch (comparisonError) {
+          console.error("Comparison-ready email delivery failed", comparisonError);
+        }
+      }
+
       res.json({ ...result, email });
     } catch (error) {
       if (error.code === "VALIDATION_ERROR") {
@@ -144,10 +159,13 @@ export function createApp({
       language = payload.language === "es" ? "es" : "en";
 
       try {
-        await sendCallRequestNotification({
+        await sendCallRequest({
           name: payload.name,
           email: payload.email,
-          language
+          language,
+          participant: payload.participant,
+          result: payload.result,
+          context: payload.context
         });
       } catch (notifyError) {
         console.error("Schedule-call notification failed", notifyError);
@@ -182,6 +200,22 @@ export function createApp({
   });
 
   app.all("/api/groups", (_req, res) => {
+    res.setHeader("Allow", "GET");
+    res.status(405).json({ error: "Method not allowed" });
+  });
+
+  app.get("/api/comparison", async (req, res) => {
+    try {
+      const payload = decodeActionToken(req.query.data);
+      const language = payload.language === "es" ? "es" : "en";
+      const group = await getComparisonGroup(payload.groupId);
+      res.json({ ok: true, group, language });
+    } catch (error) {
+      res.status(400).json({ error: "Unable to load this comparison link" });
+    }
+  });
+
+  app.all("/api/comparison", (_req, res) => {
     res.setHeader("Allow", "GET");
     res.status(405).json({ error: "Method not allowed" });
   });

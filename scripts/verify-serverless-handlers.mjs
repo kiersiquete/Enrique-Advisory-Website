@@ -115,6 +115,7 @@ const resultsHandler = (await import("../api/results.js")).default;
 const groupsHandler = (await import("../api/groups.js")).default;
 const invitationsHandler = (await import("../api/invitations.js")).default;
 const scheduleCallHandler = (await import("../api/schedule-call.js")).default;
+const comparisonHandler = (await import("../api/comparison.js")).default;
 const { encodeActionToken } = await import("../server/summary-report.js");
 
 const invalidResultResponse = createResponse();
@@ -262,5 +263,21 @@ const scheduleInvalidResponse = createResponse();
 await scheduleCallHandler({ method: "GET", query: { data: "not-valid-base64url" } }, scheduleInvalidResponse);
 assert.equal(scheduleInvalidResponse.statusCode, 400);
 assert.match(scheduleInvalidResponse.body, /no longer valid/);
+
+const comparisonMethodResponse = createResponse();
+await comparisonHandler({ method: "POST", query: {} }, comparisonMethodResponse);
+assert.equal(comparisonMethodResponse.statusCode, 405);
+assert.equal(comparisonMethodResponse.headers.Allow, "GET");
+
+const comparisonToken = encodeActionToken({ groupId: "SERVERLESSGROUP", language: "en" });
+const comparisonOkResponse = createResponse();
+await comparisonHandler({ method: "GET", query: { data: comparisonToken } }, comparisonOkResponse);
+assert.equal(comparisonOkResponse.statusCode, 200);
+assert.equal(comparisonOkResponse.body.group.id, "SERVERLESSGROUP");
+assert.equal(comparisonOkResponse.body.language, "en");
+
+const comparisonInvalidResponse = createResponse();
+await comparisonHandler({ method: "GET", query: { data: "not-valid-base64url" } }, comparisonInvalidResponse);
+assert.equal(comparisonInvalidResponse.statusCode, 400);
 
 console.log("Serverless handler verification passed.");

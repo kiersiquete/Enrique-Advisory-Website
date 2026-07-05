@@ -1,8 +1,10 @@
 import tls from "node:tls";
 import {
   buildAdminReportPayload,
+  buildComparisonReportPayload,
   buildSummaryReportPayload,
   createAdminPdfBuffer,
+  createComparisonPdfBuffer,
   encodeActionToken,
   encodeSummaryReportPayload
 } from "./summary-report.js";
@@ -102,11 +104,30 @@ function createScheduleCallUrl(body, savedResult, options = {}) {
   const recipientEmail = body.reportRequest?.recipientEmail || body.profile?.email || "";
   if (!recipientEmail) return "";
 
+  const report = buildAdminReportPayload(body, savedResult);
   const token = encodeActionToken({
-    name: body.profile?.name || "",
+    name: report.participant?.name || body.profile?.name || "",
     email: recipientEmail,
     language: body.language === "es" ? "es" : "en",
-    sessionKey: savedResult.sessionKey || ""
+    sessionKey: savedResult.sessionKey || "",
+    participant: {
+      phone: report.participant?.phone || "",
+      country: report.participant?.country || "",
+      relationship: report.participant?.relationship || "",
+      generation: report.participant?.generation || ""
+    },
+    result: {
+      overall: report.overall,
+      level: report.level || "",
+      focusAreas: (report.focusAreas || []).slice(0, 3),
+      unknownCount: report.transparency?.unknownCount ?? 0
+    },
+    context: {
+      groupId: report.context?.groupId || "",
+      participantId: report.context?.participantId || "",
+      requestedAt: report.timing?.requestedAt || "",
+      contactRequested: Boolean(report.context?.contactRequested)
+    }
   });
 
   return `${baseUrl}/api/schedule-call?data=${token}`;
@@ -911,16 +932,50 @@ function htmlCallRequestEmail(request = {}) {
   const language = request.language === "es" ? "es" : "en";
   const name = escapeHtml(request.name || (language === "es" ? "Alguien" : "Someone"));
   const email = escapeHtml(request.email || "");
+  const participant = request.participant || {};
+  const result = request.result || {};
+  const context = request.context || {};
+  const focusAreas = Array.isArray(result.focusAreas) ? result.focusAreas.slice(0, 3) : [];
 
   const text =
     language === "es"
       ? {
           title: "Solicitud de conversación",
-          body: `${name} completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`
+          body: `${name} completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`,
+          profileTitle: "Perfil del participante",
+          resultTitle: "Resultado de referencia",
+          focusTitle: "Áreas de enfoque",
+          contactTitle: "Cómo responder",
+          contactBody: "Responde a este correo para contactar directamente a esta persona.",
+          overallScore: "Puntaje general",
+          resultLevel: "Nivel de resultado",
+          name: "Nombre",
+          email: "Email",
+          phone: "Teléfono",
+          country: "País",
+          relationship: "Relación",
+          generation: "Generación",
+          requested: "Solicitado",
+          groupKey: "Grupo"
         }
       : {
           title: "Conversation request",
-          body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`
+          body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
+          profileTitle: "Participant profile",
+          resultTitle: "Result context",
+          focusTitle: "Focus areas",
+          contactTitle: "How to respond",
+          contactBody: "Reply to this email to contact this person directly.",
+          overallScore: "Overall score",
+          resultLevel: "Result level",
+          name: "Name",
+          email: "Email",
+          phone: "Phone",
+          country: "Country",
+          relationship: "Relationship",
+          generation: "Generation",
+          requested: "Requested",
+          groupKey: "Group key"
         };
 
   return `<!doctype html>
@@ -944,7 +999,51 @@ function htmlCallRequestEmail(request = {}) {
             <tr>
               <td style="padding:30px 34px;">
                 <p style="margin:0 0 18px; color:#454943; font-size:16px; line-height:1.6;">${text.body}</p>
-                <p style="margin:0; color:#1c3d2e; font-size:15px; line-height:1.6; font-weight:700;">${email}</p>
+
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px;">
+                  <tr>
+                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScore)}</p>
+                      <p style="margin:0; color:#1c3d2e; font-size:36px; line-height:1; font-weight:700;">${escapeHtml(result.overall ?? "N/A")}<span style="font-size:15px; color:#6f726d;"> /100</span></p>
+                    </td>
+                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevel)}</p>
+                      <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${escapeHtml(result.level || "Not provided")}</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.profileTitle)}</p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
+                  ${detailRow(text.name, request.name)}
+                  ${detailRow(text.email, request.email)}
+                  ${detailRow(text.phone, participant.phone)}
+                  ${detailRow(text.country, participant.country)}
+                  ${detailRow(text.relationship, participant.relationship)}
+                  ${detailRow(text.generation, participant.generation)}
+                  ${detailRow(text.requested, context.requestedAt)}
+                  ${detailRow(text.groupKey, context.groupId)}
+                </table>
+
+                ${
+                  focusAreas.length
+                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.focusTitle)}</p>
+                        ${focusAreas
+                          .map(
+                            (item) =>
+                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
+                          )
+                          .join("")}
+                      </div>`
+                    : ""
+                }
+
+                <div style="margin:0; padding:16px 18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px;">
+                  <p style="margin:0 0 6px; color:#1c3d2e; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(text.contactTitle)}</p>
+                  <p style="margin:0 0 10px; color:#454943; font-size:14px; line-height:1.55;">${escapeHtml(text.contactBody)}</p>
+                  <p style="margin:0; color:#1c3d2e; font-size:15px; line-height:1.6; font-weight:700;">${email}</p>
+                </div>
               </td>
             </tr>
           </table>
@@ -968,14 +1067,194 @@ export async function sendCallRequestNotification(request = {}) {
 
   const language = request.language === "es" ? "es" : "en";
   const name = request.name || (language === "es" ? "Alguien" : "Someone");
+  const focusAreas = Array.isArray(request.result?.focusAreas) ? request.result.focusAreas.slice(0, 3) : [];
   const message = await sendSmtpEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: requesterEmail,
     subject:
       language === "es" ? `${name} quiere hablar contigo` : `${name} would like to speak with you`,
-    text: `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you. Reply to this email to reach them directly.`,
-    html: htmlCallRequestEmail({ name, email: requesterEmail, language })
+    text: [
+      `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
+      "",
+      `Overall score: ${request.result?.overall ?? "Not provided"}/100`,
+      `Result level: ${request.result?.level || "Not provided"}`,
+      focusAreas.length ? `Focus areas: ${focusAreas.join(", ")}` : "",
+      "",
+      `Phone: ${request.participant?.phone || "Not provided"}`,
+      `Country: ${request.participant?.country || "Not provided"}`,
+      `Relationship: ${request.participant?.relationship || "Not provided"}`,
+      `Generation: ${request.participant?.generation || "Not provided"}`,
+      `Requested: ${request.context?.requestedAt || "Not provided"}`,
+      `Group key: ${request.context?.groupId || "Not provided"}`,
+      "",
+      "Reply to this email to reach them directly."
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    html: htmlCallRequestEmail({
+      ...request,
+      name,
+      email: requesterEmail,
+      language
+    })
+  });
+
+  return {
+    provider: "smtp",
+    sent: true,
+    messageId: message?.id
+  };
+}
+
+function comparisonViewUrl(groupId, language, options = {}) {
+  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (!baseUrl) return "";
+
+  const token = encodeActionToken({ groupId, language });
+  return `${baseUrl}/diagnostic?view=admin-comparison&data=${token}`;
+}
+
+function htmlComparisonReadyEmail(payload, viewUrl) {
+  const participants = payload.participants || [];
+  const convergence = payload.convergence || [];
+  const divergence = payload.divergence || [];
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Group comparison ready</title>
+  </head>
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+            <tr>
+              <td style="background:#1c3d2e; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Advisor notification</p>
+                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">Group comparison ready</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:34px;">
+                <p style="margin:0 0 20px; color:#454943; font-size:16px; line-height:1.65;">${payload.participantCount} people have completed the self-assessment in group <strong>${escapeHtml(payload.groupId)}</strong>. This comparison is for advisor use only, respondents do not see this view.</p>
+
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-collapse:separate; border-spacing:0;">
+                  <tr>
+                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Average gap</p>
+                      <p style="margin:0; color:#1c3d2e; font-size:32px; line-height:1; font-weight:700;">${payload.averageGap}<span style="font-size:14px; color:#6f726d;"> pts</span></p>
+                    </td>
+                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Largest gap</p>
+                      <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${
+                        payload.biggestGap
+                          ? escapeHtml(`${payload.biggestGap.label} (${payload.biggestGap.gap} pts)`)
+                          : "Not available"
+                      }</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Participants</p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
+                  ${participants
+                    .map((participant) =>
+                      detailRow(participant.label, participant.overall === null ? "N/A" : `${participant.overall}/100`)
+                    )
+                    .join("")}
+                </table>
+
+                ${
+                  divergence.length
+                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Divergence (gap over 20)</p>
+                        ${divergence
+                          .map(
+                            (row) =>
+                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700;">${escapeHtml(row.label)} - ${row.gap} pts</p>`
+                          )
+                          .join("")}
+                      </div>`
+                    : ""
+                }
+
+                ${
+                  convergence.length
+                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Convergence (gap 10 or less)</p>
+                        ${convergence
+                          .map(
+                            (row) =>
+                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700;">${escapeHtml(row.label)}</p>`
+                          )
+                          .join("")}
+                      </div>`
+                    : ""
+                }
+
+                ${actionButtonRow([{ url: viewUrl, label: "View full comparison in browser", accent: "#0F463C" }])}
+
+                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">Attached PDF: full group comparison with pillar-by-pillar gaps.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+export async function sendComparisonReadyEmail(group = {}, options = {}) {
+  const config = getEmailConfig();
+  if (!config) {
+    return { skipped: true, reason: "missing-smtp-config" };
+  }
+
+  const language = options.language === "es" ? "es" : "en";
+  const payload = buildComparisonReportPayload(group, language);
+  if (payload.participantCount < 2) {
+    return { skipped: true, reason: "not-enough-participants" };
+  }
+
+  const viewUrl = comparisonViewUrl(payload.groupId, language, options);
+  const pdf = createComparisonPdfBuffer(payload);
+  const subject = `Group comparison ready - ${payload.participantCount} perspectives (${payload.groupId})`;
+
+  const text = [
+    `A group comparison is ready for group ${payload.groupId}.`,
+    "",
+    `Completed perspectives: ${payload.participantCount}`,
+    `Average score gap: ${payload.averageGap} points`,
+    payload.biggestGap ? `Largest gap: ${payload.biggestGap.label} (${payload.biggestGap.gap} points)` : "",
+    payload.convergence.length ? `Convergence areas: ${payload.convergence.map((row) => row.label).join(", ")}` : "",
+    payload.divergence.length ? `Divergence areas: ${payload.divergence.map((row) => row.label).join(", ")}` : "",
+    "",
+    viewUrl ? `View the full comparison in your browser: ${viewUrl}` : "",
+    "",
+    "This comparison is for advisor use only. Respondents do not see this view."
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const message = await sendSmtpEmail(config, {
+    from: config.from,
+    to: config.adminEmail,
+    replyTo: config.replyTo,
+    subject,
+    text,
+    html: htmlComparisonReadyEmail(payload, viewUrl),
+    attachments: [
+      {
+        filename: `gilbert-group-comparison-${payload.groupId || "group"}.pdf`,
+        contentType: "application/pdf",
+        content: pdf
+      }
+    ]
   });
 
   return {

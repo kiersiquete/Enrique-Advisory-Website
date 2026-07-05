@@ -35,6 +35,14 @@ const app = createApp({
     calls.push({ type: "persist", body });
     if (body?.forceValidationError) throw validationError("Respondent email is required");
     if (body?.forceServerError) throw new Error("Airtable is sad");
+    if (body?.forceComparisonReady) {
+      return {
+        ok: true,
+        persistence: "airtable",
+        sessionKey: "session-test",
+        group: { id: "GROUP123", participants: [{ id: "p1" }, { id: "p2" }] }
+      };
+    }
     return { ok: true, persistence: "airtable", sessionKey: "session-test" };
   },
   async getComparisonGroup(groupId) {
@@ -50,6 +58,14 @@ const app = createApp({
   async sendInviteEmail(body) {
     calls.push({ type: "invite-email", body });
     return { sent: true, provider: "test-invite-sender" };
+  },
+  async sendCallRequest(body) {
+    calls.push({ type: "call-request", body });
+    return { sent: true, provider: "test-call-sender" };
+  },
+  async sendComparisonEmail(group, options) {
+    calls.push({ type: "comparison-email", group, options });
+    return { sent: true, provider: "test-comparison-sender" };
   }
 });
 
@@ -123,14 +139,55 @@ try {
   assert.equal(groupWrongMethod.response.headers.get("allow"), "GET");
   assert.equal(groupWrongMethod.body.error, "Method not allowed");
 
+  const comparisonReady = await requestJson(baseUrl, "/api/results", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile: { email: "kier@example.com" }, forceComparisonReady: true })
+  });
+  assert.equal(comparisonReady.response.status, 200);
+  const comparisonEmailCall = calls.find((call) => call.type === "comparison-email");
+  assert.equal(comparisonEmailCall.group.id, "GROUP123");
+
+  const comparisonToken = encodeActionToken({ groupId: "GROUP123", language: "en" });
+  const comparisonOk = await requestJson(baseUrl, `/api/comparison?data=${comparisonToken}`);
+  assert.equal(comparisonOk.response.status, 200);
+  assert.equal(comparisonOk.body.group.id, "GROUP123");
+  assert.equal(comparisonOk.body.language, "en");
+
+  const comparisonInvalid = await requestJson(baseUrl, "/api/comparison?data=not-valid-base64url");
+  assert.equal(comparisonInvalid.response.status, 400);
+
+  const comparisonWrongMethod = await requestJson(baseUrl, "/api/comparison", { method: "POST" });
+  assert.equal(comparisonWrongMethod.response.status, 405);
+  assert.equal(comparisonWrongMethod.response.headers.get("allow"), "GET");
+
   const scheduleToken = encodeActionToken({
     name: "Kier",
     email: "kier@example.com",
-    language: "en"
+    language: "en",
+    participant: {
+      phone: "+52 55 1234 5678",
+      country: "Mexico",
+      relationship: "Founder",
+      generation: "First generation"
+    },
+    result: {
+      overall: 70,
+      level: "Level 3 - Established",
+      focusAreas: ["Family Governance Bodies: 63/100"]
+    },
+    context: {
+      groupId: "GROUP123",
+      requestedAt: "Jun 20, 2026, 5:25 PM"
+    }
   });
   const scheduleOk = await requestText(baseUrl, `/api/schedule-call?data=${scheduleToken}`);
   assert.equal(scheduleOk.response.status, 200);
   assert.match(scheduleOk.body, /Gilbert has been notified/);
+  const callRequest = calls.find((call) => call.type === "call-request");
+  assert.equal(callRequest.body.result.overall, 70);
+  assert.equal(callRequest.body.participant.country, "Mexico");
+  assert.equal(callRequest.body.context.groupId, "GROUP123");
 
   const scheduleEsToken = encodeActionToken({
     name: "Kier",
@@ -152,7 +209,22 @@ try {
 
   assert.deepEqual(
     calls.map((call) => call.type),
-    ["persist", "email", "persist", "persist", "invite-email", "group", "group", "group"]
+    [
+      "persist",
+      "email",
+      "persist",
+      "persist",
+      "invite-email",
+      "group",
+      "group",
+      "group",
+      "persist",
+      "email",
+      "comparison-email",
+      "group",
+      "call-request",
+      "call-request"
+    ]
   );
 
   console.log("API route verification passed.");

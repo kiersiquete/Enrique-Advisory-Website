@@ -44,6 +44,7 @@ function useViewportMatch(query) {
 
 export default function RadarPanel({ result, language }) {
   const isMobile = useViewportMatch("(max-width: 640px)");
+  const useCompactLabels = useViewportMatch("(max-width: 1180px)");
   const data = useMemo(
     () =>
       PILLARS.map((pillar) => {
@@ -51,26 +52,26 @@ export default function RadarPanel({ result, language }) {
         const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
 
         return {
-          label: isMobile
+          label: isMobile || useCompactLabels
             ? MOBILE_RADAR_LABELS[language]?.[pillar.id] ?? pillar.shortLabels[language]
             : pillar.shortLabels[language],
           score: hasScore ? roundedScore(item.score) : 0
         };
       }),
-    [isMobile, language, result]
+    [isMobile, language, result, useCompactLabels]
   );
   const chartConfig = isMobile
     ? {
-        className: "h-[340px] w-full",
-        margin: { top: 20, right: 48, bottom: 20, left: 48 },
-        outerRadius: "88%",
+        className: "h-[380px] w-full",
+        margin: { top: 14, right: 54, bottom: 14, left: 54 },
+        outerRadius: "94%",
         angleTick: { fill: "#1C3D2E", fontSize: 14, fontWeight: 500 },
         radiusTick: { fill: "#6B6B5F", fontSize: 12, dx: -7, dy: 6 }
       }
     : {
-        className: "h-[340px] w-full sm:h-[560px]",
-        margin: { top: 28, right: 44, bottom: 28, left: 44 },
-        outerRadius: "80%",
+        className: "h-[420px] w-full sm:h-[650px]",
+        margin: { top: 18, right: 68, bottom: 18, left: 68 },
+        outerRadius: "94%",
         angleTick: { fill: "#1C3D2E", fontSize: 14, fontWeight: 500 },
         radiusTick: { fill: "#6B6B5F", fontSize: 13, dx: -10, dy: 8 }
       };

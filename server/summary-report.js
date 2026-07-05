@@ -211,6 +211,81 @@ export function buildAdminReportPayload(body = {}, savedResult = {}) {
   };
 }
 
+const COMPARISON_RELATIONSHIP_LABELS = {
+  founder: "Founder",
+  "family-working": "Family member working in the business",
+  "family-not-working": "Family member not working in the business",
+  "shareholder-non-family": "Shareholder, non-family",
+  "spouse-partner": "Spouse or partner",
+  other: "Other"
+};
+
+const COMPARISON_GENERATION_LABELS = {
+  first: "First generation (founder)",
+  second: "Second generation",
+  "third-plus": "Third generation or later"
+};
+
+function comparisonParticipantLabel(participant, index) {
+  const role = COMPARISON_RELATIONSHIP_LABELS[participant.role] || participant.role || "Participant";
+  const generation = COMPARISON_GENERATION_LABELS[participant.generation] || participant.generation || "";
+  return `P${index + 1}: ${[role, generation].filter(Boolean).join(" - ")}`;
+}
+
+export function buildComparisonReportPayload(group = {}, language = "en") {
+  const participants = (group.participants ?? []).slice(0, 3);
+  const participantSummaries = participants.map((participant, index) => ({
+    id: participant.id,
+    label: comparisonParticipantLabel(participant, index),
+    country: participant.country || "",
+    overall: hasFiniteScore(participant.result?.overall)
+      ? Math.round(Number(participant.result.overall))
+      : null,
+    unknownCount: Math.round(safeNumber(participant.result?.transparency?.unknownCount))
+  }));
+
+  const pillarMap = new Map();
+  participants.forEach((participant, index) => {
+    (participant.result?.pillarScores ?? []).forEach((pillar) => {
+      if (!hasFiniteScore(pillar.score)) return;
+      if (!pillarMap.has(pillar.id)) {
+        pillarMap.set(pillar.id, { id: pillar.id, label: pillarLabel(pillar), scores: [] });
+      }
+      pillarMap.get(pillar.id).scores.push({
+        participantIndex: index,
+        score: Math.round(Number(pillar.score))
+      });
+    });
+  });
+
+  const pillarRows = [...pillarMap.values()]
+    .map((row) => {
+      const values = row.scores.map((score) => score.score);
+      const gap = values.length >= 2 ? Math.max(...values) - Math.min(...values) : null;
+      return { ...row, gap };
+    })
+    .sort((a, b) => (b.gap ?? -1) - (a.gap ?? -1));
+
+  const gapped = pillarRows.filter((row) => row.gap !== null);
+  const convergence = gapped.filter((row) => row.gap <= 10);
+  const divergence = gapped.filter((row) => row.gap > 20);
+  const averageGap = gapped.length
+    ? Math.round(gapped.reduce((sum, row) => sum + row.gap, 0) / gapped.length)
+    : 0;
+
+  return {
+    groupId: group.id || "",
+    language: language === "es" ? "es" : "en",
+    participantCount: participants.length,
+    participants: participantSummaries,
+    pillarRows,
+    biggestGap: gapped[0] || null,
+    averageGap,
+    convergence,
+    divergence
+  };
+}
+
 function wrapText(doc, text, x, y, maxWidth, lineHeight) {
   const lines = doc.splitTextToSize(String(text || ""), maxWidth);
   doc.text(lines, x, y);
@@ -708,6 +783,157 @@ export function createAdminPdfBuffer(payload) {
     doc.setFontSize(8);
     doc.text(`Page ${page} of ${pageCount}`, pageWidth - margin, pageHeight - 28, { align: "right" });
     doc.text("Confidential advisor report", margin, pageHeight - 28);
+  }
+
+  return Buffer.from(doc.output("arraybuffer"));
+}
+
+export function createComparisonPdfBuffer(payload) {
+  const report = payload ?? {};
+  const participants = report.participants ?? [];
+  const doc = new jsPDF({ unit: "pt", format: "letter" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 46;
+  const forest = "#1c3d2e";
+  const copper = "#c46f3a";
+  const parchment = "#f8f3ea";
+  const muted = "#6f726d";
+  const ink = "#3f433f";
+  let y = 0;
+
+  function pageHeader(title) {
+    doc.setFillColor(parchment);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
+    doc.setFillColor(forest);
+    doc.rect(0, 0, pageWidth, 92, "F");
+    doc.setTextColor(copper);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text("GILBERT DEVLYN - GROUP COMPARISON", margin, 38);
+    doc.setTextColor("#ffffff");
+    doc.setFontSize(22);
+    doc.text(title, margin, 68);
+    doc.setTextColor("#d8c7b2");
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Confidential - advisor use only", pageWidth - margin, 38, { align: "right" });
+    y = 120;
+  }
+
+  function ensureSpace(height) {
+    if (y + height <= pageHeight - 70) return;
+    doc.addPage();
+    pageHeader("Group comparison");
+  }
+
+  function sectionTitle(title) {
+    ensureSpace(34);
+    doc.setTextColor(copper);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(String(title).toUpperCase(), margin, y);
+    y += 20;
+  }
+
+  function participantRow(participant) {
+    ensureSpace(48);
+    const scoreLabel = participant.overall === null ? "N/A" : `${participant.overall}/100`;
+    doc.setFillColor("#ffffff");
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 40, 8, 8, "F");
+    doc.setTextColor(forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    wrapText(doc, participant.label, margin + 16, y + 18, pageWidth - margin * 2 - 180, 12);
+    doc.setTextColor(muted);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(`Unknown answers: ${participant.unknownCount}`, margin + 16, y + 32);
+    doc.setTextColor(forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(scoreLabel, pageWidth - margin - 16, y + 25, { align: "right" });
+    y += 48;
+  }
+
+  function pillarRow(row) {
+    ensureSpace(40);
+    const scoreText = row.scores.map((score) => `P${score.participantIndex + 1}: ${score.score}`).join("   ");
+    doc.setFillColor("#ffffff");
+    doc.roundedRect(margin, y, pageWidth - margin * 2, 32, 6, 6, "F");
+    doc.setTextColor(forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    wrapText(doc, row.label, margin + 14, y + 14, 190, 11);
+    doc.setTextColor(ink);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(scoreText, margin + 214, y + 14);
+    doc.setTextColor(row.gap === null ? muted : row.gap > 20 ? copper : forest);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(row.gap === null ? "Gap: n/a" : `Gap: ${row.gap}`, pageWidth - margin - 14, y + 19, {
+      align: "right"
+    });
+    y += 38;
+  }
+
+  function listCard(title, items, emptyText, accent) {
+    ensureSpace(30 + Math.max(1, items.length) * 16 + 20);
+    doc.setTextColor(copper);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(String(title).toUpperCase(), margin, y);
+    y += 18;
+    const cardHeight = 20 + Math.max(1, items.length) * 16;
+    doc.setFillColor("#ffffff");
+    doc.roundedRect(margin, y, pageWidth - margin * 2, cardHeight, 8, 8, "F");
+    let itemY = y + 22;
+    if (!items.length) {
+      doc.setTextColor(muted);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(emptyText, margin + 16, itemY);
+    } else {
+      items.forEach((item) => {
+        doc.setFillColor(accent);
+        doc.circle(margin + 18, itemY - 3, 3, "F");
+        doc.setTextColor(ink);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text(`${item.label} (gap ${item.gap})`, margin + 30, itemY);
+        itemY += 16;
+      });
+    }
+    y += cardHeight + 18;
+  }
+
+  pageHeader(`Group ${report.groupId || ""}`);
+  doc.setTextColor(forest);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(`${report.participantCount || 0} completed perspectives`, margin, y);
+  y += 24;
+
+  sectionTitle("Participants");
+  participants.forEach(participantRow);
+
+  y += 6;
+  sectionTitle("Pillar comparison");
+  (report.pillarRows || []).forEach(pillarRow);
+
+  y += 6;
+  listCard("Convergence (gap 10 or less)", report.convergence || [], "No clear convergence yet.", forest);
+  listCard("Divergence (gap over 20)", report.divergence || [], "No major gaps above 20 points.", copper);
+
+  const comparisonPageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= comparisonPageCount; page += 1) {
+    doc.setPage(page);
+    doc.setTextColor(muted);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`Page ${page} of ${comparisonPageCount}`, pageWidth - margin, pageHeight - 28, { align: "right" });
+    doc.text("Confidential group comparison - advisor use only", margin, pageHeight - 28);
   }
 
   return Buffer.from(doc.output("arraybuffer"));

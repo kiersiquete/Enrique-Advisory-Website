@@ -760,47 +760,6 @@ function createParticipantSummary(resultPackage, participantId = createParticipa
   };
 }
 
-function upsertResultInGroup(groupId, resultPackage, inviteEmail = "") {
-  const groups = loadGroups();
-  const normalizedInviteEmail = String(inviteEmail ?? "").trim();
-  const group = groups[groupId] ?? {
-    id: groupId,
-    maxParticipants: MAX_GROUP_PARTICIPANTS,
-    createdAt: new Date().toISOString(),
-    invitations: [],
-    participants: []
-  };
-  const participantId = resultPackage.participantId ?? createParticipantId();
-  const summary = createParticipantSummary(resultPackage, participantId);
-  const existingIndex = group.participants.findIndex((participant) => participant.id === participantId);
-
-  if (existingIndex >= 0) {
-    group.participants[existingIndex] = summary;
-  } else if (group.participants.length < MAX_GROUP_PARTICIPANTS) {
-    group.participants.push(summary);
-  }
-
-  if (normalizedInviteEmail) {
-    group.invitations = [
-      ...(group.invitations ?? []),
-      {
-        email: normalizedInviteEmail,
-        createdAt: new Date().toISOString()
-      }
-    ].slice(-8);
-  }
-
-  groups[groupId] = group;
-  saveGroups(groups);
-
-  return { group, participantId };
-}
-
-function getStoredGroup(groupId) {
-  if (!groupId) return null;
-  return loadGroups()[groupId] ?? null;
-}
-
 function saveStoredGroup(group) {
   if (!group?.id) return null;
   const groups = loadGroups();
@@ -812,14 +771,6 @@ function saveStoredGroup(group) {
   };
   saveGroups(groups);
   return groups[group.id];
-}
-
-async function fetchComparisonGroup(groupId) {
-  if (!groupId) return null;
-  const response = await fetch(`/api/groups?group=${encodeURIComponent(groupId)}`);
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.group) return null;
-  return saveStoredGroup(data.group);
 }
 
 function createMockResultPackage(language = "en") {
@@ -1075,28 +1026,33 @@ export default function App() {
       return;
     }
 
-    const requestedComparison = params.get("view") === "comparison";
-    const existingGroup = getStoredGroup(groupId);
     setLanguage(linkLanguage);
     setPendingGroupId(groupId);
     setActiveMode("full");
-
-    if (requestedComparison && existingGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
-      setActiveComparisonGroup(existingGroup);
-      setScreen("comparison");
-      return;
-    }
-
     setActiveComparisonGroup(null);
     setScreen("assessment-home");
-    fetchComparisonGroup(groupId).then((group) => {
-      if (!group?.participants?.length) return;
-      setGroupRefresh((value) => value + 1);
-      if (requestedComparison && group.participants.length >= MIN_COMPARISON_PARTICIPANTS) {
-        setActiveComparisonGroup(group);
-        setScreen("comparison");
-      }
-    });
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("view") !== "admin-comparison") return;
+
+    const token = params.get("data");
+    if (!token) return;
+
+    setScreen("loading");
+    fetch(`/api/comparison?data=${encodeURIComponent(token)}`)
+      .then((response) => response.json().catch(() => ({})))
+      .then((data) => {
+        if (data?.group) {
+          setLanguage(data.language === "es" ? "es" : "en");
+          setActiveComparisonGroup(data.group);
+          setScreen("comparison");
+        } else {
+          setScreen("home");
+        }
+      })
+      .catch(() => setScreen("home"));
   }, []);
 
   useEffect(() => {
@@ -1159,21 +1115,16 @@ export default function App() {
 
     window.setTimeout(() => {
       const result = calculateResults(questions, answers);
-      let resultPackage = {
+      const resultPackage = {
         mode,
         language,
         profile,
         answers,
         result,
         createdAt: new Date().toISOString(),
-        groupId: pendingGroupId ?? createGroupId()
+        groupId: pendingGroupId ?? createGroupId(),
+        participantId: createParticipantId()
       };
-
-      if (pendingGroupId) {
-        const { group, participantId } = upsertResultInGroup(pendingGroupId, resultPackage);
-        resultPackage = { ...resultPackage, participantId, groupId: group.id };
-        setGroupRefresh((value) => value + 1);
-      }
 
       setLatestResult(resultPackage);
       setPendingGroupId(null);
@@ -1226,44 +1177,9 @@ export default function App() {
     startMode("full");
   }
 
-  async function refreshGroupFromServer(groupId) {
-    const group = await fetchComparisonGroup(groupId);
-    if (group) {
-      saveStoredGroup(group);
-      setGroupRefresh((value) => value + 1);
-    }
-    return group;
-  }
-
   async function submitFinalResult(resultPackage) {
     const response = await persistResult(resultPackage);
-    const serverGroup = response.group ? saveStoredGroup(response.group) : null;
     setLatestResult(resultPackage);
-    if (resultPackage.groupId) {
-      const { group } = upsertResultInGroup(resultPackage.groupId, resultPackage, "");
-      const savedGroup = saveStoredGroup({
-        ...group,
-        ...(serverGroup ?? {}),
-        inviteLink: resultPackage.inviteLink || serverGroup?.inviteLink || group.inviteLink || ""
-      });
-      setGroupRefresh((value) => value + 1);
-      const refreshedGroup = serverGroup ?? (await refreshGroupFromServer(resultPackage.groupId));
-      const comparisonGroup = refreshedGroup ?? savedGroup;
-      if (comparisonGroup?.participants?.length >= MIN_COMPARISON_PARTICIPANTS) {
-        setActiveComparisonGroup(comparisonGroup);
-        setScreen("comparison");
-        window.history.pushState(
-          {},
-          "",
-          `${SCREEN_ROUTES["assessment-home"]}${buildDiagnosticSearch(
-            comparisonGroup.id,
-            resultPackage.language || language,
-            "comparison"
-          )}`
-        );
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    }
     return response;
   }
 
@@ -3873,7 +3789,7 @@ function ResultsScreen({
         </button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(480px,1.15fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(280px,0.72fr)_minmax(560px,1.28fr)]">
         <section className="rounded-xl bg-forest p-6 text-white shadow-soft sm:p-8 lg:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-copper">
             {copy.overallScore}
@@ -3898,7 +3814,7 @@ function ResultsScreen({
         <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
           <Suspense
             fallback={
-              <div className="grid h-[340px] w-full place-items-center text-sm font-semibold text-muted sm:h-[560px]">
+              <div className="grid h-[420px] w-full place-items-center text-sm font-semibold text-muted sm:h-[650px]">
                 {detailCopy.loadingChart}
               </div>
             }
@@ -4260,7 +4176,7 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
   const comparisonCopy = copy.comparison;
   const visualCopy = getComparisonVisualCopy(language);
   const participants = (group.participants ?? []).slice(0, MAX_GROUP_PARTICIPANTS);
-  const canCompare = participants.length >= 2;
+  const canCompare = participants.length >= MIN_COMPARISON_PARTICIPANTS;
   const rows = buildComparisonRows(participants, language);
   const convergence = rows.filter((row) => row.numericCount >= 2 && row.gap <= 10);
   const transparency = rows.filter((row) => row.hasTransparencyGap);

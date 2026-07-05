@@ -16,7 +16,10 @@ export default async function handler(req, res) {
       await sendCallRequestNotification({
         name: payload.name,
         email: payload.email,
-        language
+        language,
+        participant: payload.participant,
+        result: payload.result,
+        context: payload.context
       });
     } catch (notifyError) {
       console.error("Schedule-call notification failed", notifyError);

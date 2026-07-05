@@ -1,5 +1,5 @@
 import { persistAssessmentToAirtable } from "../server/airtable.js";
-import { sendSummaryReportEmails } from "../server/email.js";
+import { sendComparisonReadyEmail, sendSummaryReportEmails } from "../server/email.js";
 import { normalizeAssessmentSubmission } from "../server/scoring.js";
 
 function readBody(req) {
@@ -35,6 +35,18 @@ export default async function handler(req, res) {
     } else {
       email = { sent: false, skipped: true };
     }
+
+    if ((result.group?.participants?.length ?? 0) >= 2) {
+      try {
+        await sendComparisonReadyEmail(result.group, {
+          baseUrl: requestBaseUrl(req),
+          language: body.language
+        });
+      } catch (comparisonError) {
+        console.error("Comparison-ready email delivery failed", comparisonError);
+      }
+    }
+
     return res.status(200).json({ ...result, email });
   } catch (error) {
     if (error.code === "VALIDATION_ERROR") {
