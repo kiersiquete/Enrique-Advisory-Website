@@ -1107,6 +1107,10 @@ export default function App() {
   function handleComplete(answers, profile) {
     const mode = activeMode;
     const questions = FULL_QUESTIONS[language];
+    const validQuestionIds = new Set(questions.map((question) => question.id));
+    const cleanAnswers = Object.fromEntries(
+      Object.entries(answers).filter(([questionId]) => validQuestionIds.has(questionId))
+    );
 
     clearAssessmentDraft();
     setAssessmentDraft(null);
@@ -1114,12 +1118,12 @@ export default function App() {
     setScreen("loading");
 
     window.setTimeout(() => {
-      const result = calculateResults(questions, answers);
+      const result = calculateResults(questions, cleanAnswers);
       const resultPackage = {
         mode,
         language,
         profile,
-        answers,
+        answers: cleanAnswers,
         result,
         createdAt: new Date().toISOString(),
         groupId: pendingGroupId ?? createGroupId(),
@@ -1399,7 +1403,11 @@ function SiteHeader({
         </nav>
 
         <div className="col-start-2 row-start-1 flex items-center gap-2 justify-self-end lg:col-start-3">
-          <LanguageToggle language={language} setLanguage={setLanguage} />
+          <LanguageToggle
+            language={language}
+            setLanguage={setLanguage}
+            disabled={activeScreen === "assessment"}
+          />
           <button
             type="button"
             className="grid h-11 w-11 place-items-center rounded-full border border-forest/12 bg-white text-forest shadow-line transition duration-200 hover:border-copper hover:text-copper lg:hidden"
@@ -2713,15 +2721,22 @@ function AssessmentLanding({ copy, language, onStart }) {
   );
 }
 
-function LanguageToggle({ language, setLanguage, variant = "light" }) {
+function LanguageToggle({ language, setLanguage, variant = "light", disabled = false }) {
   const dark = variant === "dark";
 
   return (
     <div
       className={`inline-flex rounded-full border p-1 ${
         dark ? "w-fit border-white/24 bg-white/8" : "w-fit border-forest/15 bg-white"
-      }`}
+      } ${disabled ? "opacity-50" : ""}`}
       aria-label="Language selection"
+      title={
+        disabled
+          ? language === "es"
+            ? "Termina o reinicia la autoevaluación para cambiar de idioma"
+            : "Finish or restart the self-assessment to change language"
+          : undefined
+      }
     >
       {Object.values(LANGUAGES).map((item) => {
         const active = item.code === language;
@@ -2729,7 +2744,8 @@ function LanguageToggle({ language, setLanguage, variant = "light" }) {
           <button
             key={item.code}
             type="button"
-            className={`min-h-9 min-w-11 rounded-full px-2 text-xs font-semibold transition sm:min-h-10 sm:min-w-16 sm:px-4 sm:text-sm ${
+            disabled={disabled}
+            className={`min-h-9 min-w-11 rounded-full px-2 text-xs font-semibold transition sm:min-h-10 sm:min-w-16 sm:px-4 sm:text-sm disabled:cursor-not-allowed ${
               active
                 ? dark
                   ? "bg-white text-forest"
@@ -2739,7 +2755,10 @@ function LanguageToggle({ language, setLanguage, variant = "light" }) {
                   : "text-forest/68 hover:text-forest"
             }`}
             aria-pressed={active}
-            onClick={() => setLanguage(item.code)}
+            onClick={() => {
+              if (disabled) return;
+              setLanguage(item.code);
+            }}
           >
             {item.short}
           </button>
@@ -4942,6 +4961,10 @@ function getFinalActionCopy(language) {
         "Respondent email is required": "El email del participante es obligatorio.",
         "Respondent name is required": "El nombre del participante es obligatorio.",
         "Assessment answers are required": "Las respuestas de la autoevaluación son obligatorias.",
+        "Assessment answers contain unknown question IDs":
+          "Hubo un problema con tus respuestas. Por favor reinicia la autoevaluación sin cambiar de idioma a la mitad.",
+        "Assessment answers contain invalid score values":
+          "Hubo un problema con tus respuestas. Por favor reinicia la autoevaluación e inténtalo de nuevo.",
         "Assessment result score is required": "El puntaje de la autoevaluación es obligatorio.",
         "Assessment pillar scores are required": "Los puntajes por pilar son obligatorios."
       },
@@ -4967,6 +4990,10 @@ function getFinalActionCopy(language) {
       "Respondent email is required": "Respondent email is required.",
       "Respondent name is required": "Respondent name is required.",
       "Assessment answers are required": "Assessment answers are required.",
+      "Assessment answers contain unknown question IDs":
+        "There was a problem with your answers. Please restart the self-assessment without switching languages partway through.",
+      "Assessment answers contain invalid score values":
+        "There was a problem with your answers. Please restart the self-assessment and try again.",
       "Assessment result score is required": "Assessment result score is required.",
       "Assessment pillar scores are required": "Assessment pillar scores are required."
     },
