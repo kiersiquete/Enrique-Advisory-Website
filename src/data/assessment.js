@@ -671,8 +671,8 @@ export const STAGES = [
 ];
 
 export const SUPPORT_MESSAGE = {
-  en: "Gilbert helps families turn a diagnosis into structured conversations, clearer decisions, and practical governance work that can actually be executed.",
-  es: "Gilbert ayuda a las familias a convertir el diagnóstico en conversaciones estructuradas, decisiones más claras y trabajo práctico de gobierno que realmente pueda ejecutarse."
+  en: "Gilbert helps families turn a self-assessment into structured conversations, clearer decisions, and practical governance work that can actually be executed.",
+  es: "Gilbert ayuda a las familias a convertir la autoevaluación en conversaciones estructuradas, decisiones más claras y trabajo práctico de gobierno que realmente pueda ejecutarse."
 };
 
 export const COPY = {
@@ -686,7 +686,7 @@ export const COPY = {
       home: "Home",
       about: "About",
       services: "Services",
-      assessment: "Diagnostic"
+      assessment: "Self-assessment"
     },
     booking: {
       startAssessment: "Start Assessment",
@@ -723,28 +723,31 @@ export const COPY = {
     home: {
       title: "Gilbert Devlyn Family Enterprise Advisory",
       subtitle:
-        "Guidance for business families navigating ownership, succession, governance, and next-generation roles before pressure turns into conflict.",
+        "Guidance for business families on ownership, succession, and next-generation roles — before pressure turns into conflict.",
       body:
         "Gilbert Devlyn brings lived experience as a family member, owner, executive, and board participant inside a multigenerational enterprise. He helps families name the conversations that are being avoided, organize who needs to be involved, and move toward agreements that can hold under pressure.",
       gilbertTitle: "Who is Gilbert?",
       gilbertBody:
         "Gilbert Devlyn brings firsthand experience from within a leading third generation family business group. As a family member, owner, and board member, he has been directly involved in decisions that shape continuity across generations.",
       video: {
-        label: "Intro video",
-        title: "A short note from Gilbert",
+        label: "Gilbert video",
+        title: "Reserved for Gilbert's message",
         body:
-          "This space is prepared for a brief homepage video where Gilbert can introduce who he is, what he helps families with, and why the first conversation matters.",
+          "This space is reserved for Gilbert's own short homepage video. Until the final clip is ready, the page uses this as a visual placeholder rather than showing a third-party video.",
         duration: "45 sec video",
-        embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
+        embedUrl: ""
       },
       primaryCta: "Learn about Gilbert",
-      secondaryCta: "Explore the diagnostic",
+      heroCta: "Start a conversation",
+      secondaryCta: "Explore the self-assessment",
       valueTitle: "Why the advisory matters",
       valueBody:
         "Family business decisions carry more than operational weight. They affect trust, continuity, ownership, and future roles. Gilbert gives families a neutral space to separate the issues, align around priorities, and turn sensitive conversations into workable agreements.",
-      businessTitle: "What Gilbert helps families clarify",
+      businessTitle: "Separate. Structure. Sustain.",
       businessBody:
         "The work sits at the intersection of ownership, leadership, board governance, and family dynamics. The goal is not more theory. It is a clearer path for decisions the family actually has to make.",
+      frameworkIntro:
+        "A neutral space to untangle family, ownership, and business — then turn conversations into agreements that last.",
       helpingTitle: "Families usually reach out when",
       helpingItems: [
         "A founder or senior generation wants continuity but has not aligned the family around what comes next",
@@ -789,7 +792,7 @@ export const COPY = {
       ],
       evidence: {
         label: "Why this matters",
-        title: "What can happen when the family side stays undefined",
+        title: "What can happen when the family dimension is not clearly defined",
         intro:
           "Many family businesses do not fail because the business is weak. They struggle because expectations, decision rules, and succession conversations were never made clear.",
         sourceNote:
@@ -820,29 +823,37 @@ export const COPY = {
             theme: "Succession",
             informal:
               "Succession is recognized as critical, but planning often stays behind daily business pressure.",
+            informalShort: "Planning stays behind daily pressure, even though it's seen as critical.",
             advisory:
-              "Leadership transition becomes a recurring agenda: readiness, role criteria, timing, and ownership expectations are made visible."
+              "Leadership transition becomes a recurring agenda: readiness, role criteria, timing, and ownership expectations are made visible.",
+            advisoryShort: "Readiness, criteria, and timing become a recurring agenda item."
           },
           {
             theme: "Family alignment",
             informal:
               "Values and purpose may be understood by senior leaders but remain unwritten or weakly communicated across generations.",
+            informalShort: "Values are understood by leaders but rarely written down.",
             advisory:
-              "The family documents shared principles, decision rights, and communication cadences so alignment is not dependent on memory or hierarchy."
+              "The family documents shared principles, decision rights, and communication cadences so alignment is not dependent on memory or hierarchy.",
+            advisoryShort: "Shared principles and decision rights are documented for everyone."
           },
           {
             theme: "Conflict",
             informal:
               "Disagreement is handled personally, late, or through informal authority, which can turn normal tension into distrust.",
+            informalShort: "Disagreement is handled late, personally, or by informal authority.",
             advisory:
-              "Families define how dissent is raised, who decides, and how sensitive topics move forward without exposing individual responses."
+              "Families define how dissent is raised, who decides, and how sensitive topics move forward without exposing individual responses.",
+            advisoryShort: "The family agrees how disagreement is raised and who decides."
           },
           {
             theme: "Decision speed",
             informal:
               "Organizational, leadership, and decision-making challenges can slow down agility even when the business has strong market instincts.",
+            informalShort: "Family issues blend into daily operations and slow decisions down.",
             advisory:
-              "Clear governance roles help the family separate ownership, board, executive, and next-generation conversations."
+              "Clear governance roles help the family separate ownership, board, executive, and next-generation conversations.",
+            advisoryShort: "Clear roles separate ownership, board, and family conversations."
           }
         ],
         sources: [
@@ -929,18 +940,18 @@ export const COPY = {
             "Clear roles, responsibilities, and rhythms so decisions endure."
         }
       ],
-      toolTitle: "The diagnostic is a first read, not the full advisory work",
+      toolTitle: "The self-assessment is a starting point, not the full advisory work",
       toolParagraphs: [
-        "The diagnostic is a light starting point, not the center of the relationship.",
+        "The self-assessment is a light starting point, not the center of the relationship.",
         "It helps a family see where roles, expectations, decisions, and succession conversations may need more structure.",
         "When used at the right moment, it gives Gilbert and the family a shared language for the first advisory conversation."
       ],
-      toolCta: "See how the diagnostic works",
+      toolCta: "See how the self-assessment works",
       ctaTitle: "Learn how Gilbert works with families",
       ctaBody:
         "Start with who Gilbert is, the experience he brings, and the kinds of family-enterprise moments where his work is useful.",
       ctaButton: "Learn about Gilbert",
-      ctaNote: "The diagnostic is available when the family is ready for a structured first read."
+      ctaNote: "The self-assessment is available when the family is ready for a structured first read."
     },
     services: {
       label: "Services",
@@ -950,7 +961,7 @@ export const COPY = {
       promiseTitle: "Advisory shaped around the decision in front of the family",
       promiseBody:
         "The work starts by understanding the family system, the business context, and the conversation that has become difficult to hold. From there, Gilbert helps structure the right forum, sequence the work, and keep the family moving toward decisions it can use.",
-      previewLabel: "How I Help",
+      previewLabel: "How Gilbert Helps",
       previewTitle: "Four ways to work with Gilbert",
       previewBody:
         "The advisory relationship can be structured as a project, a board role, executive coaching, or a private 1:1 advisory space depending on what the family needs to decide.",
@@ -973,13 +984,13 @@ export const COPY = {
         {
           title: "Board service",
           summary:
-            "Independent board participation for family enterprises that need a voice able to connect business strategy with family context.",
+            "Helping business families create a new board of directors or professionalize an existing one — a voice that connects business strategy with family context.",
           forWhom:
-            "Family-owned companies, advisory boards, or boards working through governance maturity, succession, professionalization, or owner alignment.",
+            "Early-stage and growing businesses structuring a governance system for the first time, as well as established family-owned companies whose board needs to mature, professionalize, or better align with ownership.",
           helpsWith:
-            "Bringing family-enterprise perspective into board discussion, clarifying roles, improving decision preparation, and helping the board understand family dynamics without becoming trapped by them.",
+            "Designing the board's structure and charter from the ground up, defining roles and decision rights, helping recruit the right mix of family and independent directors, and bringing family-enterprise perspective into board discussion so it understands family dynamics without becoming trapped by them.",
           outcome:
-            "A board conversation that better separates ownership, management, family, and long-term continuity decisions."
+            "A functioning board — newly created or professionalized — that clearly separates ownership, management, family, and long-term continuity decisions."
         },
         {
           title: "Executive coaching",
@@ -1006,8 +1017,8 @@ export const COPY = {
       ],
       ctaTitle: "Start with the kind of support the moment requires",
       ctaBody:
-        "Some families begin with a diagnostic. Others begin with a conversation about a specific decision, transition, or governance question.",
-      diagnosticCta: "Use the diagnostic",
+        "Some families begin with a self-assessment. Others begin with a conversation about a specific decision, transition, or governance question.",
+      diagnosticCta: "Let's work together",
       aboutCta: "Learn about Gilbert"
     },
     about: {
@@ -1021,15 +1032,28 @@ export const COPY = {
         "At under 40, he sits close enough to the next generation to understand their perspective and their drive to step in, while also having built experience within the system they are entering. This allows him to work across generations with credibility, helping turn tension into progress rather than friction.",
         "Today, he works with other business families facing similar dynamics, helping them make sense of what is already happening, bring the right conversations to the surface, and move forward with clarity."
       ],
+      quickFacts: [
+        {
+          value: "12+",
+          label: "years inside family enterprise"
+        },
+        {
+          value: "4 roles",
+          label: "family member, owner, executive, board participant"
+        },
+        {
+          value: "FFI + IMD",
+          label: "family business, wealth advising, and board training"
+        }
+      ],
       video: {
-        label: "Watch",
+        label: "",
         title: "A deeper introduction",
         body:
-          "This space is prepared for a longer video where Gilbert can explain his background, lived experience, and how he works with business families before any diagnostic is introduced.",
+          "This space is prepared for a longer video where Gilbert can explain his background, lived experience, and how he works with business families before any self-assessment is introduced.",
         duration: "2 min video",
-        embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
+        embedUrl: ""
       },
-      heroCta: "See the diagnostic approach",
       contextLabel: "Why lived experience matters",
       contextTitle: "He understands the system from more than one seat",
       contextBody:
@@ -1087,21 +1111,37 @@ export const COPY = {
         "A board or leadership group trying to separate family concerns from business decisions",
         "Important decisions that feel stuck because the conversation has not happened"
       ],
-      toolTitle: "Why this self-assessment matters",
-      toolBody:
-        "Most families already track the business: sales, growth, profitability, and operations. What is less often defined is how the family makes decisions, handles expectations, and prepares for the future.",
-      toolBodySecond:
-        "At its core, the self-assessment reflects a simple reality: most business families do not need more complexity first. They need a shared understanding of where things are clear and where they are not.",
-      toolBodyThird:
-        "This is not a scorecard. It does not compare families or produce a verdict. Instead, it gives the family a simple map for conversations about roles, expectations, decisions, succession, and continuity.",
-      toolBodyFourth:
-        "When used thoughtfully, it becomes a practical starting point for conversations that are often postponed until pressure makes them harder.",
-      toolCta: "See how the diagnostic works"
+      toolTitle: "Let's work together — it starts with the self-assessment",
+      toolIntro:
+        "Every engagement begins the same way: a short, private self-assessment that gives us a shared starting point before the first real conversation.",
+      toolSteps: [
+        {
+          title: "Complete the self-assessment",
+          body:
+            "About 15 minutes, on your own, at your own pace. You can pause and pick up exactly where you left off."
+        },
+        {
+          title: "Receive your individual report",
+          body:
+            "A private summary of your results, organized by pillar, showing your strongest areas and where more clarity may help."
+        },
+        {
+          title: "Decide on a conversation",
+          body:
+            "If it's useful, Gilbert reaches out to go through the results together and talk about next steps. There is no obligation."
+        }
+      ],
+      toolReceiveBody:
+        "You will receive a written summary of your own results and, if you choose to invite other family members, a combined view that shows where the family agrees and where perspectives differ.",
+      toolPrivacyTitle: "How confidentiality is handled",
+      toolPrivacyBody:
+        "Your individual answers are never shared publicly or with other family members. If you invite others to compare results, each person only ever sees their own answers — Gilbert is the only one who sees the combined view, and only to prepare a more useful conversation. Responses are never benchmarked publicly, used for marketing, or shared with anyone outside this engagement. You can pause the self-assessment at any time; your progress is saved privately in your browser until you return.",
+      toolCta: "Let's work together"
     },
     cookieConsent: {
       title: "We value your privacy",
       body:
-        "This site uses cookies to keep your diagnostic progress, connect your result to the comparison flow, and support result capture.",
+        "This site uses cookies to save self-assessment progress and keep comparison links working.",
       privacyLink: "Read the Privacy Policy",
       accept: "Accept cookies",
       reject: "Reject"
@@ -1113,7 +1153,7 @@ export const COPY = {
       close: "Close",
       intro: [
         "Gilbert Devlyn Advisory",
-        "This Privacy Policy explains how the website, diagnostic, comparison links, and related communications collect, use, store, and share information. For privacy questions, contact info@gilbertdevlyn.com."
+        "This Privacy Policy explains how the website, self-assessment, comparison links, and related communications collect, use, store, and share information. For privacy questions, contact info@gilbertdevlyn.com."
       ],
       sections: [
         {
@@ -1254,7 +1294,7 @@ export const COPY = {
       ]
     },
     resumeAssessment: {
-      label: "Saved diagnostic",
+      label: "Saved assessment",
       title: "Continue your assessment?",
       body:
         "We found a saved assessment in this browser. You can continue where you left off or start again with a clean form.",
@@ -1268,6 +1308,8 @@ export const COPY = {
       title: "Start with a simple self-assessment",
       body:
         "In about 10 minutes, see how clearly your family works together across eight practical family-business topics.",
+      startingPointNote:
+        "This is a starting point for conversation - not a defined action plan, and not a judgment of the family or the business.",
       introBadge: "Simple starting point",
       languageNote: "Available in EN and ES",
       journeyLabel: "What happens next",
@@ -1294,7 +1336,7 @@ export const COPY = {
         "Priority topics",
         "Comparison link"
       ],
-      notAuditTitle: "Built for sensitive rooms",
+      notAuditTitle: "A safe, confidential space",
       gilbertContextTitle: "Why Gilbert starts here",
       gilbertContextBody:
         "The assessment gives families a neutral map before the harder conversation begins. Gilbert uses it to identify where clarity, trust, and practical governance work should come first.",
@@ -1327,34 +1369,43 @@ export const COPY = {
       conversationCta: "Start the assessment",
     },
     intro:
-      "A guided self-assessment for family-owned businesses to understand clarity across eight family enterprise topics.",
+      "A guided self-assessment for family-owned businesses to understand clarity across eight family-enterprise topics.",
     notAudit:
-      "This is a self-assessment, not an audit, test, or ranking. The result is meant to support better conversations.",
+      "This is a self-assessment, not an audit, test, or ranking. Your answers are handled privately and confidentially, and are used only to support a better conversation - never to judge the family or the business.",
+    preAssessmentPrivacy: {
+      title: "Before you begin",
+      body:
+        "Your answers are private. They are used only to generate your individual report and are never shared publicly or with other family members. If you invite others, each person sees only their own results - Gilbert alone sees the combined view, and only to prepare a better conversation. You can pause at any time; your progress is saved in this browser.",
+      primaryCta: "I understand - begin",
+      secondaryCta: "Read the privacy policy"
+    },
     chooseMode: "Choose a mode",
     language: "Language",
     modes: {
       full: {
         title: "Complete Self-Assessment",
-        description: "Answer 50 questions across eight family enterprise topics. It takes about 10 minutes and gives your family a practical starting point.",
+        description: "Answer 50 questions across eight family-enterprise topics. It takes about 10 minutes and gives your family a practical starting point.",
         meta: "50 questions · ~10 minutes · Map + summary result"
       }
     },
     intake: {
       eyebrow: "Respondent profile",
       title: "Tell us about yourself",
-      body:
-        "The same answer can mean something different depending on whether it comes from a founder, family member, spouse, or shareholder.",
+      body: "Your role helps Gilbert read the results in the right context.",
+      privacyReassurance:
+        "This profile is used only to interpret your result. Individual answers are handled privately.",
+      modeSectionLabel: "Before the self-assessment",
       formLabel: "Before the questions",
       formTitle: "Help us read your result in context",
       formNote: "This profile stays connected to your result and prepares the comparison flow.",
       contextTitle: "Why this comes first",
       contextBody:
-        "Family governance is shaped by role, generation, and access to information. This context makes the diagnostic more useful.",
+        "Family governance is shaped by role, generation, and access to information. This context makes the self-assessment easier to interpret.",
       nextTitle: "What happens next",
       nextSteps: [
         "Complete this short profile",
         "Answer the self-assessment across the eight topics",
-        "Receive a result with priorities, transparency signals, and next steps"
+        "Receive a result showing strengths, areas for clarity, and suggested next steps"
       ],
       includesTitle: "Your result includes",
       includes: [
@@ -1471,7 +1522,7 @@ export const COPY = {
     comparison: {
       inviteTitle: "Invite another family member",
       inviteBody:
-        "Enter their email and we will send a private invitation so they can complete the diagnostic and compare perspectives.",
+        "Enter their email and we will send a private invitation so they can complete the self-assessment and compare perspectives.",
       invitePrivacyNote:
         "Only pillar-level differences are compared. Individual answers are not shared question by question.",
       inviteEmail: "Family member email",
@@ -1485,7 +1536,7 @@ export const COPY = {
       inviteSentBody: "We sent the private group link to {email}.",
       inviteSentModalTitle: "Invitation email sent",
       inviteSentModalBody:
-        "We sent the private group link to {email}. They can open the email and complete the diagnostic from the same comparison group.",
+        "We sent the private group link to {email}. They can open the email and complete the self-assessment from the same comparison group.",
       inviteSentModalDone: "Done, save assessment",
       inviteNote:
         "The invited person will receive the private group link by email.",
@@ -1536,11 +1587,11 @@ export const COPY = {
       home: "Inicio",
       about: "Acerca de",
       services: "Servicios",
-      assessment: "Diagnóstico"
+      assessment: "Autoevaluación"
     },
     booking: {
-      startAssessment: "Iniciar Diagnóstico",
-      takeAssessment: "Tomar el Diagnóstico",
+      startAssessment: "Iniciar autoevaluación",
+      takeAssessment: "Tomar la autoevaluación",
       getGovernanceScore: "Obtener Puntaje de Gobierno",
       bookStrategyCall: "Solicitar seguimiento",
       modalLabel: "Solicitud de seguimiento",
@@ -1573,26 +1624,29 @@ export const COPY = {
     home: {
       title: "Gilbert Devlyn Asesoría para Empresas Familiares",
       subtitle:
-        "Acompañamiento para familias empresarias que navegan propiedad, sucesión, gobierno y roles de siguiente generación antes de que la presión se convierta en conflicto.",
+        "Acompañamiento para familias empresarias en propiedad, sucesión y roles de la siguiente generación — antes de que la presión se convierta en conflicto.",
       body:
         "Gilbert Devlyn aporta experiencia vivida como miembro de familia, propietario, ejecutivo y consejero dentro de una empresa multigeneracional. Ayuda a las familias a nombrar las conversaciones que se están evitando, ordenar quiénes deben participar y avanzar hacia acuerdos que resistan la presión.",
       gilbertTitle: "¿Quién es Gilbert?",
       gilbertBody:
         "Gilbert Devlyn aporta experiencia directa desde dentro de un grupo empresarial familiar de tercera generación. Como miembro de familia, propietario y consejero, ha participado directamente en decisiones que dan forma a la continuidad entre generaciones.",
       video: {
-        label: "Video de introducción",
-        title: "Un mensaje breve de Gilbert",
+        label: "Video de Gilbert",
+        title: "Reservado para el mensaje de Gilbert",
         body:
-          "Este espacio queda preparado para un video breve de inicio donde Gilbert pueda presentar quién es, en qué ayuda a las familias y por qué importa la primera conversación.",
+          "Este espacio queda reservado para el video breve de Gilbert en la página de inicio. Hasta que el clip final esté listo, se mantiene como marcador visual en lugar de mostrar un video de terceros.",
         duration: "Video de 45 seg",
-        embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
+        embedUrl: ""
       },
       primaryCta: "Conocer a Gilbert",
-      secondaryCta: "Explorar diagnóstico",
+      heroCta: "Iniciar una conversación",
+      secondaryCta: "Explorar autoevaluación",
       valueTitle: "Por qué importa la asesoría",
       valueBody:
         "Las decisiones de una empresa familiar pesan más que lo operativo. Afectan la confianza, la continuidad, la propiedad y los roles futuros. Gilbert ofrece un espacio neutral para separar los temas, alinear prioridades y convertir conversaciones sensibles en acuerdos posibles.",
-      businessTitle: "Lo que Gilbert ayuda a aclarar",
+      businessTitle: "Separar. Ordenar. Sostener.",
+      frameworkIntro:
+        "Un espacio neutral para separar familia, propiedad y empresa — y convertir las conversaciones en acuerdos que perduran.",
       businessBody:
         "El trabajo vive en el cruce entre propiedad, liderazgo, consejo y dinámica familiar. El objetivo no es más teoría, sino un camino más claro para las decisiones que la familia realmente necesita tomar.",
       helpingTitle: "Las familias suelen buscar apoyo cuando",
@@ -1639,7 +1693,7 @@ export const COPY = {
       ],
       evidence: {
         label: "Por qué importa",
-        title: "Qué puede pasar cuando la parte familiar no está definida",
+        title: "Qué puede pasar cuando la dimensión familiar no está claramente definida",
         intro:
           "Muchas empresas familiares no fallan porque el negocio sea débil. Se complican porque las expectativas, las reglas de decisión y las conversaciones de sucesión nunca quedaron claras.",
         sourceNote:
@@ -1670,29 +1724,37 @@ export const COPY = {
             theme: "Sucesión",
             informal:
               "La sucesión se reconoce como crítica, pero la planeación suele quedarse detrás de la presión del día a día.",
+            informalShort: "La planeación queda detrás de la urgencia diaria, aunque se sabe crítica.",
             advisory:
-              "La transición de liderazgo entra en una agenda recurrente: preparación, criterios de rol, tiempos y expectativas de propiedad se vuelven visibles."
+              "La transición de liderazgo entra en una agenda recurrente: preparación, criterios de rol, tiempos y expectativas de propiedad se vuelven visibles.",
+            advisoryShort: "Preparación, criterios y tiempos se vuelven agenda recurrente."
           },
           {
             theme: "Alineación familiar",
             informal:
               "Los valores y el propósito pueden estar claros para líderes senior, pero no siempre están escritos o comunicados entre generaciones.",
+            informalShort: "Los líderes entienden los valores, pero rara vez quedan por escrito.",
             advisory:
-              "La familia documenta principios compartidos, derechos de decisión y ritmos de comunicación para que la alineación no dependa de memoria o jerarquía."
+              "La familia documenta principios compartidos, derechos de decisión y ritmos de comunicación para que la alineación no dependa de memoria o jerarquía.",
+            advisoryShort: "Principios y derechos de decisión quedan documentados para todos."
           },
           {
             theme: "Conflicto",
             informal:
               "El desacuerdo se maneja de forma personal, tardía o mediante autoridad informal, convirtiendo tensión normal en desconfianza.",
+            informalShort: "El desacuerdo se maneja tarde, en lo personal o por autoridad informal.",
             advisory:
-              "La familia define cómo se plantea el desacuerdo, quién decide y cómo avanzan los temas sensibles sin exponer respuestas individuales."
+              "La familia define cómo se plantea el desacuerdo, quién decide y cómo avanzan los temas sensibles sin exponer respuestas individuales.",
+            advisoryShort: "La familia acuerda cómo plantear el desacuerdo y quién decide."
           },
           {
             theme: "Velocidad de decisión",
             informal:
               "Los retos organizacionales, de liderazgo y decisión pueden frenar la agilidad aunque el negocio tenga buenos instintos de mercado.",
+            informalShort: "Los temas familiares se mezclan con la operación y frenan decisiones.",
             advisory:
-              "Roles claros de gobierno ayudan a separar conversaciones de propiedad, consejo, equipo ejecutivo y siguiente generación."
+              "Roles claros de gobierno ayudan a separar conversaciones de propiedad, consejo, equipo ejecutivo y siguiente generación.",
+            advisoryShort: "Roles claros separan propiedad, consejo y conversaciones familiares."
           }
         ],
         sources: [
@@ -1779,18 +1841,18 @@ export const COPY = {
             "Después de la reunión, el trabajo continúa con pasos concretos: acuerdos claros, responsables definidos y un ritmo familiar protegido para que las decisiones sobrevivan más allá de una buena conversación."
         }
       ],
-      toolTitle: "El diagnóstico es una primera lectura, no todo el trabajo de asesoría",
+      toolTitle: "La autoevaluación es un punto de partida, no todo el trabajo de asesoría",
       toolParagraphs: [
-        "El diagnóstico es un punto de partida ligero, no el centro de la relación.",
+        "La autoevaluación es un punto de partida ligero, no el centro de la relación.",
         "Ayuda a ver dónde los roles, expectativas, decisiones y conversaciones de sucesión pueden necesitar más estructura.",
         "Usado en el momento correcto, le da a Gilbert y a la familia un lenguaje compartido para la primera conversación de asesoría."
       ],
-      toolCta: "Ver cómo funciona el diagnóstico",
+      toolCta: "Ver cómo funciona la autoevaluación",
       ctaTitle: "Conoce cómo trabaja Gilbert con las familias",
       ctaBody:
         "Empieza por quién es Gilbert, la experiencia que aporta y los momentos de empresa familiar donde su trabajo puede ser útil.",
       ctaButton: "Aprender sobre Gilbert",
-      ctaNote: "El diagnóstico está disponible cuando la familia esté lista para una primera lectura estructurada."
+      ctaNote: "La autoevaluación está disponible cuando la familia esté lista para una primera lectura estructurada."
     },
     services: {
       label: "Servicios",
@@ -1800,7 +1862,7 @@ export const COPY = {
       promiseTitle: "Asesoría diseñada alrededor de la decisión que la familia tiene enfrente",
       promiseBody:
         "El trabajo empieza por entender el sistema familiar, el contexto del negocio y la conversación que se ha vuelto difícil de sostener. Desde ahí, Gilbert ayuda a estructurar el foro correcto, ordenar el proceso y mantener a la familia avanzando hacia decisiones útiles.",
-      previewLabel: "Cómo ayudo",
+      previewLabel: "Cómo ayuda Gilbert",
       previewTitle: "Cuatro formas de trabajar con Gilbert",
       previewBody:
         "La relación de asesoría puede tomar forma de proyecto, rol de consejo, coaching ejecutivo o espacio privado 1:1 según lo que la familia necesite decidir.",
@@ -1823,13 +1885,13 @@ export const COPY = {
         {
           title: "Servicio de consejo",
           summary:
-            "Participación independiente en consejo para empresas familiares que necesitan una voz capaz de conectar estrategia de negocio con contexto familiar.",
+            "Ayudar a familias empresarias a crear un nuevo consejo de administración o a profesionalizar uno existente — una voz que conecta estrategia de negocio con contexto familiar.",
           forWhom:
-            "Empresas familiares, consejos consultivos o consejos que trabajan madurez de gobierno, sucesión, profesionalización o alineación de propietarios.",
+            "Empresas en etapa temprana o en crecimiento que están estructurando un sistema de gobierno por primera vez, así como empresas familiares establecidas cuyo consejo necesita madurar, profesionalizarse o alinearse mejor con la propiedad.",
           helpsWith:
-            "Llevar perspectiva de empresa familiar a la conversación de consejo, aclarar roles, mejorar la preparación de decisiones y ayudar al consejo a entender la dinámica familiar sin quedar atrapado por ella.",
+            "Diseñar la estructura y los estatutos del consejo desde cero, definir roles y derechos de decisión, ayudar a reclutar la mezcla correcta de consejeros familiares e independientes, y llevar la perspectiva de empresa familiar a la conversación de consejo para que entienda la dinámica familiar sin quedar atrapado por ella.",
           outcome:
-            "Una conversación de consejo que separa mejor propiedad, dirección, familia y decisiones de continuidad de largo plazo."
+            "Un consejo funcional — recién creado o profesionalizado — que separa con claridad propiedad, dirección, familia y decisiones de continuidad de largo plazo."
         },
         {
           title: "Coaching ejecutivo",
@@ -1856,8 +1918,8 @@ export const COPY = {
       ],
       ctaTitle: "Empieza con el tipo de apoyo que el momento requiere",
       ctaBody:
-        "Algunas familias empiezan con el diagnóstico. Otras empiezan con una conversación sobre una decisión, transición o pregunta de gobierno específica.",
-      diagnosticCta: "Usar el diagnóstico",
+        "Algunas familias empiezan con la autoevaluación. Otras empiezan con una conversación sobre una decisión, transición o pregunta de gobierno específica.",
+      diagnosticCta: "Trabajemos juntos",
       aboutCta: "Conocer a Gilbert"
     },
     about: {
@@ -1869,15 +1931,28 @@ export const COPY = {
         "Con menos de 40 años, está lo suficientemente cerca de la siguiente generación para entender su perspectiva y su deseo de participar, pero también ha construido experiencia dentro del sistema al que esa generación está entrando. Eso le permite trabajar entre generaciones con credibilidad.",
         "Hoy guía a otras familias empresarias en momentos de transición, ayudándolas a entender lo que ya está pasando, traer las conversaciones correctas a la superficie y avanzar con claridad. Gilbert no es un consultor que solo estudió el tema; lo vivió y decidió acompañar a otros en el mismo camino."
       ],
+      quickFacts: [
+        {
+          value: "12+",
+          label: "años dentro de empresa familiar"
+        },
+        {
+          value: "4 roles",
+          label: "familiar, propietario, ejecutivo y consejero"
+        },
+        {
+          value: "FFI + IMD",
+          label: "formación en empresa familiar, patrimonio y consejo"
+        }
+      ],
       video: {
-        label: "Video",
+        label: "",
         title: "Una introducción más profunda",
         body:
-          "Este espacio queda preparado para un video más largo donde Gilbert pueda explicar su historia, experiencia vivida y forma de trabajar con familias empresarias antes de presentar el diagnóstico.",
+          "Este espacio queda preparado para un video más largo donde Gilbert pueda explicar su historia, experiencia vivida y forma de trabajar con familias empresarias antes de presentar la autoevaluación.",
         duration: "Video de 2 min",
-        embedUrl: "https://www.youtube.com/embed/3-3rexYRdcQ"
+        embedUrl: ""
       },
-      heroCta: "Ver enfoque del diagnóstico",
       contextLabel: "Por qué importa la experiencia vivida",
       contextTitle: "Entiende el sistema desde más de un asiento",
       contextBody:
@@ -1935,21 +2010,37 @@ export const COPY = {
         "Un consejo o equipo de liderazgo intentando separar preocupaciones familiares de decisiones empresariales",
         "Decisiones importantes que se sienten estancadas porque la conversación no ha ocurrido"
       ],
-      toolTitle: "Por qué importa esta autoevaluación",
-      toolBody:
-        "La mayoría de las familias ya mide el negocio: ventas, crecimiento, rentabilidad y operación. Lo que muchas veces no está definido es cómo la familia toma decisiones, maneja expectativas y se prepara para el futuro.",
-      toolBodySecond:
-        "En el fondo, la autoevaluación refleja una realidad simple: la mayoría de las familias empresarias no necesita más complejidad al inicio. Necesita un entendimiento compartido de qué está claro y qué no.",
-      toolBodyThird:
-        "Esto no es un scorecard. No compara familias ni produce un veredicto. En cambio, ofrece un mapa sencillo para conversar sobre roles, expectativas, decisiones, sucesión y continuidad.",
-      toolBodyFourth:
-        "Cuando se usa con cuidado, se convierte en un punto de partida práctico para conversaciones que muchas veces se postergan hasta que la presión las vuelve más difíciles.",
-      toolCta: "Ver cómo funciona el diagnóstico"
+      toolTitle: "Trabajemos juntos: todo empieza con la autoevaluación",
+      toolIntro:
+        "Todo proceso de asesoría comienza igual: una autoevaluación breve y privada que nos da un punto de partida compartido antes de la primera conversación real.",
+      toolSteps: [
+        {
+          title: "Completa la autoevaluación",
+          body:
+            "Unos 15 minutos, a tu propio ritmo. Puedes pausar y continuar exactamente donde te quedaste."
+        },
+        {
+          title: "Recibe tu reporte individual",
+          body:
+            "Un resumen privado de tus resultados, organizado por pilar, con tus áreas más sólidas y en cuáles conviene buscar más claridad."
+        },
+        {
+          title: "Decide sobre una conversación",
+          body:
+            "Si es útil, Gilbert te contacta para revisar los resultados juntos y hablar de los siguientes pasos. No hay ninguna obligación."
+        }
+      ],
+      toolReceiveBody:
+        "Recibirás un resumen escrito de tus propios resultados y, si decides invitar a otros miembros de la familia, una vista combinada que muestra en qué coincide la familia y en qué difieren las perspectivas.",
+      toolPrivacyTitle: "Cómo se maneja la confidencialidad",
+      toolPrivacyBody:
+        "Tus respuestas individuales nunca se comparten públicamente ni con otros miembros de la familia. Si invitas a otras personas a comparar resultados, cada quien ve únicamente sus propias respuestas — solo Gilbert ve la vista combinada, y únicamente para preparar una conversación más útil. Las respuestas nunca se comparan públicamente, no se usan con fines de mercadotecnia ni se comparten con nadie fuera de este proceso. Puedes pausar la autoevaluación en cualquier momento; tu avance se guarda de forma privada en tu navegador hasta que regreses.",
+      toolCta: "Trabajemos juntos"
     },
     cookieConsent: {
       title: "Valoramos tu privacidad",
       body:
-        "Este sitio usa cookies para guardar tu avance en el diagnóstico, conectar tu resultado con el flujo de comparación y apoyar la captura de resultados.",
+        "Este sitio usa cookies para guardar tu avance en la autoevaluación y mantener activas las ligas de comparación.",
       privacyLink: "Leer la Política de Privacidad",
       accept: "Aceptar cookies",
       reject: "Rechazar"
@@ -1961,7 +2052,7 @@ export const COPY = {
       close: "Cerrar",
       intro: [
         "Gilbert Devlyn Advisory",
-        "Esta Política de Privacidad explica cómo el sitio web, el diagnóstico, las ligas de comparación y las comunicaciones relacionadas recopilan, usan, almacenan y comparten información. Para preguntas de privacidad, escribe a info@gilbertdevlyn.com."
+        "Esta Política de Privacidad explica cómo el sitio web, la autoevaluación, las ligas de comparación y las comunicaciones relacionadas recopilan, usan, almacenan y comparten información. Para preguntas de privacidad, escribe a info@gilbertdevlyn.com."
       ],
       sections: [
         {
@@ -2102,20 +2193,22 @@ export const COPY = {
       ]
     },
     resumeAssessment: {
-      label: "Diagnóstico guardado",
-      title: "¿Continuar tu diagnóstico?",
+      label: "Autoevaluación guardada",
+      title: "¿Continuar tu autoevaluación?",
       body:
-        "Encontramos un diagnóstico guardado en este navegador. Puedes continuar donde te quedaste o empezar de nuevo con un formulario limpio.",
+        "Encontramos una autoevaluación guardada en este navegador. Puedes continuar donde te quedaste o empezar de nuevo con un formulario limpio.",
       answeredLabel: "Respondidas",
       currentLabel: "Pregunta actual",
       updatedLabel: "Último guardado",
-      continueCta: "Continuar diagnóstico",
+      continueCta: "Continuar autoevaluación",
       startOverCta: "Empezar de nuevo"
     },
     assessmentIntro: {
       title: "Empieza con una autoevaluación sencilla",
       body:
         "En alrededor de 10 minutos, observa qué tan claramente trabaja junta la familia en ocho temas prácticos de empresa familiar.",
+      startingPointNote:
+        "Este es un punto de partida para la conversación, no un plan de acción definido, ni un juicio sobre la familia o la empresa.",
       introBadge: "Punto de partida sencillo",
       languageNote: "Disponible en EN y ES",
       journeyLabel: "Qué ocurre después",
@@ -2142,14 +2235,14 @@ export const COPY = {
         "Temas prioritarios",
         "Enlace de comparación"
       ],
-      notAuditTitle: "Diseñado para conversaciones sensibles",
+      notAuditTitle: "Un espacio seguro y confidencial",
       gilbertContextTitle: "Por qué Gilbert empieza aquí",
       gilbertContextBody:
         "La autoevaluación le da a la familia un mapa neutral antes de iniciar la conversación difícil. Gilbert lo usa para identificar dónde hacen falta claridad, confianza y trabajo práctico de gobierno.",
       coverageLabel: "8 Temas de Empresa Familiar",
       coverageTitle: "Un mapa compartido para conversaciones que suelen ser difíciles de iniciar",
       coverageBody:
-        "El diagnóstico observa la relación entre familia, propiedad y empresa. El objetivo no es producir un veredicto; es ayudar a la familia a ver qué conversaciones necesitan mayor claridad.",
+        "La autoevaluación observa la relación entre familia, propiedad y empresa. El objetivo no es producir un veredicto; es ayudar a la familia a ver qué conversaciones necesitan mayor claridad.",
       outcomesLabel: "Qué recibes",
       outcomesTitle: "Un punto de partida práctico",
       outcomes: [
@@ -2169,15 +2262,22 @@ export const COPY = {
             "Recibe una etapa de madurez, áreas sugeridas de enfoque y siguientes pasos prácticos para la conversación familiar."
         }
       ],
-      conversationTitle: "Comienza con el diagnóstico completo",
+      conversationTitle: "Comienza con la autoevaluación completa",
       conversationBody:
-        "El diagnóstico completo ofrece la vista más útil para una reunión familiar, conversación de propiedad o discusión con un asesor.",
-      conversationCta: "Iniciar diagnóstico completo",
+        "La autoevaluación completa ofrece la vista más útil para una reunión familiar, conversación de propiedad o discusión con un asesor.",
+      conversationCta: "Iniciar autoevaluación completa",
     },
     intro:
       "Una autoevaluación guiada para que familias empresarias comprendan su claridad en ocho temas de empresa familiar.",
     notAudit:
-      "Esta es una autoevaluación, no una auditoría, examen ni ranking. El resultado busca apoyar mejores conversaciones.",
+      "Esta es una autoevaluación, no una auditoría, examen ni ranking. Tus respuestas se manejan de forma privada y confidencial, y se usan únicamente para apoyar una mejor conversación, nunca para juzgar a la familia o la empresa.",
+    preAssessmentPrivacy: {
+      title: "Antes de empezar",
+      body:
+        "Tus respuestas son privadas. Se usan únicamente para generar tu reporte individual y nunca se comparten públicamente ni con otros miembros de la familia. Si invitas a otras personas, cada quien ve solo sus propios resultados; únicamente Gilbert ve la vista combinada, y solo para preparar una mejor conversación. Puedes pausar en cualquier momento; tu avance se guarda en este navegador.",
+      primaryCta: "Entendido, empezar",
+      secondaryCta: "Leer la política de privacidad"
+    },
     chooseMode: "Elige una modalidad",
     language: "Idioma",
     modes: {
@@ -2190,19 +2290,21 @@ export const COPY = {
     intake: {
       eyebrow: "Perfil del participante",
       title: "Cuéntanos sobre ti",
-      body:
-        "La misma respuesta puede significar algo distinto si viene de un fundador, familiar, cónyuge o accionista.",
+      body: "Tu rol ayuda a Gilbert a leer los resultados en el contexto correcto.",
+      privacyReassurance:
+        "Este perfil se usa únicamente para interpretar tu resultado. Las respuestas individuales se manejan de forma privada.",
+      modeSectionLabel: "Antes de la autoevaluación",
       formLabel: "Antes de las preguntas",
       formTitle: "Ayúdanos a leer tu resultado en contexto",
       formNote: "Este perfil queda conectado a tu resultado y prepara el flujo de comparación.",
       contextTitle: "Por qué esto va primero",
       contextBody:
-        "El gobierno familiar depende del rol, la generación y el acceso a información. Este contexto hace más útil el diagnóstico.",
+        "El gobierno familiar depende del rol, la generación y el acceso a información. Este contexto hace que la autoevaluación sea más fácil de interpretar.",
       nextTitle: "Qué sigue",
       nextSteps: [
         "Completa este perfil breve",
         "Responde la autoevaluación en los ocho temas",
-        "Recibe un resultado con prioridades, señales de transparencia y siguientes pasos"
+        "Recibe un resultado con fortalezas, áreas de claridad y siguientes pasos sugeridos"
       ],
       includesTitle: "Tu resultado incluye",
       includes: [
@@ -2319,7 +2421,7 @@ export const COPY = {
     comparison: {
       inviteTitle: "Invitar a otro familiar",
       inviteBody:
-        "Ingresa su email y enviaremos una invitación privada para que complete el diagnóstico y comparen perspectivas.",
+        "Ingresa su email y enviaremos una invitación privada para que complete la autoevaluación y comparen perspectivas.",
       invitePrivacyNote:
         "Solo se comparan diferencias por pilar. Las respuestas individuales no se comparten pregunta por pregunta.",
       inviteEmail: "Email del familiar",
@@ -2333,8 +2435,8 @@ export const COPY = {
       inviteSentBody: "Enviamos la liga privada de grupo a {email}.",
       inviteSentModalTitle: "Invitación enviada por email",
       inviteSentModalBody:
-        "Enviamos la liga privada de grupo a {email}. Esa persona puede abrir el email y completar el diagnóstico dentro del mismo grupo de comparación.",
-      inviteSentModalDone: "Listo, guardar diagnóstico",
+        "Enviamos la liga privada de grupo a {email}. Esa persona puede abrir el email y completar la autoevaluación dentro del mismo grupo de comparación.",
+      inviteSentModalDone: "Listo, guardar autoevaluación",
       inviteNote:
         "La persona invitada recibirá la liga privada de grupo por email.",
       inviteEmailRequired: "Ingresa un email antes de enviar la invitación.",
@@ -2347,7 +2449,7 @@ export const COPY = {
         "Guarda este resultado solicitando tu reporte resumen antes de ver la comparación del grupo.",
       waitingTitle: "Esperando otra perspectiva",
       waitingBody:
-        "La comparación se abrirá automáticamente cuando una segunda persona complete el diagnóstico desde esta liga.",
+        "La comparación se abrirá automáticamente cuando una segunda persona complete la autoevaluación desde esta liga.",
       pageLabel: "Comparación grupal",
       title: "Comparar perspectivas de gobierno familiar",
       intro:

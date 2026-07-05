@@ -1,5 +1,6 @@
 import { persistAssessmentToAirtable } from "../server/airtable.js";
 import { sendSummaryReportEmails } from "../server/email.js";
+import { normalizeAssessmentSubmission } from "../server/scoring.js";
 
 function readBody(req) {
   if (!req.body) return {};
@@ -19,7 +20,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const body = readBody(req);
+  const body = normalizeAssessmentSubmission(readBody(req));
 
   try {
     const result = await persistAssessmentToAirtable(body);

@@ -60,10 +60,14 @@ function safeNumber(value, fallback = 0) {
   return Number.isFinite(number) ? number : fallback;
 }
 
+function hasFiniteScore(value) {
+  return value !== null && value !== "" && Number.isFinite(Number(value));
+}
+
 function stageLabel(stage) {
-  if (!stage) return "Diagnostic summary";
+  if (!stage) return "Self-assessment summary";
   if (typeof stage === "string") return STAGE_LABELS[stage] || stage;
-  return stage.label || stage.title || STAGE_LABELS[stage.id] || stage.id || "Diagnostic summary";
+  return stage.label || stage.title || STAGE_LABELS[stage.id] || stage.id || "Self-assessment summary";
 }
 
 function pillarLabel(pillar) {
@@ -123,10 +127,10 @@ export function buildSummaryReportPayload(body = {}, savedResult = {}) {
     .map((pillar) => ({
       id: pillar.id,
       label: pillarLabel(pillar),
-      score: Math.round(safeNumber(pillar.score)),
+      score: hasFiniteScore(pillar.score) ? Math.round(Number(pillar.score)) : null,
       unknown: Math.round(safeNumber(pillar.unknown))
     }))
-    .filter((pillar) => pillar.label && Number.isFinite(pillar.score));
+    .filter((pillar) => pillar.label && hasFiniteScore(pillar.score));
   const sortedByScore = [...pillarScores].sort((a, b) => a.score - b.score);
 
   return {
@@ -159,6 +163,14 @@ export function decodeSummaryReportPayload(value = "") {
   return JSON.parse(Buffer.from(String(value), "base64url").toString("utf8"));
 }
 
+export function encodeActionToken(payload) {
+  return encodeSummaryReportPayload(payload);
+}
+
+export function decodeActionToken(value = "") {
+  return decodeSummaryReportPayload(value);
+}
+
 export function buildAdminReportPayload(body = {}, savedResult = {}) {
   const summary = buildSummaryReportPayload(body, savedResult);
   const profile = body.profile ?? {};
@@ -186,6 +198,7 @@ export function buildAdminReportPayload(body = {}, savedResult = {}) {
       mode: body.mode || "full",
       groupId: body.groupId || "",
       participantId: body.participantId || "",
+      contactRequested: Boolean(body.reportRequest?.contactRequested),
       inviteStatus: hasInvitation ? "Invitation created" : "No invitation created",
       inviteEmail: body.inviteEmail || "",
       inviteLink: body.inviteLink || "",
@@ -321,7 +334,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setTextColor(copper);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("FAMILY ENTERPRISE DIAGNOSTIC", margin, 52);
+  doc.text("FAMILY ENTERPRISE SELF-ASSESSMENT", margin, 52);
 
   doc.setTextColor("#ffffff");
   doc.setFontSize(36);
@@ -358,7 +371,7 @@ export function createSummaryPdfBuffer(payload) {
     135,
     "Overall score",
     `${Math.round(safeNumber(report.overall))}`,
-    `${report.level || "Diagnostic summary"}`
+    `${report.level || "Self-assessment summary"}`
   );
 
   const summaryX = margin + 198;
@@ -547,7 +560,7 @@ export function createAdminPdfBuffer(payload) {
   doc.text("/100", pageWidth - margin - 72, y + 78);
   doc.setFontSize(9);
   doc.setTextColor(muted);
-  doc.text(report.level || "Diagnostic summary", pageWidth - margin - 94, y + 98, { align: "center" });
+  doc.text(report.level || "Self-assessment summary", pageWidth - margin - 94, y + 98, { align: "center" });
   y += 160;
 
   sectionTitle("Contact and context");
@@ -643,7 +656,7 @@ export function createAdminPdfBuffer(payload) {
     doc.setFontSize(10);
     y = wrapText(
       doc,
-      "This appendix is for Gilbert's internal review. It includes the submitted answer for each diagnostic question so follow-up can be grounded in the respondent's actual inputs.",
+      "This appendix is for Gilbert's internal review. It includes the submitted answer for each self-assessment question so follow-up can be grounded in the respondent's actual inputs.",
       margin,
       y,
       pageWidth - margin * 2,

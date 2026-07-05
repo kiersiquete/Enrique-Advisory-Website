@@ -3,8 +3,19 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getComparisonGroupFromAirtable, persistAssessmentToAirtable } from "./airtable.js";
-import { sendInvitationEmail, sendSummaryReportEmails } from "./email.js";
-import { createAdminPdfBuffer, createSummaryPdfBuffer, decodeSummaryReportPayload } from "./summary-report.js";
+import {
+  renderScheduleCallConfirmationPage,
+  sendCallRequestNotification,
+  sendInvitationEmail,
+  sendSummaryReportEmails
+} from "./email.js";
+import { normalizeAssessmentSubmission } from "./scoring.js";
+import {
+  createAdminPdfBuffer,
+  createSummaryPdfBuffer,
+  decodeActionToken,
+  decodeSummaryReportPayload
+} from "./summary-report.js";
 
 const port = process.env.PORT || 5174;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -42,10 +53,11 @@ export function createApp({
 
   app.post("/api/results", async (req, res) => {
     try {
-      const result = await persistAssessment(req.body ?? {});
+      const body = normalizeAssessmentSubmission(req.body ?? {});
+      const result = await persistAssessment(body);
       let email;
       try {
-        email = await sendSummaryEmails(req.body ?? {}, result, { baseUrl: requestBaseUrl(req) });
+        email = await sendSummaryEmails(body, result, { baseUrl: requestBaseUrl(req) });
       } catch (emailError) {
         console.error("Summary email delivery failed", emailError);
         email = { sent: false, error: "summary-email-delivery-failed" };
@@ -121,6 +133,35 @@ export function createApp({
   });
 
   app.all("/api/advisor-report-pdf", (_req, res) => {
+    res.setHeader("Allow", "GET");
+    res.status(405).json({ error: "Method not allowed" });
+  });
+
+  app.get("/api/schedule-call", async (req, res) => {
+    let language = "en";
+    try {
+      const payload = decodeActionToken(req.query.data);
+      language = payload.language === "es" ? "es" : "en";
+
+      try {
+        await sendCallRequestNotification({
+          name: payload.name,
+          email: payload.email,
+          language
+        });
+      } catch (notifyError) {
+        console.error("Schedule-call notification failed", notifyError);
+      }
+
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(renderScheduleCallConfirmationPage(language, true));
+    } catch (error) {
+      res.status(400).setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(renderScheduleCallConfirmationPage(language, false));
+    }
+  });
+
+  app.all("/api/schedule-call", (_req, res) => {
     res.setHeader("Allow", "GET");
     res.status(405).json({ error: "Method not allowed" });
   });

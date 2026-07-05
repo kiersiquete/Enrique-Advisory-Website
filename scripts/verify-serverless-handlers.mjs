@@ -22,6 +22,10 @@ function createResponse() {
     json(payload) {
       this.body = payload;
       return this;
+    },
+    send(payload) {
+      this.body = payload;
+      return this;
     }
   };
 }
@@ -110,6 +114,8 @@ globalThis.fetch = async (url, options = {}) => {
 const resultsHandler = (await import("../api/results.js")).default;
 const groupsHandler = (await import("../api/groups.js")).default;
 const invitationsHandler = (await import("../api/invitations.js")).default;
+const scheduleCallHandler = (await import("../api/schedule-call.js")).default;
+const { encodeActionToken } = await import("../server/summary-report.js");
 
 const invalidResultResponse = createResponse();
 await resultsHandler({ method: "POST", body: {} }, invalidResultResponse);
@@ -240,5 +246,21 @@ assert.equal(validGroupResponse.body.group.id, "SERVERLESSGROUP");
 assert.equal(validGroupResponse.body.group.participants.length, 1);
 assert.equal(validGroupResponse.body.group.participants[0].id, "participant-serverless");
 assert.equal(validGroupResponse.body.group.participants[0].result.overall, 72);
+
+const scheduleMethodResponse = createResponse();
+await scheduleCallHandler({ method: "POST", query: {} }, scheduleMethodResponse);
+assert.equal(scheduleMethodResponse.statusCode, 405);
+assert.equal(scheduleMethodResponse.headers.Allow, "GET");
+
+const scheduleToken = encodeActionToken({ name: "Kier", email: "kier@example.com", language: "en" });
+const scheduleOkResponse = createResponse();
+await scheduleCallHandler({ method: "GET", query: { data: scheduleToken } }, scheduleOkResponse);
+assert.equal(scheduleOkResponse.statusCode, 200);
+assert.match(scheduleOkResponse.body, /Gilbert has been notified/);
+
+const scheduleInvalidResponse = createResponse();
+await scheduleCallHandler({ method: "GET", query: { data: "not-valid-base64url" } }, scheduleInvalidResponse);
+assert.equal(scheduleInvalidResponse.statusCode, 400);
+assert.match(scheduleInvalidResponse.body, /no longer valid/);
 
 console.log("Serverless handler verification passed.");

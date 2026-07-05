@@ -111,7 +111,7 @@ const RESULT_DETAIL_COPY = {
   en: {
     implementationGapTitle: "The implementation gap",
     implementationGapBody:
-      "After the diagnosis, most families can see the problem and even agree on the solution. The harder part is execution: who leads the work, how decisions are financed, how much time the family can commit, and how to keep momentum when sensitive conversations appear. Gilbert's role is to help convert insight into a sequence of conversations, agreements, and practical governance work.",
+      "After the self-assessment, most families can see the problem and even agree on the solution. The harder part is execution: who leads the work, how decisions are financed, how much time the family can commit, and how to keep momentum when sensitive conversations appear. Gilbert's role is to help convert insight into a sequence of conversations, agreements, and practical governance work.",
     topicSummaryLabel: "Topic map",
     topicSummaryTitle: "Results by topic",
     topicSummaryIntro:
@@ -154,7 +154,7 @@ const RESULT_DETAIL_COPY = {
   es: {
     implementationGapTitle: "La brecha de ejecución",
     implementationGapBody:
-      "Después del diagnóstico, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es ejecutar: quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo sostener el avance cuando aparecen conversaciones sensibles. El rol de Gilbert es ayudar a convertir el diagnóstico en una secuencia de conversaciones, acuerdos y trabajo práctico de gobierno.",
+      "Después de la autoevaluación, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es ejecutar: quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo sostener el avance cuando aparecen conversaciones sensibles. El rol de Gilbert es ayudar a convertir la autoevaluación en una secuencia de conversaciones, acuerdos y trabajo práctico de gobierno.",
     topicSummaryLabel: "Mapa de temas",
     topicSummaryTitle: "Resultados por tema",
     topicSummaryIntro:
@@ -991,6 +991,7 @@ export default function App() {
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [groupRefresh, setGroupRefresh] = useState(0);
   const [privacyPolicyOpen, setPrivacyPolicyOpen] = useState(false);
+  const [inviteShareContext, setInviteShareContext] = useState(null);
 
   const copy = COPY[language];
   const isMockDemoRoute =
@@ -1063,6 +1064,17 @@ export default function App() {
     }
 
     const linkLanguage = params.get("lang") === "es" ? "es" : "en";
+
+    if (params.get("view") === "invite") {
+      setLanguage(linkLanguage);
+      setInviteShareContext({
+        groupId,
+        name: params.get("name")?.trim() || ""
+      });
+      setScreen("invite-share");
+      return;
+    }
+
     const requestedComparison = params.get("view") === "comparison";
     const existingGroup = getStoredGroup(groupId);
     setLanguage(linkLanguage);
@@ -1154,7 +1166,7 @@ export default function App() {
         answers,
         result,
         createdAt: new Date().toISOString(),
-        groupId: pendingGroupId
+        groupId: pendingGroupId ?? createGroupId()
       };
 
       if (pendingGroupId) {
@@ -1255,101 +1267,6 @@ export default function App() {
     return response;
   }
 
-  async function handleCreateInvite(resultPackage, inviteEmail, options = {}) {
-    const { commitToLatest = true } = options;
-    const groupId = resultPackage.groupId ?? createGroupId();
-    const withGroup = { ...resultPackage, groupId };
-
-    if (!commitToLatest) {
-      const participantId = resultPackage.participantId ?? createParticipantId();
-      const inviteLink = getInviteUrl(groupId, language);
-      const updatedResult = {
-        ...withGroup,
-        participantId,
-        inviteEmail: String(inviteEmail ?? "").trim(),
-        inviteLink,
-        groupParticipantCount: 1
-      };
-
-      return {
-        group: {
-          id: groupId,
-          maxParticipants: MAX_GROUP_PARTICIPANTS,
-          createdAt: new Date().toISOString(),
-          invitations: [],
-          participants: [createParticipantSummary(updatedResult, participantId)]
-        },
-        inviteLink,
-        resultPackage: updatedResult
-      };
-    }
-
-    const { group, participantId } = upsertResultInGroup(groupId, withGroup, inviteEmail);
-    const inviteLink = getInviteUrl(group.id, language);
-    const updatedResult = {
-      ...withGroup,
-      participantId,
-      inviteEmail: String(inviteEmail ?? "").trim(),
-      inviteLink,
-      groupParticipantCount: group.participants.length
-    };
-
-    if (commitToLatest) {
-      setLatestResult(updatedResult);
-      setGroupRefresh((value) => value + 1);
-    }
-
-    const response = await persistResult(updatedResult);
-    const serverGroup = response.group ? saveStoredGroup(response.group) : null;
-    const savedGroup = saveStoredGroup({
-      ...group,
-      ...(serverGroup ?? {}),
-      inviteLink: inviteLink || serverGroup?.inviteLink || group.inviteLink || ""
-    });
-    if (commitToLatest) {
-      setGroupRefresh((value) => value + 1);
-    }
-
-    let invitationEmail = null;
-    if (updatedResult.inviteEmail) {
-      invitationEmail = await sendInvitationEmail({
-        invitedEmail: updatedResult.inviteEmail,
-        inviteLink,
-        groupId: group.id,
-        language: updatedResult.language || language,
-        inviterName: updatedResult.profile?.name,
-        inviterEmail: updatedResult.profile?.email
-      });
-    }
-
-    return {
-      group: savedGroup ?? serverGroup ?? group,
-      inviteLink,
-      resultPackage: updatedResult,
-      invitationEmail
-    };
-  }
-
-  async function handleViewComparison(groupId) {
-    const group = (await refreshGroupFromServer(groupId)) ?? getStoredGroup(groupId);
-    if (!group) return;
-    if ((group.participants?.length ?? 0) < MIN_COMPARISON_PARTICIPANTS) {
-      setGroupRefresh((value) => value + 1);
-      return;
-    }
-    setActiveComparisonGroup(group);
-    setScreen("comparison");
-    window.history.pushState(
-      {},
-      "",
-      `${SCREEN_ROUTES["assessment-home"]}${buildDiagnosticSearch(group.id, language, "comparison")}`
-    );
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  const latestGroup =
-    latestResult?.groupId && groupRefresh >= 0 ? getStoredGroup(latestResult.groupId) : null;
-
   return (
     <main className="page-grain flex min-h-[100dvh] w-full max-w-none flex-col overflow-x-hidden bg-parchment text-ink">
       {screen !== "loading" && (
@@ -1404,6 +1321,7 @@ export default function App() {
           onDraftChange={handleDraftChange}
           onBack={() => navigate("assessment-home")}
           onComplete={handleComplete}
+          privacyPolicyOpen={privacyPolicyOpen}
           onOpenPrivacyPolicy={() => setPrivacyPolicyOpen(true)}
         />
       )}
@@ -1415,12 +1333,8 @@ export default function App() {
           copy={copy}
           language={language}
           resultPackage={latestResult}
-          group={latestGroup}
           onRetake={restart}
           onSubmitFinal={submitFinalResult}
-          onCreateInvite={handleCreateInvite}
-          onViewComparison={handleViewComparison}
-          onRefreshGroup={refreshGroupFromServer}
         />
       )}
 
@@ -1433,7 +1347,19 @@ export default function App() {
         />
       )}
 
-      {["home", "about", "services", "assessment-home", "results", "comparison"].includes(screen) && (
+      {screen === "invite-share" && inviteShareContext && (
+        <CompareInvitePage
+          copy={copy}
+          language={language}
+          groupId={inviteShareContext.groupId}
+          inviterName={inviteShareContext.name}
+          onNavigateHome={() => navigate("home")}
+        />
+      )}
+
+      {["home", "about", "services", "assessment-home", "results", "comparison", "invite-share"].includes(
+        screen
+      ) && (
         <SiteFooter
           copy={copy}
           language={language}
@@ -1501,7 +1427,7 @@ function SiteHeader({
     return (
       activeScreen === item.id ||
       (item.id === "assessment-home" &&
-        ["assessment", "results", "comparison", "followup"].includes(activeScreen))
+        ["assessment", "results", "comparison", "followup", "invite-share"].includes(activeScreen))
     );
   }
 
@@ -1618,14 +1544,14 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
   }
 
   return createPortal(
-    <section className="pointer-events-none fixed inset-x-0 bottom-0 z-[9980] px-4 pb-4 sm:px-6 sm:pb-6">
-      <div className="pointer-events-auto mx-auto flex w-full max-w-5xl flex-col gap-4 rounded-xl border border-forest/12 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between sm:p-5">
+    <section className="pointer-events-none fixed inset-x-0 bottom-0 z-[9980] px-3 pb-3 sm:px-6 sm:pb-6">
+      <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-lg border border-forest/12 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-2xl">
           <p className="text-sm font-bold text-forest">{copy.title}</p>
-          <p className="mt-1 text-sm leading-6 text-muted">{copy.body}</p>
+          <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">{copy.body}</p>
           <button
             type="button"
-            className="mt-2 inline-flex text-sm font-bold text-forest underline decoration-forest/30 underline-offset-4 transition hover:text-copper"
+            className="mt-1 inline-flex text-xs font-bold text-forest underline decoration-forest/30 underline-offset-4 transition hover:text-copper sm:text-sm"
             onClick={onOpenPrivacyPolicy}
           >
             {copy.privacyLink}
@@ -1634,7 +1560,7 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
         <div className="flex shrink-0">
           <button
             type="button"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:bg-forest-2 sm:w-auto"
+            className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-forest px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest-2 sm:w-auto"
             onClick={acceptCookies}
           >
             {copy.accept}
@@ -1746,6 +1672,62 @@ function PrivacyPolicyModal({ copy, onClose }) {
   );
 }
 
+function PreAssessmentPrivacyModal({ copy, onDismiss, onReadPolicy }) {
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onDismiss();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onDismiss]);
+
+  if (!copy || typeof document === "undefined") return null;
+
+  return createPortal(
+    <section
+      className="fixed inset-0 z-[9996] flex items-center justify-center bg-forest/48 px-4 py-6 backdrop-blur-sm sm:px-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pre-assessment-privacy-title"
+    >
+      <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-xl border border-forest/12 bg-white shadow-soft">
+        <div className="flex items-start gap-3 border-b border-forest/10 p-5 sm:p-6">
+          <ShieldCheck aria-hidden="true" className="mt-1 shrink-0 text-forest" size={22} />
+          <h2
+            id="pre-assessment-privacy-title"
+            className="font-display text-2xl font-semibold leading-tight text-forest sm:text-3xl"
+          >
+            {copy.title}
+          </h2>
+        </div>
+
+        <div className="p-5 sm:p-6">
+          <p className="text-sm leading-7 text-ink/76 sm:text-base">{copy.body}</p>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-forest/10 p-4 sm:p-5">
+          <button
+            type="button"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest px-5 text-sm font-bold text-white transition hover:bg-forest-2"
+            onClick={onDismiss}
+          >
+            {copy.primaryCta}
+          </button>
+          <button
+            type="button"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-forest/18 bg-white px-5 text-sm font-bold text-forest transition hover:border-copper hover:text-copper"
+            onClick={onReadPolicy}
+          >
+            {copy.secondaryCta}
+          </button>
+        </div>
+      </div>
+    </section>,
+    document.body
+  );
+}
+
 function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver }) {
   if (!copy || !draft || typeof document === "undefined") return null;
 
@@ -1818,18 +1800,18 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
       label: language === "es" ? "años dentro de empresa familiar" : "years inside family enterprise"
     },
     {
-      value: "4",
+      value: "4 roles",
       label:
         language === "es"
-          ? "espacios vividos: familia, propiedad, consejo, liderazgo"
-          : "lived spaces: family, ownership, board, leadership"
+          ? "familiar, propietario, ejecutivo y consejero"
+          : "family member, owner, executive, board participant"
     },
     {
-      value: "NextGen",
+      value: "FFI + IMD",
       label:
         language === "es"
-          ? "conecta generaciones senior y siguiente generación"
-          : "bridges senior and next-generation perspectives"
+          ? "formación en empresa familiar, patrimonio y consejo"
+          : "family business, wealth advising, and board training"
     }
   ];
 
@@ -1837,9 +1819,18 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
     language === "es"
       ? "Asesoría para empresas familiares"
       : "Family Enterprise Advisory";
+  const finalCta = getHomeFinalCtaCopy(language);
+  const startConversation = () => {
+    const subject =
+      language === "es"
+        ? "Conversación con Gilbert Devlyn"
+        : "Conversation with Gilbert Devlyn";
+    window.location.href = `mailto:${copy.contactEmail}?subject=${encodeURIComponent(subject)}`;
+  };
+
   return (
     <section className="w-full">
-      <section className="relative overflow-hidden border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#f4efe6_46%,#e7ddcf_100%)]">
+      <section className="relative overflow-hidden border-b border-forest/10 bg-cream">
         <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-8 px-4 py-8 sm:px-8 sm:py-14 lg:min-h-[calc(100dvh-80px)] lg:grid-cols-[minmax(0,0.92fr)_minmax(460px,0.78fr)] lg:items-center lg:px-12 xl:px-8">
           <div className="min-w-0 max-w-4xl">
             <div className="fade-up inline-flex max-w-full items-center gap-2 rounded-full border border-forest/12 bg-white/72 px-3 py-2 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-forest shadow-line sm:gap-3 sm:px-4 sm:text-xs sm:tracking-[0.18em]">
@@ -1858,12 +1849,6 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             >
               {copy.home.subtitle}
             </p>
-            <p
-              className="fade-up mt-4 max-w-full text-[0.98rem] leading-7 text-ink/68 sm:max-w-3xl sm:text-base sm:leading-8"
-              style={{ "--index": 3 }}
-            >
-              {copy.home.body}
-            </p>
             <div
               className="fade-up mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row"
               style={{ "--index": 4 }}
@@ -1871,6 +1856,14 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
               <button
                 type="button"
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
+                onClick={startConversation}
+              >
+                {copy.home.heroCta}
+                <ArrowRight aria-hidden="true" size={18} />
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-forest/24 px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-forest/40 active:translate-y-px active:scale-[0.99]"
                 onClick={() => onNavigate("about")}
               >
                 {copy.home.primaryCta}
@@ -1878,19 +1871,13 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
               </button>
             </div>
             <div
-              className="fade-up mt-7 grid max-w-3xl grid-cols-3 gap-2 sm:mt-10 sm:gap-3"
+              className="fade-up mt-7 grid max-w-3xl grid-cols-1 gap-2 sm:mt-10 sm:grid-cols-3 sm:gap-3"
               style={{ "--index": 5 }}
             >
               {heroStats.map((item) => (
                 <HeroStat key={item.label} value={item.value} label={item.label} />
               ))}
             </div>
-            <p
-              className="fade-up mt-6 max-w-2xl border-l-2 border-copper pl-4 text-sm font-medium leading-6 text-muted sm:mt-8 sm:text-base sm:leading-7"
-              style={{ "--index": 6 }}
-            >
-              {copy.home.note}
-            </p>
           </div>
 
           <AdvisorPortrait
@@ -1902,146 +1889,45 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
 
       <VideoPlaceholderSection video={copy.home.video} language={language} />
 
-      <HomeChallengeSection copy={copy} />
+      <HomeProblemSection copy={copy} language={language} />
 
-      <HomeServicesPreview copy={copy} onNavigate={onNavigate} />
+      <HomeFamilyDimensionSection copy={copy} />
 
-      <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-[1.18fr_0.82fr]">
-          <InfoBlock
-            icon={Compass}
-            title={copy.home.valueTitle}
-            body={copy.home.valueBody}
-          />
-          <InfoBlock
-            icon={Handshake}
-            title={copy.home.businessTitle}
-            body={copy.home.businessBody}
-          />
-          <section className="grid gap-6 rounded-lg border border-forest/10 bg-parchment/62 p-6 shadow-line transition duration-200 hover:-translate-y-1 hover:shadow-soft sm:p-8 lg:col-span-2 lg:grid-cols-[0.48fr_1fr] lg:items-start">
-            <div>
-              <div className="mb-5 grid h-12 w-12 place-items-center rounded-lg bg-forest text-white">
-                <ShieldCheck aria-hidden="true" size={22} />
-              </div>
-              <h2 className="font-display text-3xl font-semibold tracking-tight text-forest sm:text-4xl">
-                {copy.home.helpingTitle}
-              </h2>
-            </div>
-            <ul className="grid gap-3 md:grid-cols-2">
-              {copy.home.helpingItems.map((item) => (
-                <li
-                  key={item}
-                  className="flex gap-3 rounded-md border border-forest/8 bg-white/70 p-4 text-sm font-medium leading-6 text-ink/72 sm:text-base sm:leading-7"
-                >
-                  <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-      </section>
+      <HomeHowGilbertWorksSection copy={copy} language={language} />
 
-      <section className="border-b border-forest/10 bg-parchment/44 px-5 py-10 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {copy.nav.assessment}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-              {copy.home.toolTitle}
-            </h2>
-          </div>
-          <div className="grid gap-4">
-            {copy.home.toolParagraphs.map((paragraph) => (
-              <p key={paragraph} className="text-base leading-8 text-ink/74 sm:text-lg">
-                {paragraph}
-              </p>
-            ))}
-            <button
-              type="button"
-              className="mt-2 inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-md border border-forest/18 bg-white px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
-              onClick={onStartAssessment}
-            >
-              {copy.home.toolCta}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <AdvisoryEvidenceSection copy={copy} />
-
-      <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="max-w-3xl">
-            <h2 className="font-display text-4xl font-semibold tracking-tight text-forest sm:text-5xl">
-              {copy.about.testimonialsTitle}
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-muted">
-              {copy.about.testimonialsSubtitle}
-            </p>
-          </div>
-          <section className="rounded-lg border border-forest/10 bg-parchment/62 p-6 shadow-line sm:p-8">
-            <h3 className="font-display text-3xl font-semibold leading-tight text-forest">
-              {copy.about.situationsTitle}
-            </h3>
-            <ul className="mt-5 space-y-3">
-              {copy.about.situations.map((item) => (
-                <li key={item} className="flex gap-3 text-base leading-7 text-ink/74">
-                  <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-      </section>
-
-      <section className="px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1400px]">
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {copy.nav.about}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-              {copy.home.approachTitle}
-            </h2>
-            <p className="mt-4 text-base leading-8 text-muted sm:text-lg">
-              {copy.home.approachSubtitle}
-            </p>
-          </div>
-          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {copy.home.approachBlocks.map((block, index) => (
-              <ApproachFeature key={block.title} block={block} index={index} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeAssessmentEntrySection copy={copy} language={language} />
 
       <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px] overflow-hidden rounded-lg bg-forest text-white shadow-soft lg:grid lg:grid-cols-[minmax(0,1fr)_420px]">
           <div className="px-6 py-10 sm:px-10 lg:px-14 lg:py-12">
             <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              {copy.home.ctaTitle}
+              {finalCta.title}
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-8 text-white/76 sm:text-lg">
-              {copy.home.ctaBody}
+              {finalCta.body}
             </p>
-            <p className="mt-4 text-sm font-semibold text-white/58">{copy.home.ctaNote}</p>
+            <p className="mt-4 text-sm font-semibold text-white/58">{finalCta.note}</p>
             <button
               type="button"
-              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-copper px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-              onClick={() => onNavigate("about")}
+              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-4 text-xs font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
+              onClick={startConversation}
             >
-              {copy.home.ctaButton}
+              {finalCta.primary}
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+            <button
+              type="button"
+              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-white/24 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-[#C9B2DE] hover:text-[#C9B2DE] active:translate-y-px active:scale-[0.99] sm:ml-3 sm:mt-8 sm:w-auto sm:px-5 sm:text-sm"
+              onClick={onStartAssessment}
+            >
+              {finalCta.secondary}
               <ArrowRight aria-hidden="true" size={18} />
             </button>
           </div>
           <div className="relative hidden min-h-full overflow-hidden lg:block">
             <img
               className="absolute inset-0 h-full w-full object-cover object-[58%_center] opacity-80"
-              src="/family-governance-roundtable.png"
+              src="/family-governance-roundtable-gilbert-speaking.png"
               alt=""
             />
             <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/60 to-transparent" />
@@ -2052,49 +1938,159 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
   );
 }
 
-function HomeServicesPreview({ copy, onNavigate }) {
+function HomeProblemSection({ copy, language }) {
+  const sectionLabel =
+    language === "es" ? "El problema que ayuda a ordenar" : "The problem Gilbert helps solve";
+  const mapLabel = language === "es" ? "Mapa de temas" : "Issue map";
+  const icons = [Landmark, CalendarDays, Scale, UsersRound, Compass, ShieldCheck];
+
+  return (
+    <section className="border-b border-forest/10 bg-cream px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-[0.36fr_0.64fr] lg:items-start">
+        <div className="max-w-2xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {sectionLabel}
+          </p>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+            {copy.home.helpingTitle}
+          </h2>
+          <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg sm:leading-9">
+            {copy.home.challengeIntro}
+          </p>
+          <p className="mt-6 border-l-2 border-[#C9B2DE] pl-4 text-sm font-semibold leading-6 text-forest/76">
+            {language === "es"
+              ? "El punto no es agregar más gobierno. Es separar los temas correctos para que la familia pueda decidir con calma."
+              : "The point is not to add more governance. It is to separate the right issues so the family can make decisions with more calm."}
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-white p-5 shadow-line sm:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
+            {mapLabel}
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {copy.home.challengeItems.map((item, index) => {
+              const Icon = icons[index] ?? Compass;
+
+              return (
+                <article
+                  key={item.title}
+                  className="grid grid-cols-[40px_1fr] gap-4 rounded-lg bg-[#F4EEE2] p-4 shadow-line"
+                >
+                  <span className="grid h-10 w-10 place-items-center rounded-md bg-forest text-white">
+                    <Icon aria-hidden="true" size={18} />
+                  </span>
+                  <div>
+                    <h3 className="font-display text-xl font-semibold leading-tight text-forest">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-ink/70">{item.body}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeFamilyDimensionSection({ copy }) {
+  const evidence = copy.home.evidence;
+
+  return (
+    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto max-w-[1400px]">
+        <div className="max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {evidence.label}
+          </p>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+            {evidence.title}
+          </h2>
+          <p className="mt-5 text-base leading-8 text-ink/76 sm:text-lg">{evidence.intro}</p>
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {evidence.stats.map((stat) => (
+            <div key={stat.value} className="rounded-lg border border-forest/10 bg-parchment/32 p-6">
+              <p className="font-display text-5xl font-semibold text-forest">{stat.value}</p>
+              <p className="mt-2 text-sm leading-6 text-ink/68">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 overflow-hidden rounded-lg border border-forest/10">
+          <div className="grid grid-cols-1 gap-2 bg-forest px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white sm:grid-cols-[0.8fr_1fr_1fr] sm:gap-4 sm:px-5">
+            <span className="hidden sm:block" />
+            <span>{evidence.comparisonHeaders.informal}</span>
+            <span>{evidence.comparisonHeaders.advisory}</span>
+          </div>
+          {evidence.comparisons.map((row, index) => (
+            <div
+              key={row.theme}
+              className={`grid grid-cols-1 gap-2 p-4 sm:grid-cols-[0.8fr_1fr_1fr] sm:gap-4 sm:p-5 ${
+                index % 2 === 0 ? "bg-parchment/24" : "bg-white"
+              }`}
+            >
+              <p className="font-display text-lg font-semibold text-forest">{row.theme}</p>
+              <p className="text-sm leading-6 text-ink/64">{row.informalShort}</p>
+              <p className="text-sm leading-6 text-forest/82">{row.advisoryShort}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 text-xs font-medium leading-5 text-muted">{evidence.sourceNote}</p>
+      </div>
+    </section>
+  );
+}
+
+function HomeHowGilbertWorksSection({ copy, language }) {
   const icons = [Compass, Landmark, Handshake, UsersRound];
 
   return (
-    <section className="border-b border-forest/10 bg-parchment/42 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto max-w-[1400px]">
-        <div className="grid gap-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-end">
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {copy.services.previewLabel}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-              {copy.services.previewTitle}
-            </h2>
-            <p className="mt-4 text-base leading-8 text-ink/74 sm:text-lg">
-              {copy.services.previewBody}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="inline-flex min-h-12 w-fit items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99] lg:justify-self-end"
-            onClick={() => onNavigate("services")}
-          >
-            {copy.services.previewCta}
-            <ArrowRight aria-hidden="true" size={18} />
-          </button>
+    <section className="border-b border-forest/10 bg-cream px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-x-8 gap-y-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
+        <div className="lg:col-start-1">
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            {copy.services.previewLabel}
+          </p>
+          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+            {copy.services.previewTitle}
+          </h2>
         </div>
 
-        <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <p className="max-w-2xl text-base leading-8 text-ink/74 sm:text-lg lg:col-start-2 lg:self-end lg:pb-2">
+          {copy.home.approachSubtitle}
+        </p>
+
+        <div className="h-[300px] overflow-hidden rounded-xl shadow-soft sm:h-[360px] lg:col-start-1 lg:row-start-2 lg:h-full lg:min-h-[520px]">
+          <img
+            className="h-full w-full object-cover object-[78%_center]"
+            src="/gilbert-advisory-wall-session-gilbert-facing-family.png"
+            alt={language === "es"
+              ? "Familia empresaria revisando un marco de gobierno en una sesión de asesoría"
+              : "Family enterprise group reviewing a governance framework in an advisory session"}
+          />
+        </div>
+
+        <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:col-start-2 lg:row-start-2">
           {copy.services.items.map((service, index) => {
             const Icon = icons[index] ?? Compass;
 
             return (
               <article
                 key={service.title}
-                className="flex min-h-[230px] flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
+                className="flex min-h-[220px] flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
               >
                 <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
                   <Icon aria-hidden="true" size={20} />
                 </div>
-                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
+                <h4 className="font-display text-2xl font-semibold leading-tight text-forest">
                   {service.title}
-                </h3>
+                </h4>
                 <p className="mt-3 text-sm leading-6 text-ink/72">{service.summary}</p>
               </article>
             );
@@ -2105,45 +2101,44 @@ function HomeServicesPreview({ copy, onNavigate }) {
   );
 }
 
-function HomeChallengeSection({ copy }) {
-  const icons = [Landmark, CalendarDays, Scale, UsersRound, Compass, ShieldCheck];
+function HomeAssessmentEntrySection({ copy, language }) {
+  const assessmentCopy = getHomeAssessmentCopy(language);
+  const steps = getHomeAssessmentSteps(language);
 
   return (
-    <section className="border-b border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-start">
-        <div className="max-w-2xl lg:sticky lg:top-28">
+    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-10 rounded-lg bg-[#F4EEE2] p-6 shadow-line sm:p-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
+        <div>
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {copy.home.valueTitle}
+            {assessmentCopy.label}
           </p>
           <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-            {copy.home.challengeTitle}
+            {copy.home.toolTitle}
           </h2>
-          <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg">
-            {copy.home.challengeIntro}
-          </p>
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {copy.home.challengeItems.map((item, index) => {
-            const Icon = icons[index] ?? Compass;
-
-            return (
-              <article
-                key={item.title}
-                className="rounded-lg border border-forest/10 bg-parchment/44 p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:bg-parchment/62 hover:shadow-soft sm:p-6"
-              >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
-                  <Icon aria-hidden="true" size={20} />
-                </div>
-                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">
-                  {item.body}
-                </p>
-              </article>
-            );
-          })}
+        <div className="grid gap-4">
+          {copy.home.toolParagraphs.map((paragraph) => (
+            <p key={paragraph} className="text-base leading-8 text-ink/74 sm:text-lg">
+              {paragraph}
+            </p>
+          ))}
+          <div className="mt-2 flex gap-3 border-l-2 border-[#C9B2DE] pl-4">
+            <ShieldCheck aria-hidden="true" className="mt-1 shrink-0 text-forest" size={20} />
+            <div>
+              <p className="text-sm font-bold text-forest">{assessmentCopy.privacyTitle}</p>
+              <p className="mt-1 text-sm leading-6 text-ink/70">{assessmentCopy.privacyBody}</p>
+            </div>
+          </div>
+          <ol className="mt-4 grid gap-4 sm:grid-cols-3">
+            {steps.map((step, index) => (
+              <li key={step} className="border-l border-forest/18 pl-4">
+                <span className="font-display text-2xl font-semibold leading-none text-copper/70">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <p className="mt-2 text-sm font-medium leading-6 text-forest/78">{step}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </section>
@@ -2155,7 +2150,7 @@ function ServicesPage({ copy, onNavigate }) {
 
   return (
     <section className="w-full">
-      <section className="border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#f4efe6_48%,#e7ddcf_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 xl:px-8">
+      <section className="border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#F4EEE2_48%,#E9DFCC_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-end">
           <div className="max-w-4xl">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
@@ -2197,8 +2192,8 @@ function ServicesPage({ copy, onNavigate }) {
         </div>
       </section>
 
-      <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-8 rounded-lg bg-forest p-6 text-white shadow-soft sm:p-10 lg:grid-cols-[0.72fr_0.28fr] lg:items-center">
+      <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:px-12 xl:px-8">
+        <div className="mx-auto grid max-w-[1400px] gap-8 rounded-lg bg-forest px-8 py-10 text-white shadow-soft sm:px-12 sm:py-10 lg:grid-cols-[0.72fr_0.28fr] lg:items-center lg:px-14 lg:py-10">
           <div>
             <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
               {copy.services.ctaTitle}
@@ -2210,7 +2205,7 @@ function ServicesPage({ copy, onNavigate }) {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <button
               type="button"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99]"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99]"
               onClick={() => onNavigate("assessment-home")}
             >
               {copy.services.diagnosticCta}
@@ -2270,7 +2265,7 @@ function ServiceDetail({ label, body }) {
 
 function VideoPlaceholderSection({ video, language }) {
   return (
-    <section className="border-b border-forest/10 bg-parchment/38 px-5 py-12 sm:px-8 lg:px-12 xl:px-8">
+    <section className="border-b border-forest/10 bg-white px-5 py-12 sm:px-8 lg:px-12 xl:px-8">
       <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.5fr_0.5fr] lg:items-center">
         <div className="max-w-3xl lg:self-center">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
@@ -2285,7 +2280,7 @@ function VideoPlaceholderSection({ video, language }) {
         </div>
 
         <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="aspect-video bg-[linear-gradient(135deg,rgba(28,61,46,0.92),rgba(28,61,46,0.72)),url('/gilbert-home.jpg')] bg-cover bg-center">
+          <div className="relative aspect-video overflow-hidden bg-[#103F36]">
             {video.embedUrl ? (
               <iframe
                 className="h-full w-full"
@@ -2295,7 +2290,14 @@ function VideoPlaceholderSection({ video, language }) {
                 allowFullScreen
               />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
+              <div className="relative flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(244,238,226,0.08)_0%,rgba(244,238,226,0)_42%),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]" />
+                <div className="absolute left-6 top-6 text-left font-display text-3xl font-semibold leading-none text-[#F4EEE2]/18 sm:text-5xl">
+                  Gilbert
+                  <br />
+                  Devlyn
+                </div>
+                <div className="absolute bottom-6 right-6 h-16 w-28 border-b border-r border-[#F1C84C]/55" />
                 <span className="grid h-16 w-16 place-items-center rounded-full border border-white/24 bg-white/14 text-white shadow-line backdrop-blur">
                   <Play aria-hidden="true" size={28} fill="currentColor" />
                 </span>
@@ -2321,10 +2323,12 @@ function AboutVideoSection({ video, language }) {
     <section className="px-5 py-12 sm:px-8 sm:py-14 lg:px-12 lg:py-16 xl:px-8">
       <div className="mx-auto max-w-[1100px] text-center">
         <div className="mx-auto mb-7 max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {video.label}
-          </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl lg:text-6xl">
+          {video.label ? (
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+              {video.label}
+            </p>
+          ) : null}
+          <h1 className={`${video.label ? "mt-4 " : ""}font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl lg:text-6xl`}>
             {video.title}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-ink/70 sm:text-lg">
@@ -2392,122 +2396,6 @@ function AdvisorPortrait({ language }) {
   );
 }
 
-function InfoBlock({ icon: Icon, title, body }) {
-  return (
-    <section className="rounded-lg border border-forest/10 bg-white p-6 shadow-line transition duration-200 hover:-translate-y-1 hover:shadow-soft sm:p-8">
-      <div className="mb-5 grid h-12 w-12 place-items-center rounded-lg bg-forest text-white">
-        <Icon aria-hidden="true" size={22} />
-      </div>
-      <h2 className="font-display text-3xl font-semibold tracking-tight text-forest sm:text-4xl">
-        {title}
-      </h2>
-      <p className="mt-4 text-base leading-7 text-ink/72">{body}</p>
-    </section>
-  );
-}
-
-function AdvisoryEvidenceSection({ copy }) {
-  const evidence = copy.home.evidence;
-
-  return (
-    <section className="border-b border-forest/10 bg-white px-5 py-10 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto max-w-[1400px]">
-        <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="rounded-lg border border-forest/10 bg-parchment/56 p-5 shadow-line sm:p-6">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {evidence.label}
-            </p>
-            <h2 className="mt-3 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
-              {evidence.title}
-            </h2>
-            <p className="mt-4 text-base leading-7 text-ink/72">
-              {evidence.intro}
-            </p>
-            <div className="mt-6 divide-y divide-forest/10 border-y border-forest/10">
-              {evidence.stats.map((stat) => (
-                <div key={stat.value} className="grid gap-2 py-4 sm:grid-cols-[0.28fr_1fr] sm:items-center">
-                  <p className="font-display text-3xl font-semibold leading-none text-copper sm:text-4xl">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm font-medium leading-6 text-ink/68">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-4 text-xs font-medium leading-5 text-muted">
-              {evidence.sourceNote}
-            </p>
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-forest/10 bg-white shadow-line">
-            <div className="hidden border-b border-forest/10 bg-white/80 px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-muted md:grid md:grid-cols-[0.34fr_1fr_1fr] md:gap-5">
-              <span />
-              <span>{evidence.comparisonHeaders.informal}</span>
-              <span>{evidence.comparisonHeaders.advisory}</span>
-            </div>
-            {evidence.comparisons.map((item) => (
-              <article
-                key={item.theme}
-                className="grid gap-4 border-b border-forest/10 p-5 last:border-b-0 md:grid-cols-[0.34fr_1fr_1fr] md:gap-5 md:p-6"
-              >
-                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
-                  {item.theme}
-                </h3>
-                <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-copper md:hidden">
-                    {evidence.comparisonHeaders.informal}
-                  </p>
-                  <p className="text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">
-                    {item.informal}
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-copper md:hidden">
-                    {evidence.comparisonHeaders.advisory}
-                  </p>
-                  <p className="text-sm font-medium leading-6 text-forest/82 sm:text-base sm:leading-7">
-                    {item.advisory}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 rounded-lg border border-forest/10 bg-white/72 p-4 shadow-line sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-medium leading-6 text-ink/68">
-            {evidence.sourceNote}
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ApproachFeature({ block, index }) {
-  const icons = [Compass, Scale, Landmark, Handshake];
-  const Icon = icons[index] ?? Compass;
-
-  return (
-    <article
-      className="fade-up relative flex min-h-[310px] flex-col rounded-lg border border-forest/10 bg-white p-6 shadow-line transition duration-300 hover:-translate-y-1 hover:border-forest/24 hover:shadow-soft sm:p-7"
-      style={{ "--index": index }}
-    >
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="grid h-12 w-12 place-items-center rounded-lg bg-forest text-white">
-          <Icon aria-hidden="true" size={22} />
-        </div>
-        <span className="font-display text-5xl font-semibold tracking-tight text-copper/30">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-      </div>
-      <h3 className="font-display text-2xl font-semibold leading-tight tracking-tight text-forest">
-        {block.title}
-      </h3>
-      <p className="mt-4 text-sm leading-7 text-ink/72 sm:text-base">{block.body}</p>
-    </article>
-  );
-}
-
 function AboutPage({ copy, language, onNavigate }) {
   return (
     <section className="w-full">
@@ -2528,20 +2416,24 @@ function AboutPage({ copy, language, onNavigate }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-forest/64 via-transparent to-transparent" />
             </div>
-            <button
-              type="button"
-              className="inline-flex min-h-12 w-fit max-w-full items-center justify-center gap-2 whitespace-nowrap rounded-md border border-forest/18 bg-white px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
-              onClick={() => onNavigate("assessment-home")}
-            >
-              {copy.about.heroCta}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
           </div>
 
           <div className="flex min-h-full flex-col justify-start lg:py-1">
             <h2 className="max-w-4xl font-display text-[2.65rem] font-semibold leading-[1.04] text-forest sm:text-[3.45rem] xl:text-[4rem]">
               {copy.about.title}
             </h2>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {copy.about.quickFacts.map((fact) => (
+                <div key={fact.label} className="rounded-lg border border-forest/10 bg-white/72 p-4 shadow-line">
+                  <p className="font-display text-3xl font-semibold leading-none tracking-tight text-forest">
+                    {fact.value}
+                  </p>
+                  <p className="mt-2 text-[0.66rem] font-bold uppercase leading-4 tracking-[0.13em] text-muted">
+                    {fact.label}
+                  </p>
+                </div>
+              ))}
+            </div>
             <div className="mt-6 space-y-4">
               {copy.about.bio.map((paragraph) => (
                 <p key={paragraph} className="text-base leading-7 text-ink/76 sm:text-[1.02rem] sm:leading-8">
@@ -2601,18 +2493,34 @@ function AboutPage({ copy, language, onNavigate }) {
             <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
               {copy.about.toolTitle}
             </h2>
+            <p className="mt-5 text-lg leading-8 text-white/76">{copy.about.toolIntro}</p>
           </div>
           <div className="mt-8 lg:mt-0">
-            {[copy.about.toolBody, copy.about.toolBodySecond, copy.about.toolBodyThird, copy.about.toolBodyFourth].filter(Boolean).map(
-              (paragraph) => (
-                <p key={paragraph} className="mb-5 text-lg leading-8 text-white/76 last:mb-0">
-                  {paragraph}
-                </p>
-              )
-            )}
+            <div className="grid gap-4 sm:grid-cols-3">
+              {copy.about.toolSteps.map((step, index) => (
+                <div key={step.title} className="rounded-lg border border-white/16 bg-white/8 p-4">
+                  <span className="font-display text-2xl font-semibold leading-none text-[#F1C84C]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="mt-3 text-sm font-bold text-white">{step.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/70">{step.body}</p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-6 text-base leading-7 text-white/76">{copy.about.toolReceiveBody}</p>
+
+            <div className="mt-6 flex gap-3 rounded-lg border border-white/16 bg-white/8 p-5">
+              <ShieldCheck aria-hidden="true" className="mt-1 shrink-0 text-[#F1C84C]" size={22} />
+              <div>
+                <p className="text-sm font-bold text-white">{copy.about.toolPrivacyTitle}</p>
+                <p className="mt-2 text-sm leading-6 text-white/72">{copy.about.toolPrivacyBody}</p>
+              </div>
+            </div>
+
             <button
               type="button"
-              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-copper px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-[#A85F35] active:translate-y-px active:scale-[0.99]"
+              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-[#F1C84C] px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99]"
               onClick={() => onNavigate("assessment-home")}
             >
               {copy.about.toolCta}
@@ -2731,10 +2639,13 @@ function AssessmentLanding({ copy, language, onStart }) {
               <p className="mt-5 max-w-3xl text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
                 {copy.assessmentIntro.body}
               </p>
+              <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-white/62 sm:text-base">
+                {copy.assessmentIntro.startingPointNote}
+              </p>
 
               <button
                 type="button"
-                className="mt-7 inline-flex min-h-[3.15rem] w-full items-center justify-center gap-3 rounded-md bg-copper px-5 text-base font-semibold text-white shadow-line transition duration-200 active:translate-y-px lg:hidden"
+                className="mt-7 inline-flex min-h-[3.15rem] w-full items-center justify-center gap-3 rounded-md bg-[#F1C84C] px-5 text-base font-semibold text-forest shadow-line transition duration-200 hover:bg-[#E6B93E] active:translate-y-px lg:hidden"
                 onClick={() => onStart("full")}
               >
                 {copy.assessmentIntro.conversationCta}
@@ -2871,7 +2782,7 @@ function AssessmentLanding({ copy, language, onStart }) {
             <div className="space-y-3">
               <button
                 type="button"
-                className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-3 rounded-md bg-copper px-5 py-4 text-base font-semibold text-white shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-[#AA5E2E] active:translate-y-0"
+                className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-3 rounded-md bg-[#F1C84C] px-5 py-4 text-base font-semibold text-forest shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-0"
                 onClick={() => onStart("full")}
               >
                 {copy.assessmentIntro.conversationCta}
@@ -3087,27 +2998,30 @@ function AssessmentProfileIntake({
             {intake.title}
           </h1>
           <p className="mt-5 max-w-xl text-lg leading-8 text-white/76">{intake.body}</p>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-white/58">
+            {intake.privacyReassurance}
+          </p>
 
           <div className="mt-8 border-t border-white/14 pt-6">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/55">
-              {selectedMode.title}
+              {intake.modeSectionLabel}
             </p>
             <p className="mt-2 text-base leading-7 text-white/78">
               {selectedMode.description}
             </p>
           </div>
 
-          <div className="mt-8 rounded-lg border border-white/18 p-4">
-            <p className="text-sm font-semibold text-white">{intake.contextTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-white/70">{intake.contextBody}</p>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-white/72">{intake.contextTitle}</p>
+            <p className="mt-2 text-sm leading-6 text-white/58">{intake.contextBody}</p>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-lg bg-white/[0.055] p-4">
+            <div className="rounded-lg border border-white/14 bg-white/10 p-4">
               <p className="text-sm font-semibold text-white">{intake.nextTitle}</p>
               <ol className="mt-3 space-y-3">
                 {intake.nextSteps.map((step, index) => (
-                  <li key={step} className="flex gap-3 text-sm leading-6 text-white/70">
+                  <li key={step} className="flex gap-3 text-sm leading-6 text-white/85">
                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-copper bg-copper text-xs font-semibold text-white">
                       {index + 1}
                     </span>
@@ -3117,13 +3031,13 @@ function AssessmentProfileIntake({
               </ol>
             </div>
 
-            <div className="rounded-lg border border-white/12 bg-white/[0.035] p-4">
-              <p className="text-sm font-semibold text-white">{intake.includesTitle}</p>
+            <div className="p-1">
+              <p className="text-sm font-semibold text-white/72">{intake.includesTitle}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {intake.includes.map((item) => (
                   <span
                     key={item}
-                    className="rounded-full border border-white/12 px-3 py-1 text-xs font-semibold text-white/70"
+                    className="rounded-full border border-white/12 px-3 py-1 text-xs font-semibold text-white/58"
                   >
                     {item}
                   </span>
@@ -3419,6 +3333,7 @@ function AssessmentFlow({
   onDraftChange,
   onBack,
   onComplete,
+  privacyPolicyOpen,
   onOpenPrivacyPolicy
 }) {
   const questions = FULL_QUESTIONS[language];
@@ -3449,6 +3364,25 @@ function AssessmentFlow({
     ...(usableDraft?.profile ?? {})
   }));
   const draftStartedAtRef = useRef(usableDraft?.startedAt ?? new Date().toISOString());
+  const [showPrivacyNotice, setShowPrivacyNotice] = useState(() => !usableDraft);
+  const awaitingPolicyReturnRef = useRef(false);
+
+  function dismissPrivacyNotice() {
+    setShowPrivacyNotice(false);
+  }
+
+  function readPrivacyPolicyFromNotice() {
+    awaitingPolicyReturnRef.current = true;
+    setShowPrivacyNotice(false);
+    onOpenPrivacyPolicy();
+  }
+
+  useEffect(() => {
+    if (!privacyPolicyOpen && awaitingPolicyReturnRef.current) {
+      awaitingPolicyReturnRef.current = false;
+      setShowPrivacyNotice(true);
+    }
+  }, [privacyPolicyOpen]);
 
   const countryOptions = useMemo(
     () => buildCountryOptions(intake.phoneCountryOptions, language),
@@ -3606,26 +3540,42 @@ function AssessmentFlow({
 
   if (!profileStepComplete) {
     return (
-      <AssessmentProfileIntake
-        copy={copy}
-        mode={mode}
-        profile={profile}
-        profileTouched={profileTouched}
-        profileIsComplete={profileIsComplete}
-        emailIsValid={emailIsValid}
-        phoneIsValid={phoneIsValid}
-        relationshipRequiresDetail={relationshipRequiresDetail}
-        countryOptions={countryOptions}
-        onBack={onBack}
-        onChange={updateProfile}
-        onSubmit={submitProfile}
-        onOpenPrivacyPolicy={onOpenPrivacyPolicy}
-      />
+      <>
+        {showPrivacyNotice && (
+          <PreAssessmentPrivacyModal
+            copy={copy.preAssessmentPrivacy}
+            onDismiss={dismissPrivacyNotice}
+            onReadPolicy={readPrivacyPolicyFromNotice}
+          />
+        )}
+        <AssessmentProfileIntake
+          copy={copy}
+          mode={mode}
+          profile={profile}
+          profileTouched={profileTouched}
+          profileIsComplete={profileIsComplete}
+          emailIsValid={emailIsValid}
+          phoneIsValid={phoneIsValid}
+          relationshipRequiresDetail={relationshipRequiresDetail}
+          countryOptions={countryOptions}
+          onBack={onBack}
+          onChange={updateProfile}
+          onSubmit={submitProfile}
+          onOpenPrivacyPolicy={onOpenPrivacyPolicy}
+        />
+      </>
     );
   }
 
   return (
     <section className="flex min-h-[calc(100dvh-80px)] w-full flex-col px-5 py-6 sm:px-8 lg:px-16 xl:px-24">
+      {showPrivacyNotice && (
+        <PreAssessmentPrivacyModal
+          copy={copy.preAssessmentPrivacy}
+          onDismiss={dismissPrivacyNotice}
+          onReadPolicy={readPrivacyPolicyFromNotice}
+        />
+      )}
       <header className="mb-8">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
@@ -3803,23 +3753,17 @@ function ResultsScreen({
   copy,
   language,
   resultPackage,
-  group,
   onRetake,
-  onSubmitFinal,
-  onCreateInvite,
-  onViewComparison,
-  onRefreshGroup
+  onSubmitFinal
 }) {
-  const [invitePromptOpen, setInvitePromptOpen] = useState(false);
-  const [inviteSentEmail, setInviteSentEmail] = useState("");
-  const [inviteSentShouldSave, setInviteSentShouldSave] = useState(false);
   const [submitPending, setSubmitPending] = useState(false);
   const [submitted, setSubmitted] = useState(
     () => Boolean(resultPackage.finalizedAt || resultPackage.reportRequest?.status === "requested")
   );
+  const [contactRequested, setContactRequested] = useState(
+    () => Boolean(resultPackage.reportRequest?.contactRequested)
+  );
   const [resultPackageForSave, setResultPackageForSave] = useState(resultPackage);
-  const [currentGroup, setCurrentGroup] = useState(group);
-  const invitePanelRef = useRef(null);
   const { result } = resultPackageForSave;
   const stage = result.stage;
   const unknownCount = result.transparency?.unknownCount ?? 0;
@@ -3846,33 +3790,15 @@ function ResultsScreen({
     [pillarBreakdowns]
   );
   const finalCopy = getFinalActionCopy(language);
-  const hasInvite = Boolean(resultPackageForSave.groupId);
   const [submitError, setSubmitError] = useState("");
-  const [invitePromptEmail, setInvitePromptEmail] = useState("");
-  const [invitePromptError, setInvitePromptError] = useState("");
-  const [invitePromptPending, setInvitePromptPending] = useState(false);
   const submitInFlightRef = useRef(false);
-  const knownParticipantCount = currentGroup?.participants?.length ?? 0;
-  const isCompletingFullGroup =
-    Boolean(resultPackageForSave.groupId) &&
-    !submitted &&
-    knownParticipantCount >= MAX_GROUP_PARTICIPANTS;
 
   useEffect(() => {
     setResultPackageForSave(resultPackage);
   }, [resultPackage]);
 
-  useEffect(() => {
-    setCurrentGroup(group);
-  }, [group]);
-
-  async function submitResult({ allowWithoutInvite = false } = {}) {
+  async function submitResult() {
     if (submitInFlightRef.current || submitted) return;
-
-    if (!hasInvite && !allowWithoutInvite) {
-      setInvitePromptOpen(true);
-      return;
-    }
 
     setSubmitError("");
     setSubmitPending(true);
@@ -3901,6 +3827,7 @@ function ResultsScreen({
           status: "requested",
           recipientEmail: resultPackageForSave.profile?.email || "",
           language: resultPackageForSave.language,
+          contactRequested,
           detailedAnalysisRetained: true,
           advisorDetail: {
             visibility: "internal",
@@ -3917,60 +3844,12 @@ function ResultsScreen({
         }
       });
       setSubmitted(true);
-      setInvitePromptOpen(false);
     } catch (error) {
       setSubmitError(getSaveErrorMessage(error, finalCopy));
     } finally {
       submitInFlightRef.current = false;
       setSubmitPending(false);
     }
-  }
-
-  function requestSummaryReport() {
-    if (isCompletingFullGroup) {
-      submitResult({ allowWithoutInvite: true });
-      return;
-    }
-
-    setInvitePromptOpen(true);
-  }
-
-  function closeInvitePrompt() {
-    setInvitePromptOpen(false);
-    setInvitePromptError("");
-  }
-
-  async function sendPromptInvite() {
-    const nextInviteEmail = invitePromptEmail.trim();
-    if (!nextInviteEmail) {
-      setInvitePromptError(copy.comparison.inviteEmailRequired);
-      return;
-    }
-
-    setInvitePromptPending(true);
-    setInvitePromptError("");
-    try {
-      const next = await onCreateInvite(resultPackageForSave, nextInviteEmail);
-      if (next?.resultPackage) setResultPackageForSave(next.resultPackage);
-      if (next?.group) setCurrentGroup(next.group);
-      setInvitePromptEmail("");
-      setInvitePromptOpen(false);
-      setInviteSentShouldSave(true);
-      setInviteSentEmail(nextInviteEmail);
-    } catch (error) {
-      setInvitePromptError(copy.comparison.inviteSendError);
-    } finally {
-      setInvitePromptPending(false);
-    }
-  }
-
-  async function closeInviteSentModal({ save = false } = {}) {
-    if (save && !submitted) {
-      await submitResult({ allowWithoutInvite: true });
-    }
-
-    setInviteSentEmail("");
-    setInviteSentShouldSave(false);
   }
 
   return (
@@ -3994,7 +3873,7 @@ function ResultsScreen({
         </button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(480px,1.15fr)]">
         <section className="rounded-xl bg-forest p-6 text-white shadow-soft sm:p-8 lg:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-copper">
             {copy.overallScore}
@@ -4019,7 +3898,7 @@ function ResultsScreen({
         <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
           <Suspense
             fallback={
-              <div className="grid h-[280px] w-full place-items-center text-sm font-semibold text-muted sm:h-[430px]">
+              <div className="grid h-[340px] w-full place-items-center text-sm font-semibold text-muted sm:h-[560px]">
                 {detailCopy.loadingChart}
               </div>
             }
@@ -4048,7 +3927,7 @@ function ResultsScreen({
         </section>
       </div>
 
-      {unknownCount > 5 && (
+      {unknownCount > 0 && (
         <section className="mt-6 rounded-xl border border-copper/24 bg-white p-6 shadow-line sm:p-7">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
             <div>
@@ -4126,172 +4005,46 @@ function ResultsScreen({
         <ResultGuideCard detailCopy={detailCopy} />
 
         <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
-          <div className="mx-auto max-w-6xl">
-            <InviteFamilyPanel
-              copy={copy}
-              language={language}
-              resultPackage={resultPackageForSave}
-              group={currentGroup}
-              onCreateInvite={async (...args) => {
-                const next = await onCreateInvite(...args);
-                if (next?.resultPackage) setResultPackageForSave(next.resultPackage);
-                if (next?.group) setCurrentGroup(next.group);
-                return next;
-              }}
-              onViewComparison={onViewComparison}
-              onRefreshGroup={onRefreshGroup}
-              onInviteSent={(email) => {
-                setInviteSentShouldSave(false);
-                setInviteSentEmail(email);
-              }}
-              resultIsSaved={submitted}
-              panelRef={invitePanelRef}
-              embedded
-            >
-              <button
-                type="button"
-                className="inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
-                onClick={requestSummaryReport}
+          <div className="mx-auto max-w-2xl">
+            <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
+              {finalCopy.title}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-ink/70">{finalCopy.body}</p>
+
+            <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-ink/74">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 shrink-0 rounded border-forest/30 text-forest focus:ring-forest"
+                checked={contactRequested}
+                onChange={(event) => setContactRequested(event.target.checked)}
                 disabled={submitPending || submitted}
-              >
-                {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-              {submitted && (
-                <p className="rounded-md border border-copper/20 bg-copper/10 px-3 py-2 text-sm leading-6 text-forest">
-                  {finalCopy.successNote}
-                </p>
-              )}
-              {submitError && (
-                <p className="rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
-                  {submitError}
-                </p>
-              )}
-            </InviteFamilyPanel>
+              />
+              <span>{finalCopy.contactCheckboxLabel}</span>
+            </label>
+
+            <button
+              type="button"
+              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
+              onClick={submitResult}
+              disabled={submitPending || submitted}
+            >
+              {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
+              <ArrowRight aria-hidden="true" size={18} />
+            </button>
+            {submitted && (
+              <p className="mt-3 rounded-md border border-copper/20 bg-copper/10 px-3 py-2 text-sm leading-6 text-forest">
+                {finalCopy.successNote}
+              </p>
+            )}
+            {submitError && (
+              <p className="mt-3 rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
+                {submitError}
+              </p>
+            )}
           </div>
         </section>
       </div>
-      {invitePromptOpen && (
-        <ResultModalOverlay>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-                  {copy.comparison.inviteTitle}
-                </p>
-                <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest">
-                  {finalCopy.inviteTitle}
-                </h2>
-              </div>
-              <button
-                type="button"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/12 text-forest hover:border-copper"
-                onClick={closeInvitePrompt}
-                aria-label={finalCopy.close}
-              >
-                <X aria-hidden="true" size={18} />
-              </button>
-            </div>
-            <p className="mt-4 text-base leading-7 text-ink/72">{finalCopy.inviteBody}</p>
-            <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/72">
-              <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
-              <p>{finalCopy.invitePrivacyNote}</p>
-            </div>
-            <label className="mt-5 block">
-              <span className="mb-2 block text-sm font-semibold text-forest">
-                {copy.comparison.inviteEmail}
-              </span>
-              <input
-                className="min-h-12 w-full rounded-md border border-forest/15 bg-white px-3 text-sm text-ink outline-none transition focus:border-copper"
-                value={invitePromptEmail}
-                onChange={(event) => {
-                  setInvitePromptEmail(event.target.value);
-                  setInvitePromptError("");
-                }}
-                placeholder={copy.comparison.inviteEmailPlaceholder}
-                type="email"
-                autoComplete="email"
-              />
-            </label>
-            {invitePromptError && (
-              <p className="mt-3 text-sm font-semibold text-copper" role="alert">
-                {invitePromptError}
-              </p>
-            )}
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md bg-forest px-4 text-left text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/60"
-                onClick={sendPromptInvite}
-                disabled={invitePromptPending}
-              >
-                {invitePromptPending ? copy.comparison.sendingInvite : copy.comparison.generateInvite}
-                <Send aria-hidden="true" size={18} />
-              </button>
-              <button
-                type="button"
-                className="inline-flex min-h-12 items-center justify-between gap-3 rounded-md border border-forest/18 px-4 text-left text-sm font-semibold text-forest transition hover:border-copper disabled:cursor-not-allowed disabled:opacity-70"
-                onClick={() => submitResult({ allowWithoutInvite: true })}
-                disabled={submitPending}
-              >
-                {submitPending ? finalCopy.saving : finalCopy.continueAnyway}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-            </div>
-          </div>
-        </ResultModalOverlay>
-      )}
-      {inviteSentEmail && (
-        <ResultModalOverlay>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-soft sm:p-7">
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">
-                  {copy.comparison.inviteSent}
-                </p>
-                <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-forest">
-                  {copy.comparison.inviteSentModalTitle}
-                </h2>
-              </div>
-              <button
-                type="button"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-forest/12 text-forest hover:border-copper"
-                onClick={() => closeInviteSentModal()}
-                aria-label={finalCopy.close}
-              >
-                <X aria-hidden="true" size={18} />
-              </button>
-            </div>
-            <p className="mt-4 text-base leading-7 text-ink/72">
-              {copy.comparison.inviteSentModalBody.replace("{email}", inviteSentEmail)}
-            </p>
-            <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/72">
-              <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
-              <p>{copy.comparison.invitePrivacyNote}</p>
-            </div>
-            <button
-              type="button"
-              className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/60"
-              onClick={() => closeInviteSentModal({ save: inviteSentShouldSave })}
-              disabled={submitPending}
-            >
-              {submitPending ? finalCopy.saving : copy.comparison.inviteSentModalDone}
-            </button>
-          </div>
-        </ResultModalOverlay>
-      )}
     </section>
-  );
-}
-
-function ResultModalOverlay({ children }) {
-  if (typeof document === "undefined") return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] grid place-items-center overflow-y-auto bg-forest/45 px-5 py-8 backdrop-blur-sm">
-      {children}
-    </div>,
-    document.body
   );
 }
 
@@ -4321,7 +4074,9 @@ function PillarSummaryGrid({ breakdowns, copy }) {
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-forest/8">
               <div
-                className={`h-full rounded-full ${pillarBarColor(breakdown.score ?? 0)}`}
+                className={`h-full rounded-full ${
+                  breakdown.score === null ? "bg-forest/20" : pillarBarColor(breakdown.score)
+                }`}
                 style={{ width: `${scoreWidth}%` }}
               />
             </div>
@@ -4353,43 +4108,13 @@ function ResultGuideCard({ detailCopy }) {
   );
 }
 
-function InviteFamilyPanel({
-  copy,
-  language,
-  resultPackage,
-  group,
-  onCreateInvite,
-  onViewComparison,
-  onRefreshGroup,
-  panelRef,
-  wide = false,
-  embedded = false,
-  onInviteSent,
-  resultIsSaved = false,
-  children
-}) {
+function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHome }) {
+  const comparisonCopy = copy.comparison;
+  const pageCopy = getCompareInviteCopy(language);
   const [inviteEmail, setInviteEmail] = useState("");
   const [invitedEmail, setInvitedEmail] = useState("");
   const [inviteError, setInviteError] = useState("");
   const [invitePending, setInvitePending] = useState(false);
-  const comparisonCopy = copy.comparison;
-  const savedParticipantCount = group?.participants?.length ?? 0;
-  const participantCount = Math.min(
-    MAX_GROUP_PARTICIPANTS,
-    Math.max(savedParticipantCount, resultPackage.groupId ? 1 : 0)
-  );
-  const canCompare = savedParticipantCount >= MIN_COMPARISON_PARTICIPANTS;
-  const canViewComparison = canCompare && resultIsSaved;
-  const isFull = participantCount >= MAX_GROUP_PARTICIPANTS;
-
-  useEffect(() => {
-    if (!resultPackage.groupId || canCompare || !onRefreshGroup) return undefined;
-
-    const refresh = () => onRefreshGroup(resultPackage.groupId);
-    refresh();
-    const interval = window.setInterval(refresh, 5000);
-    return () => window.clearInterval(interval);
-  }, [canCompare, resultPackage.groupId]);
 
   async function createInvite() {
     const nextInviteEmail = inviteEmail.trim();
@@ -4401,10 +4126,16 @@ function InviteFamilyPanel({
     setInvitePending(true);
     setInviteError("");
     try {
-      const next = await onCreateInvite(resultPackage, nextInviteEmail);
+      const inviteLink = getInviteUrl(groupId, language);
+      await sendInvitationEmail({
+        invitedEmail: nextInviteEmail,
+        inviteLink,
+        groupId,
+        language,
+        inviterName
+      });
       setInvitedEmail(nextInviteEmail);
       setInviteEmail("");
-      onInviteSent?.(nextInviteEmail);
     } catch (error) {
       setInviteError(comparisonCopy.inviteSendError);
     } finally {
@@ -4413,66 +4144,77 @@ function InviteFamilyPanel({
   }
 
   return (
-    <section
-      ref={panelRef}
-      className={
-        embedded
-          ? "min-w-0"
-          : "rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6"
-      }
-    >
-      <div
-        className={
-          embedded
-            ? "grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.52fr)] lg:items-center"
-            : wide
-            ? "grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(320px,0.58fr)] lg:items-start"
-            : "space-y-4"
-        }
-      >
-        <div>
-          <div>
-            <h2 className="font-display text-2xl font-semibold leading-tight text-forest">
-              {comparisonCopy.inviteTitle}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-ink/70">{comparisonCopy.inviteBody}</p>
-            <div className="mt-3 flex gap-2 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-xs leading-5 text-ink/70">
-              <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={15} />
-              <p>{comparisonCopy.invitePrivacyNote}</p>
-            </div>
+    <section className="w-full px-5 py-10 sm:px-8 lg:px-16 xl:px-24">
+      <div className="mx-auto max-w-4xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-copper">{pageCopy.eyebrow}</p>
+        <h1 className="mt-3 font-display text-4xl font-semibold leading-tight text-forest sm:text-5xl">
+          {pageCopy.title}
+        </h1>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-ink/72">{pageCopy.intro}</p>
 
-            <div className="mt-4 rounded-lg bg-parchment/70 p-3">
-              <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="font-semibold text-forest">{comparisonCopy.participantCount}</span>
-                <span className="font-bold text-copper">
-                  {participantCount} / {MAX_GROUP_PARTICIPANTS}
-                </span>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {pageCopy.steps.map((step, index) => (
+            <div key={step.title} className="rounded-xl border border-forest/12 bg-white p-5 shadow-line">
+              <div className="grid h-9 w-9 place-items-center rounded-full bg-forest font-display text-base font-semibold text-white">
+                {index + 1}
               </div>
-              <p className="mt-2 text-xs leading-5 text-muted">{comparisonCopy.maxNote}</p>
+              <h3 className="mt-4 text-base font-bold leading-tight text-forest">{step.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-ink/68">{step.body}</p>
             </div>
+          ))}
+        </div>
 
-            {!canCompare && (
-              <div className="mt-4 border-t border-forest/10 pt-4">
-                <p className="text-sm font-semibold text-forest">{comparisonCopy.waitingTitle}</p>
-                <p className="mt-1 text-sm leading-6 text-ink/68">{comparisonCopy.waitingBody}</p>
+        <div className="mt-8 rounded-xl border border-forest/12 bg-white p-6 shadow-line sm:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-copper">{pageCopy.diagramTitle}</p>
+          <div className="mt-4 space-y-5">
+            <div>
+              <div className="flex items-center justify-between text-sm font-semibold text-forest">
+                <span>{pageCopy.convergenceLabel}</span>
+                <span className="text-xs font-normal text-ink/56">{pageCopy.convergenceExampleLabel}</span>
               </div>
-            )}
+              <div className="mt-2 space-y-1.5">
+                <div className="h-2.5 w-[78%] rounded-full bg-forest" />
+                <div className="h-2.5 w-[82%] rounded-full bg-forest/50" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-sm font-semibold text-forest">
+                <span>{pageCopy.divergenceLabel}</span>
+                <span className="text-xs font-normal text-ink/56">{pageCopy.divergenceExampleLabel}</span>
+              </div>
+              <div className="mt-2 space-y-1.5">
+                <div className="h-2.5 w-[85%] rounded-full bg-copper" />
+                <div className="h-2.5 w-[30%] rounded-full bg-copper/45" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          {isFull ? (
-            <p className="rounded-lg border border-copper/20 bg-copper/10 p-3 text-sm leading-6 text-forest">
-              {comparisonCopy.inviteLimit}
-            </p>
+        <div className="mt-8 rounded-xl border border-forest/12 bg-white p-6 shadow-line sm:p-7">
+          <h2 className="font-display text-2xl font-semibold leading-tight text-forest">{pageCopy.formTitle}</h2>
+          <p className="mt-2 text-sm leading-6 text-ink/70">{pageCopy.formBody}</p>
+          <div className="mt-4 flex gap-3 rounded-lg border border-forest/10 bg-parchment/55 p-3 text-sm leading-6 text-ink/70">
+            <ShieldCheck className="mt-0.5 shrink-0 text-copper" aria-hidden="true" size={18} />
+            <p>{comparisonCopy.invitePrivacyNote}</p>
+          </div>
+
+          {invitedEmail ? (
+            <div className="mt-5 rounded-lg border border-forest/12 bg-parchment/45 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
+                {comparisonCopy.inviteSent}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-ink/70">
+                {comparisonCopy.inviteSentBody.replace("{email}", invitedEmail)}
+              </p>
+            </div>
           ) : (
-            <>
+            <div className="mt-5">
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-forest">
                   {comparisonCopy.inviteEmail}
                 </span>
                 <input
-                  className="min-h-11 w-full rounded-md border border-forest/15 bg-white px-3 text-sm text-ink outline-none transition focus:border-copper"
+                  className="min-h-12 w-full rounded-md border border-forest/15 bg-white px-3 text-sm text-ink outline-none transition focus:border-copper"
                   value={inviteEmail}
                   onChange={(event) => {
                     setInviteEmail(event.target.value);
@@ -4480,55 +4222,35 @@ function InviteFamilyPanel({
                   }}
                   placeholder={comparisonCopy.inviteEmailPlaceholder}
                   type="email"
+                  autoComplete="email"
                 />
               </label>
               {inviteError && (
-                <p className="text-sm font-semibold text-copper" role="alert">
+                <p className="mt-3 text-sm font-semibold text-copper" role="alert">
                   {inviteError}
                 </p>
               )}
               <button
                 type="button"
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
+                className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:opacity-70"
                 onClick={createInvite}
                 disabled={invitePending}
               >
                 <Send aria-hidden="true" size={17} />
                 {invitePending ? comparisonCopy.sendingInvite : comparisonCopy.generateInvite}
               </button>
-            </>
-          )}
-
-          {invitedEmail && (
-            <div className="rounded-lg border border-forest/12 bg-parchment/45 p-3">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-copper">
-                {comparisonCopy.inviteSent}
-              </p>
-              <p className="mt-2 text-xs leading-5 text-muted">
-                {comparisonCopy.inviteSentBody.replace("{email}", invitedEmail)}
-              </p>
             </div>
           )}
-
-          {canViewComparison && (
-            <button
-              type="button"
-              className="inline-flex min-h-11 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-sm font-semibold text-white transition hover:bg-[#AA5E2E]"
-              onClick={() => onViewComparison(group.id)}
-            >
-              {comparisonCopy.viewComparison}
-              <ArrowRight aria-hidden="true" size={17} />
-            </button>
-          )}
-
-          {canCompare && !resultIsSaved && resultPackage.groupId && (
-            <p className="rounded-lg border border-copper/20 bg-copper/10 px-3 py-2 text-xs font-semibold leading-5 text-forest">
-              {comparisonCopy.saveBeforeComparison}
-            </p>
-          )}
-
-          {children}
         </div>
+
+        <button
+          type="button"
+          className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-copper"
+          onClick={onNavigateHome}
+        >
+          <ArrowLeft aria-hidden="true" size={16} />
+          {pageCopy.backHome}
+        </button>
       </div>
     </section>
   );
@@ -5069,9 +4791,10 @@ function buildComparisonRows(participants, language) {
   return PILLARS.map((pillar) => {
     const scores = participants.map((participant) => {
       const item = participant.result.pillarScores.find((score) => score.id === pillar.id);
+      const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
       return {
         participant,
-        score: item?.scored > 0 ? roundedScore(item.score) : null,
+        score: hasScore ? roundedScore(item.score) : null,
         unknown: item?.unknown ?? 0
       };
     });
@@ -5100,79 +4823,165 @@ function getResultDetailCopy(language) {
   return RESULT_DETAIL_COPY[language] ?? RESULT_DETAIL_COPY.en;
 }
 
-function getFinalActionCopy(language) {
+function getHomeFinalCtaCopy(language) {
   if (language === "es") {
     return {
-      title: "Solicita tu reporte resumen",
+      title: "Empieza una conversación con Gilbert",
       body:
-        "Guardaremos tu resultado y Gilbert dará seguimiento directamente con tu reporte resumen.",
-      continue: "Solicitar mi reporte resumen",
-      saving: "Guardando...",
-      saved: "Reporte resumen solicitado",
-      successNote:
-        "Tu reporte debería llegar a tu email en unos minutos. Si no lo recibes, no dudes en escribirnos para dar seguimiento.",
-      inviteTitle: "Invita a otro familiar antes de continuar",
-      inviteBody:
-        "La comparación funciona mejor cuando otra persona de la familia completa el diagnóstico con la misma liga.",
-      invitePrivacyNote:
-        "La comparación solo mostrará diferencias por pilar. No compartirá respuestas individuales ni detalles pregunta por pregunta.",
-      inviteFirst: "Invitar primero",
-      continueAnyway: "Enviar reporte sin invitar",
-      inviteLinkLabel: "Email de invitación",
-      inviteLinkTitle: "Enviar invitación por email",
-      inviteLinkBody:
-        "Ingresa el email de la persona que quieres invitar y le enviaremos la liga privada del grupo.",
-      inviteShareContext:
-        "El email incluirá la liga privada para completar el diagnóstico dentro del mismo grupo de comparación.",
-      inviteSaveReminder:
-        "Después de enviar la invitación, podrás guardar tu diagnóstico y solicitar tu reporte resumen.",
-      createInviteLink: "Enviar invitación por email",
-      creatingInviteLink: "Enviando invitación...",
-      inviteLinkError: "No pudimos enviar la invitación. Intenta de nuevo.",
-      error: "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
-      apiErrors: {
-        "Unable to save assessment result":
-          "No se pudo guardar el diagnóstico. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo."
-      },
-      validationErrors: {
-        "Respondent email is required": "El email del participante es obligatorio.",
-        "Respondent name is required": "El nombre del participante es obligatorio.",
-        "Assessment answers are required": "Las respuestas del diagnóstico son obligatorias.",
-        "Assessment result score is required": "El puntaje del diagnóstico es obligatorio.",
-        "Assessment pillar scores are required": "Los puntajes por pilar son obligatorios."
-      },
-      close: "Cerrar",
-      done: "Listo, guardar diagnóstico"
+        "Si la familia ya sabe que necesita claridad, el siguiente paso no tiene que ser más contenido. Puede ser una conversación directa sobre lo que está pasando y cómo empezar con cuidado.",
+      note:
+        "La autoevaluación sigue disponible como punto de partida si la familia quiere ordenar primero sus ideas.",
+      primary: "Trabajemos juntos",
+      secondary: "Tomar la autoevaluación"
     };
   }
 
   return {
-    title: "Request your summary report",
+    title: "Start a conversation with Gilbert",
     body:
-      "We'll save your results, and Gilbert will follow up directly with your summary report.",
-    continue: "Request my summary report",
+      "If the family already knows it needs more clarity, the next step does not have to be more content. It can be a direct conversation about what is happening and how to begin carefully.",
+    note:
+      "The self-assessment remains available as a starting point when the family wants to organize its thinking first.",
+    primary: "Let's work together",
+    secondary: "Take the self-assessment"
+  };
+}
+
+function getHomeAssessmentCopy(language) {
+  if (language === "es") {
+    return {
+      label: "Autoevaluación",
+      privacyTitle: "Privado y confidencial",
+      privacyBody:
+        "La información sensible se maneja con cuidado. La autoevaluación ayuda a preparar una conversación, no a exponer respuestas individuales en público."
+    };
+  }
+
+  return {
+    label: "Self-assessment",
+    privacyTitle: "Private and confidential",
+    privacyBody:
+      "Sensitive information is handled carefully. The self-assessment prepares a conversation, not a public review of individual answers."
+  };
+}
+
+function getHomeAssessmentSteps(language) {
+  if (language === "es") {
+    return [
+      "Guarda tu reporte individual",
+      "Gilbert recibe el contexto necesario para dar seguimiento",
+      "Elige si quieres que Gilbert te contacte"
+    ];
+  }
+
+  return [
+    "Save your individual report",
+    "Gilbert receives the context needed for follow-up",
+    "Choose whether you want him to contact you"
+  ];
+}
+
+function getCompareInviteCopy(language) {
+  if (language === "es") {
+    return {
+      eyebrow: "Comparar resultados",
+      title: "Por qué comparar resultados genera valor",
+      intro:
+        "Una sola perspectiva muestra dónde está una persona. Comparar perspectivas muestra dónde la familia realmente coincide y dónde no.",
+      steps: [
+        {
+          title: "Ya completaste tu autoevaluación",
+          body: "Tus resultados están guardados y listos para comparar."
+        },
+        {
+          title: "Invita a un familiar o colega",
+          body: "Esa persona completa la misma autoevaluación de forma privada, a su propio ritmo."
+        },
+        {
+          title: "Vean en qué coinciden y en qué difieren",
+          body: "Una vista de comparación simple muestra acuerdos y brechas por tema, no pregunta por pregunta."
+        }
+      ],
+      diagramTitle: "Qué revela la comparación",
+      convergenceLabel: "Dónde coinciden",
+      convergenceExampleLabel: "Ej.: Claridad de propiedad",
+      divergenceLabel: "Dónde difieren las perspectivas",
+      divergenceExampleLabel: "Ej.: Preparación para la sucesión",
+      formTitle: "Invita a alguien ahora",
+      formBody:
+        "Ingresa su email y le enviaremos una invitación privada para completar la autoevaluación.",
+      backHome: "Volver al sitio"
+    };
+  }
+
+  return {
+    eyebrow: "Compare results",
+    title: "Why comparing results creates value",
+    intro:
+      "A single perspective shows where one person stands. Comparing perspectives shows where the family actually agrees, and where it does not.",
+    steps: [
+      {
+        title: "You already completed your self-assessment",
+        body: "Your results are saved and ready to compare."
+      },
+      {
+        title: "Invite a family member or colleague",
+        body: "They complete the same self-assessment privately, at their own pace."
+      },
+      {
+        title: "See where perspectives align, and where they differ",
+        body: "A simple comparison view shows agreement and gaps by topic, not question by question."
+      }
+    ],
+    diagramTitle: "What the comparison reveals",
+    convergenceLabel: "Where you agree",
+    convergenceExampleLabel: "e.g. Ownership clarity",
+    divergenceLabel: "Where perspectives differ",
+    divergenceExampleLabel: "e.g. Succession readiness",
+    formTitle: "Invite someone now",
+    formBody: "Enter their email and we will send a private invitation to complete the self-assessment.",
+    backHome: "Back to the site"
+  };
+}
+
+function getFinalActionCopy(language) {
+  if (language === "es") {
+    return {
+      title: "Guarda tus resultados",
+      body:
+        "Guardaremos tus resultados y te enviaremos tu reporte por email de inmediato.",
+      continue: "Guardar y enviarme mi reporte",
+      saving: "Guardando...",
+      saved: "Reporte guardado y enviado",
+      successNote:
+        "Tu reporte debería llegar a tu email en unos minutos. Si no lo recibes, no dudes en escribirnos para dar seguimiento.",
+      contactCheckboxLabel:
+        "Me gustaría que Gilbert me contacte para conversar sobre estos resultados.",
+      error: "No se pudo guardar la autoevaluación. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
+      apiErrors: {
+        "Unable to save assessment result":
+          "No se pudo guardar la autoevaluación. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo."
+      },
+      validationErrors: {
+        "Respondent email is required": "El email del participante es obligatorio.",
+        "Respondent name is required": "El nombre del participante es obligatorio.",
+        "Assessment answers are required": "Las respuestas de la autoevaluación son obligatorias.",
+        "Assessment result score is required": "El puntaje de la autoevaluación es obligatorio.",
+        "Assessment pillar scores are required": "Los puntajes por pilar son obligatorios."
+      },
+      close: "Cerrar"
+    };
+  }
+
+  return {
+    title: "Save your results",
+    body: "We'll save your results and email you your report right away.",
+    continue: "Save and email me my report",
     saving: "Saving...",
-    saved: "Summary report requested",
+    saved: "Report saved and sent",
     successNote:
       "Your report should arrive in your email within a few minutes. If you do not receive it, please do not hesitate to email us so we can follow up.",
-    inviteTitle: "Invite another family member before continuing",
-    inviteBody:
-      "The comparison is most useful when another family member completes the assessment from the same link.",
-    invitePrivacyNote:
-      "The comparison only shows pillar-level differences. It will not share individual answers or question-by-question details.",
-    inviteFirst: "Invite first",
-    continueAnyway: "Send report without inviting",
-    inviteLinkLabel: "Invitation email",
-    inviteLinkTitle: "Send an invitation email",
-    inviteLinkBody:
-      "Enter the email of the person you want to invite and we will send them the private group link.",
-    inviteShareContext:
-      "The email includes the private link to complete the diagnostic in the same comparison group.",
-    inviteSaveReminder:
-      "After sending the invitation, you can save your diagnostic and request your summary report.",
-    createInviteLink: "Send invitation email",
-    creatingInviteLink: "Sending invitation...",
-    inviteLinkError: "We could not send the invitation. Please try again.",
+    contactCheckboxLabel: "I would like Gilbert to contact me to discuss these results.",
     error: "We could not save the assessment. Check the Airtable settings in Vercel and try again.",
     apiErrors: {
       "Unable to save assessment result":
@@ -5185,8 +4994,7 @@ function getFinalActionCopy(language) {
       "Assessment result score is required": "Assessment result score is required.",
       "Assessment pillar scores are required": "Assessment pillar scores are required."
     },
-    close: "Close",
-    done: "Done, save assessment"
+    close: "Close"
   };
 }
 
@@ -5198,7 +5006,8 @@ function getSaveErrorMessage(error, finalCopy) {
 
 function getPillarBand(item, language) {
   const detailCopy = getResultDetailCopy(language);
-  if (!item || item.scored === 0) {
+  const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
+  if (!item || item.scored === 0 || item.lowConfidence || !hasScore) {
     return { id: "noScore", ...detailCopy.scoreBands.noScore };
   }
 
@@ -5241,7 +5050,8 @@ function buildPillarBreakdowns(result, language) {
   return PILLARS.map((pillar) => {
     const item = result.pillarScores.find((score) => score.id === pillar.id);
     const band = getPillarBand(item, language);
-    const score = item?.scored > 0 ? roundedScore(item.score) : null;
+    const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
+    const score = hasScore ? roundedScore(item.score) : null;
     const pillarGuidance = guidance[pillar.id] ?? PILLAR_GUIDANCE.en[pillar.id];
 
     return {
@@ -5250,7 +5060,7 @@ function buildPillarBreakdowns(result, language) {
       shortLabel: pillar.shortLabels[language],
       description: pillar.descriptions[language],
       score,
-      rawScore: item?.score ?? 0,
+      rawScore: hasScore ? item.score : null,
       unknown: item?.unknown ?? 0,
       total: item?.total ?? 0,
       band,

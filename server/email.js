@@ -3,6 +3,7 @@ import {
   buildAdminReportPayload,
   buildSummaryReportPayload,
   createAdminPdfBuffer,
+  encodeActionToken,
   encodeSummaryReportPayload
 } from "./summary-report.js";
 
@@ -51,15 +52,19 @@ function escapeHtml(value = "") {
     .replace(/"/g, "&quot;");
 }
 
+function hasFiniteScore(value) {
+  return value !== null && value !== "" && Number.isFinite(Number(value));
+}
+
 function scoreLine(item) {
-  if (!item?.label || !Number.isFinite(Number(item.score))) return "";
+  if (!item?.label || !hasFiniteScore(item.score)) return "";
   return `${item.label}: ${Math.round(Number(item.score))}/100`;
 }
 
 function priorityLines(body) {
   const pillarScores = body.result?.pillarScores ?? [];
   return [...pillarScores]
-    .filter((item) => Number.isFinite(Number(item.score)))
+    .filter((item) => hasFiniteScore(item.score))
     .sort((a, b) => Number(a.score) - Number(b.score))
     .slice(0, 3)
     .map(scoreLine)
@@ -90,25 +95,95 @@ function createAdminPdfUrl(body, savedResult, options = {}) {
   return `${baseUrl}/api/advisor-report-pdf?data=${encodeSummaryReportPayload(payload)}`;
 }
 
+function createScheduleCallUrl(body, savedResult, options = {}) {
+  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (!baseUrl) return "";
+
+  const recipientEmail = body.reportRequest?.recipientEmail || body.profile?.email || "";
+  if (!recipientEmail) return "";
+
+  const token = encodeActionToken({
+    name: body.profile?.name || "",
+    email: recipientEmail,
+    language: body.language === "es" ? "es" : "en",
+    sessionKey: savedResult.sessionKey || ""
+  });
+
+  return `${baseUrl}/api/schedule-call?data=${token}`;
+}
+
+function createInviteShareUrl(body, options = {}) {
+  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (!baseUrl || !body.groupId) return "";
+
+  const url = new URL(`${baseUrl}/diagnostic`);
+  url.searchParams.set("view", "invite");
+  url.searchParams.set("group", body.groupId);
+  url.searchParams.set("lang", body.language === "es" ? "es" : "en");
+  if (body.profile?.name) url.searchParams.set("name", body.profile.name);
+
+  return url.toString();
+}
+
 function plainSummaryEmail(body, savedResult = {}, options = {}) {
   const report = buildSummaryReportPayload(body, savedResult);
-  const name = report.name || "there";
+  const language = body.language === "es" ? "es" : "en";
+  const name = report.name || (language === "es" ? "hola" : "there");
   const pdfUrl = createSummaryPdfUrl(body, savedResult, options);
+  const scheduleCallUrl = createScheduleCallUrl(body, savedResult, options);
+  const inviteShareUrl = createInviteShareUrl(body, options);
+
+  if (language === "es") {
+    return [
+      `Hola ${name},`,
+      "",
+      "Gracias por completar la Autoevaluación de Empresa Familiar.",
+      "Tus resultados se guardaron y tu reporte resumen está listo para revisar.",
+      "",
+      `Puntaje general: ${report.overall}/100`,
+      `Nivel: ${report.level}`,
+      report.focusAreas?.length ? `Áreas de enfoque: ${report.focusAreas.join(", ")}` : "",
+      "",
+      "Qué puedes hacer ahora:",
+      "1. Descargar tu PDF para guardarlo o compartirlo en una conversación.",
+      "2. Pedir una conversación con Gilbert. Con un clic, Gilbert recibe una notificación.",
+      "3. Invitar a alguien de la familia o empresa para comparar perspectivas dentro del mismo grupo.",
+      "",
+      pdfUrl ? `Descargar resultados en PDF: ${pdfUrl}` : "",
+      scheduleCallUrl ? `Agendar una conversación con Gilbert: ${scheduleCallUrl}` : "",
+      inviteShareUrl ? `Invitar a un familiar o colega: ${inviteShareUrl}` : "",
+      "",
+      "Este reporte es un punto de partida para la reflexión y la conversación. No es una calificación ni un veredicto.",
+      "Si solicitas una conversación, Gilbert recibe una notificación automáticamente.",
+      "",
+      "Saludos,",
+      "Gilbert"
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
 
   return [
     `Hi ${name},`,
     "",
-    "Thank you for completing the Family Enterprise Diagnostic.",
+    "Thank you for completing the Family Enterprise Self-Assessment.",
     "Your results have been saved, and your summary report is ready to review.",
     "",
     `Overall score: ${report.overall}/100`,
     `Level: ${report.level}`,
     report.focusAreas?.length ? `Focus areas: ${report.focusAreas.join(", ")}` : "",
-    pdfUrl ? `View your PDF summary: ${pdfUrl}` : "",
-    body.inviteLink ? `Invitation link: ${body.inviteLink}` : "",
+    "",
+    "What you can do next:",
+    "1. Download your PDF so you can keep it or use it in a conversation.",
+    "2. Ask for a conversation with Gilbert. One click sends Gilbert a notification.",
+    "3. Invite someone from the family or company to compare perspectives in the same group.",
+    "",
+    pdfUrl ? `Download results as a PDF: ${pdfUrl}` : "",
+    scheduleCallUrl ? `Schedule a conversation with Gilbert: ${scheduleCallUrl}` : "",
+    inviteShareUrl ? `Invite a family member or colleague: ${inviteShareUrl}` : "",
     "",
     "This report is a starting point for reflection and conversation. It is not a grade or verdict.",
-    "Gilbert will follow up directly if more context is needed.",
+    "If you request a conversation, Gilbert receives an automatic notification.",
     "",
     "Best,",
     "Gilbert"
@@ -125,8 +200,8 @@ function plainInvitationEmail(invitation = {}) {
     return [
       "Hola,",
       "",
-      `${invitedBy} te invitó a completar el Diagnóstico de Empresa Familiar de Gilbert Devlyn.`,
-      "El diagnóstico toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.",
+      `${invitedBy} te invitó a completar la Autoevaluación de Empresa Familiar de Gilbert Devlyn.`,
+      "La autoevaluación toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.",
       "Usa esta liga privada para responder:",
       "",
       invitation.inviteLink,
@@ -141,8 +216,8 @@ function plainInvitationEmail(invitation = {}) {
   return [
     "Hi,",
     "",
-    `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Diagnostic.`,
-    "The diagnostic takes about 10 minutes and helps compare pillar-level perspectives within the same family group.",
+    `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Self-Assessment.`,
+    "The self-assessment takes about 10 minutes and helps compare pillar-level perspectives within the same family group.",
     "Use this private link to complete it:",
     "",
     invitation.inviteLink,
@@ -162,21 +237,21 @@ function htmlInvitationEmail(invitation = {}) {
   const text =
     language === "es"
       ? {
-          title: "Te invitaron al diagnóstico familiar",
-          preheader: "Completa el diagnóstico y súmate a la comparación familiar privada.",
+          title: "Te invitaron a la autoevaluación familiar",
+          preheader: "Completa la autoevaluación y súmate a la comparación familiar privada.",
           eyebrow: "Invitación privada",
-          body: `${invitedBy} te invitó a completar el Diagnóstico de Empresa Familiar de Gilbert Devlyn. Toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.`,
-          button: "Abrir diagnóstico",
+          body: `${invitedBy} te invitó a completar la Autoevaluación de Empresa Familiar de Gilbert Devlyn. Toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.`,
+          button: "Abrir autoevaluación",
           privacy:
             "La comparación solo muestra diferencias por pilar. No comparte respuestas individuales pregunta por pregunta.",
           footer: "Gilbert Devlyn - Asesoría para empresas familiares"
         }
       : {
-          title: "You have been invited to the family diagnostic",
-          preheader: "Complete the diagnostic and join the private family comparison.",
+          title: "You have been invited to the family self-assessment",
+          preheader: "Complete the self-assessment and join the private family comparison.",
           eyebrow: "Private invitation",
-          body: `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Diagnostic. It takes about 10 minutes and helps compare pillar-level perspectives within the same family group.`,
-          button: "Open diagnostic",
+          body: `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Self-Assessment. It takes about 10 minutes and helps compare pillar-level perspectives within the same family group.`,
+          button: "Open self-assessment",
           privacy:
             "The comparison only shows pillar-level differences. It does not share individual answers or question-by-question details.",
           footer: "Gilbert Devlyn - Family Enterprise Advisory"
@@ -189,9 +264,9 @@ function htmlInvitationEmail(invitation = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(text.title)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#f4efe6; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">${escapeHtml(text.preheader)}</span>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4efe6; padding:32px 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
@@ -203,13 +278,13 @@ function htmlInvitationEmail(invitation = {}) {
             </tr>
             <tr>
               <td style="padding:34px;">
-                <p style="margin:0 0 12px; color:#c46f3a; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
+                <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
                 <h1 style="margin:0 0 18px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(text.title)}</h1>
                 <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">${text.body}</p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
-                    <td style="background:#c46f3a; border-radius:7px;">
+                    <td style="background:#0F463C; border-radius:7px;">
                       <a href="${inviteLink}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">${escapeHtml(text.button)}</a>
                     </td>
                   </tr>
@@ -227,47 +302,130 @@ function htmlInvitationEmail(invitation = {}) {
 </html>`;
 }
 
+function actionButtonRow(buttons) {
+  const visible = buttons.filter((button) => button.url);
+  if (!visible.length) return "";
+
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
+    <tr>
+      ${visible
+        .map(
+          (button, index) => `<td style="padding:${index === 0 ? "0" : "10px 0 0"};">
+            <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+              <tr>
+                <td style="background:${button.accent}; border-radius:7px;" align="center">
+                  <a href="${escapeHtml(button.url)}" style="display:block; padding:15px 22px; color:${button.textColor || "#ffffff"}; font-size:15px; font-weight:700; text-decoration:none;">${escapeHtml(button.label)}</a>
+                </td>
+              </tr>
+            </table>
+          </td>`
+        )
+        .join("</tr><tr>")}
+    </tr>
+  </table>`;
+}
+
 function htmlSummaryEmail(body, savedResult = {}, options = {}) {
   const report = buildSummaryReportPayload(body, savedResult);
+  const language = body.language === "es" ? "es" : "en";
   const pdfUrl = createSummaryPdfUrl(body, savedResult, options);
-  const name = escapeHtml(report.name || "there");
+  const scheduleCallUrl = createScheduleCallUrl(body, savedResult, options);
+  const inviteShareUrl = createInviteShareUrl(body, options);
+  const name = escapeHtml(report.name || (language === "es" ? "hola" : "there"));
   const focusAreas = (report.focusAreas || []).slice(0, 3);
+
+  const text =
+    language === "es"
+      ? {
+          title: "Tu reporte resumen de autoevaluación está listo",
+          preheader: "Tu reporte resumen de la Autoevaluación de Empresa Familiar está listo para revisar.",
+          eyebrow: "Resumen de autoevaluación",
+          heading: "Tu reporte resumen está listo",
+          intro: `Hola ${name}, gracias por completar la Autoevaluación de Empresa Familiar. Tus resultados se guardaron y tu reporte resumen está listo para revisar.`,
+          overallScoreLabel: "Puntaje general",
+          resultLevelLabel: "Nivel de resultado",
+          focusAreasLabel: "Áreas de enfoque",
+          disclaimer:
+            "Este resumen es un punto de partida para la reflexión y la conversación. No es una calificación ni un veredicto, y las respuestas individuales pregunta por pregunta no se comparten en la vista de comparación.",
+          nextStepsLabel: "Qué puedes hacer ahora",
+          nextStepsIntro:
+            "Elige el siguiente paso que mejor se ajuste a tu situación. Puedes guardar tu PDF, pedir una conversación con Gilbert o invitar a otra persona para comparar perspectivas.",
+          downloadPdf: "Descargar resultados en PDF",
+          downloadPdfHelp: "Guarda una copia clara de tu resultado individual.",
+          scheduleCall: "Agendar una conversación con Gilbert",
+          scheduleCallHelp: "Un clic notifica a Gilbert que quieres hablar sobre tus resultados.",
+          inviteSomeone: "Invitar a un familiar o colega",
+          inviteSomeoneHelp:
+            "La persona invitada completa la misma autoevaluación de forma privada para crear una comparación por tema.",
+          comparisonNote:
+            "La comparación ayuda a ver dónde coinciden las perspectivas y dónde conviene conversar primero. No muestra respuestas individuales pregunta por pregunta.",
+          footerNote: "Si solicitas una conversación, Gilbert recibe una notificación automáticamente.",
+          footerName: "Gilbert Devlyn",
+          footerLine: "Asesoría discreta y confidencial para empresas familiares."
+        }
+      : {
+          title: "Your self-assessment report is ready",
+          preheader: "Your Family Enterprise Self-Assessment summary report is ready to review.",
+          eyebrow: "Self-assessment summary",
+          heading: "Your summary report is ready",
+          intro: `Hi ${name}, thank you for completing the Family Enterprise Self-Assessment. Your results have been saved, and your summary report is ready to review.`,
+          overallScoreLabel: "Overall score",
+          resultLevelLabel: "Result level",
+          focusAreasLabel: "Focus areas",
+          disclaimer:
+            "This summary is a starting point for reflection and conversation. It is not a grade or verdict, and individual question-by-question answers are not shared in the comparison view.",
+          nextStepsLabel: "What you can do next",
+          nextStepsIntro:
+            "Choose the next step that fits your situation. You can save your PDF, ask Gilbert for a conversation, or invite someone else to compare perspectives.",
+          downloadPdf: "Download results as a PDF",
+          downloadPdfHelp: "Keep a clear copy of your individual result.",
+          scheduleCall: "Schedule a conversation with Gilbert",
+          scheduleCallHelp: "One click notifies Gilbert that you would like to discuss your results.",
+          inviteSomeone: "Invite a family member or colleague",
+          inviteSomeoneHelp:
+            "The invited person completes the same self-assessment privately so a topic-level comparison can be created.",
+          comparisonNote:
+            "Comparison helps show where perspectives align and where the first useful conversation may be. It does not show individual question-by-question answers.",
+          footerNote: "If you request a conversation, Gilbert receives an automatic notification.",
+          footerName: "Gilbert Devlyn",
+          footerLine: "Discreet, confidentiality-first advisory for family enterprises."
+        };
 
   return `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Your diagnostic summary report is ready</title>
+    <title>${escapeHtml(text.title)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#f4efe6; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">
-      Your Family Enterprise Diagnostic summary report is ready to review.
+      ${escapeHtml(text.preheader)}
     </span>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4efe6; padding:32px 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
             <tr>
               <td style="background:#1c3d2e; padding:30px 34px;">
                 <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Gilbert Devlyn</p>
-                <p style="margin:0; color:#f8f3ea; font-size:18px; line-height:1.4; font-weight:700;">Family Enterprise Advisory</p>
+                <p style="margin:0; color:#f8f3ea; font-size:18px; line-height:1.4; font-weight:700;">${escapeHtml(text.footerLine)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
-                <p style="margin:0 0 12px; color:#c46f3a; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Diagnostic summary</p>
-                <h1 style="margin:0 0 18px; color:#1c3d2e; font-size:34px; line-height:1.08; font-weight:700;">Your summary report is ready</h1>
-                <p style="margin:0 0 22px; color:#454943; font-size:16px; line-height:1.65;">Hi ${name}, thank you for completing the Family Enterprise Diagnostic. Your results have been saved, and your summary report is ready to review.</p>
+                <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
+                <h1 style="margin:0 0 18px; color:#1c3d2e; font-size:34px; line-height:1.08; font-weight:700;">${escapeHtml(text.heading)}</h1>
+                <p style="margin:0 0 22px; color:#454943; font-size:16px; line-height:1.65;">${text.intro}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border-collapse:separate; border-spacing:0;">
                   <tr>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Overall score</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScoreLabel)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.overall || 0))}<span style="font-size:16px; color:#6f726d;"> /100</span></p>
                     </td>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Result level</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevelLabel)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:18px; line-height:1.35; font-weight:700;">${escapeHtml(report.level)}</p>
                     </td>
                   </tr>
@@ -276,7 +434,7 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                 ${
                   focusAreas.length
                     ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
-                        <p style="margin:0 0 12px; color:#c46f3a; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Focus areas</p>
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.focusAreasLabel)}</p>
                         ${focusAreas
                           .map(
                             (item) =>
@@ -287,27 +445,53 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                     : ""
                 }
 
-                <p style="margin:0 0 24px; color:#454943; font-size:15px; line-height:1.65;">This summary is a starting point for reflection and conversation. It is not a grade or verdict, and individual question-by-question answers are not shared in the comparison view.</p>
+                <p style="margin:0 0 24px; color:#454943; font-size:15px; line-height:1.65;">${escapeHtml(text.disclaimer)}</p>
 
-                ${
-                  pdfUrl
-                    ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
-                        <tr>
-                          <td style="background:#c46f3a; border-radius:7px;">
-                            <a href="${escapeHtml(pdfUrl)}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">View your PDF summary</a>
-                          </td>
-                        </tr>
-                      </table>`
-                    : ""
-                }
+                <div style="margin:0 0 22px; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px;">
+                  <p style="margin:0 0 8px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.nextStepsLabel)}</p>
+                  <p style="margin:0 0 16px; color:#454943; font-size:14px; line-height:1.6;">${escapeHtml(text.nextStepsIntro)}</p>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="width:34px; vertical-align:top; padding:0 0 14px;">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#0F463C; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">1</span>
+                      </td>
+                      <td style="padding:0 0 14px; color:#454943; font-size:14px; line-height:1.55;">
+                        <strong style="color:#1c3d2e;">${escapeHtml(text.downloadPdf)}</strong><br>${escapeHtml(text.downloadPdfHelp)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="width:34px; vertical-align:top; padding:0 0 14px;">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#F1C84C; color:#17352E; font-size:12px; line-height:24px; text-align:center; font-weight:700;">2</span>
+                      </td>
+                      <td style="padding:0 0 14px; color:#454943; font-size:14px; line-height:1.55;">
+                        <strong style="color:#1c3d2e;">${escapeHtml(text.scheduleCall)}</strong><br>${escapeHtml(text.scheduleCallHelp)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="width:34px; vertical-align:top; padding:0;">
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#EF563D; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
+                      </td>
+                      <td style="padding:0; color:#454943; font-size:14px; line-height:1.55;">
+                        <strong style="color:#1c3d2e;">${escapeHtml(text.inviteSomeone)}</strong><br>${escapeHtml(text.inviteSomeoneHelp)}
+                      </td>
+                    </tr>
+                  </table>
+                </div>
 
-                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">Gilbert will follow up directly if more context is needed.</p>
+                ${actionButtonRow([
+                  { url: pdfUrl, label: text.downloadPdf, accent: "#0F463C" },
+                  { url: scheduleCallUrl, label: text.scheduleCall, accent: "#F1C84C", textColor: "#17352E" },
+                  { url: inviteShareUrl, label: text.inviteSomeone, accent: "#EF563D" }
+                ])}
+
+                <p style="margin:0 0 18px; color:#454943; font-size:14px; line-height:1.65;">${escapeHtml(text.comparisonNote)}</p>
+                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">${escapeHtml(text.footerNote)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:22px 34px; background:#1c3d2e;">
-                <p style="margin:0; color:#f8f3ea; font-size:14px; line-height:1.5; font-weight:700;">Gilbert Devlyn</p>
-                <p style="margin:2px 0 0; color:#d8c7b2; font-size:12px; line-height:1.5;">Discreet, confidentiality-first advisory for family enterprises.</p>
+                <p style="margin:0; color:#f8f3ea; font-size:14px; line-height:1.5; font-weight:700;">${escapeHtml(text.footerName)}</p>
+                <p style="margin:2px 0 0; color:#d8c7b2; font-size:12px; line-height:1.5;">${escapeHtml(text.footerLine)}</p>
               </td>
             </tr>
           </table>
@@ -318,6 +502,10 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
 </html>`;
 }
 
+function adminNotificationTitle(name, contactRequested) {
+  return contactRequested ? `${name} wants to talk with you` : `${name} just finished assessment`;
+}
+
 function adminEmailText(body, savedResult = {}, options = {}) {
   const profile = body.profile ?? {};
   const name = participantName(body, "Participant");
@@ -326,7 +514,7 @@ function adminEmailText(body, savedResult = {}, options = {}) {
   const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return [
-    `${name} just finished assessment.`,
+    `${adminNotificationTitle(name, Boolean(body.reportRequest?.contactRequested))}.`,
     "",
     `Name: ${profile.name || "Unknown"}`,
     `Email: ${profile.email || "Unknown"}`,
@@ -337,6 +525,7 @@ function adminEmailText(body, savedResult = {}, options = {}) {
     `Language: ${body.language || "en"}`,
     `Overall score: ${score}/100`,
     priorities.length ? `Priority areas: ${priorities.join(", ")}` : "",
+    `Wants to be contacted: ${body.reportRequest?.contactRequested ? "Yes" : "No"}`,
     `Invitation status: ${invitationStatus(body)}`,
     body.inviteEmail ? `Invited email: ${body.inviteEmail}` : "Invited email: Not provided",
     body.groupId ? `Group key: ${body.groupId}` : "",
@@ -362,7 +551,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
   const priorities = (report.focusAreas || []).slice(0, 3);
   const participant = report.participant ?? {};
   const name = participant.name || report.name || "Participant";
-  const completionTitle = `${name} just finished assessment`;
+  const completionTitle = adminNotificationTitle(name, Boolean(report.context?.contactRequested));
   const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return `<!doctype html>
@@ -372,11 +561,11 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(completionTitle)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#f4efe6; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">
       ${escapeHtml(completionTitle)}.
     </span>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4efe6; padding:32px 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:720px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
@@ -389,7 +578,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
             <tr>
               <td style="padding:34px;">
                 <h1 style="margin:0 0 12px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(name)}</h1>
-                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">This person finished the Family Enterprise Diagnostic and requested the summary report. The detailed advisor PDF is attached and includes the question-by-question appendix.</p>
+                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">This person finished the Family Enterprise Self-Assessment and requested the summary report. The detailed advisor PDF is attached and includes the question-by-question appendix.</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
@@ -412,6 +601,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
                   ${detailRow("Generation", participant.generation)}
                   ${detailRow("Started", report.timing?.startedAt)}
                   ${detailRow("Requested", report.timing?.requestedAt)}
+                  ${detailRow("Wants to be contacted", report.context?.contactRequested ? "Yes" : "No")}
                   ${detailRow("Invitation status", report.context?.inviteStatus)}
                   ${detailRow("Invited email", report.context?.inviteEmail)}
                   ${detailRow("Group key", report.context?.groupId)}
@@ -420,7 +610,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
                 ${
                   priorities.length
                     ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
-                        <p style="margin:0 0 12px; color:#c46f3a; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Priority areas</p>
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Priority areas</p>
                         ${priorities
                           .map(
                             (item) =>
@@ -435,7 +625,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
                   adminPdfUrl
                     ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 18px;">
                         <tr>
-                          <td style="background:#c46f3a; border-radius:7px;">
+                          <td style="background:#0F463C; border-radius:7px;">
                             <a href="${escapeHtml(adminPdfUrl)}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">View and download advisor PDF</a>
                           </td>
                         </tr>
@@ -648,7 +838,7 @@ export async function sendInvitationEmail(invitation = {}) {
     from: config.from,
     to: invitedEmail,
     replyTo: invitation.inviterEmail || config.replyTo,
-    subject: language === "es" ? "Invitación al diagnóstico de Gilbert Devlyn" : "Gilbert Devlyn diagnostic invitation",
+    subject: language === "es" ? "Invitación a la autoevaluación de Gilbert Devlyn" : "Gilbert Devlyn self-assessment invitation",
     text: plainInvitationEmail({ ...invitation, invitedEmail, inviteLink, language }),
     html: htmlInvitationEmail({ ...invitation, invitedEmail, inviteLink, language })
   });
@@ -675,11 +865,15 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
     return { skipped: true, reason: "missing-recipient-email" };
   }
 
+  const language = body.language === "es" ? "es" : "en";
   const userEmail = await sendSmtpEmail(config, {
     from: config.from,
     to: recipientEmail,
     replyTo: config.replyTo,
-    subject: "Your diagnostic summary report is ready",
+    subject:
+      language === "es"
+        ? "Tu reporte resumen de autoevaluación está listo"
+        : "Your self-assessment summary report is ready",
     text: plainSummaryEmail(body, savedResult, options),
     html: htmlSummaryEmail(body, savedResult, options)
   });
@@ -690,12 +884,15 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
     from: config.from,
     to: config.adminEmail,
     replyTo: recipientEmail,
-    subject: `${participantName(body, recipientEmail)} just finished assessment`,
+    subject: adminNotificationTitle(
+      participantName(body, recipientEmail),
+      Boolean(body.reportRequest?.contactRequested)
+    ),
     text: adminText,
     html: htmlAdminEmail(body, savedResult, options),
     attachments: [
       {
-        filename: "gilbert-advisor-diagnostic-report.pdf",
+        filename: "gilbert-advisor-assessment-report.pdf",
         contentType: "application/pdf",
         content: adminPdf
       }
@@ -708,4 +905,140 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
     userMessageId: userEmail?.id,
     adminMessageId: adminEmail?.id
   };
+}
+
+function htmlCallRequestEmail(request = {}) {
+  const language = request.language === "es" ? "es" : "en";
+  const name = escapeHtml(request.name || (language === "es" ? "Alguien" : "Someone"));
+  const email = escapeHtml(request.email || "");
+
+  const text =
+    language === "es"
+      ? {
+          title: "Solicitud de conversación",
+          body: `${name} completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`
+        }
+      : {
+          title: "Conversation request",
+          body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`
+        };
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(text.title)}</title>
+  </head>
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+            <tr>
+              <td style="background:#1c3d2e; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Advisor notification</p>
+                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:30px 34px;">
+                <p style="margin:0 0 18px; color:#454943; font-size:16px; line-height:1.6;">${text.body}</p>
+                <p style="margin:0; color:#1c3d2e; font-size:15px; line-height:1.6; font-weight:700;">${email}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+export async function sendCallRequestNotification(request = {}) {
+  const config = getEmailConfig();
+  if (!config) {
+    return { skipped: true, reason: "missing-smtp-config" };
+  }
+
+  const requesterEmail = String(request.email || "").trim();
+  if (!requesterEmail) {
+    return { skipped: true, reason: "missing-requester-email" };
+  }
+
+  const language = request.language === "es" ? "es" : "en";
+  const name = request.name || (language === "es" ? "Alguien" : "Someone");
+  const message = await sendSmtpEmail(config, {
+    from: config.from,
+    to: config.adminEmail,
+    replyTo: requesterEmail,
+    subject:
+      language === "es" ? `${name} quiere hablar contigo` : `${name} would like to speak with you`,
+    text: `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you. Reply to this email to reach them directly.`,
+    html: htmlCallRequestEmail({ name, email: requesterEmail, language })
+  });
+
+  return {
+    provider: "smtp",
+    sent: true,
+    messageId: message?.id
+  };
+}
+
+export function renderScheduleCallConfirmationPage(language = "en", ok = true) {
+  const isSpanish = language === "es";
+  const text = ok
+    ? isSpanish
+      ? {
+          title: "Solicitud enviada",
+          heading: "Gilbert fue notificado",
+          body: "Gilbert fue notificado de que te gustaría hablar con él. Te contactará directamente en los próximos días hábiles.",
+          back: "Volver al sitio"
+        }
+      : {
+          title: "Request sent",
+          heading: "Gilbert has been notified",
+          body: "Gilbert has been notified that you would like to speak with him. He will reach out directly within the next business days.",
+          back: "Back to the site"
+        }
+    : isSpanish
+      ? {
+          title: "No se pudo procesar la solicitud",
+          heading: "Este enlace ya no es válido",
+          body: "No pudimos confirmar esta solicitud de conversación. Vuelve a tu reporte por correo o contáctanos directamente.",
+          back: "Volver al sitio"
+        }
+      : {
+          title: "We could not process this request",
+          heading: "This link is no longer valid",
+          body: "We could not confirm this conversation request. Please return to your report email or contact us directly.",
+          back: "Back to the site"
+        };
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(text.title)}</title>
+  </head>
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#17352E; font-family:Arial, Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="min-height:100vh; padding:48px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px; background:#ffffff; border:1px solid #ded8cf; border-radius:12px; overflow:hidden; text-align:center;">
+            <tr>
+              <td style="padding:44px 36px;">
+                <div style="margin:0 auto 20px; width:56px; height:56px; border-radius:50%; background:#F1C84C; line-height:56px; font-size:26px; font-weight:700; color:#17352E;">&#10003;</div>
+                <h1 style="margin:0 0 14px; color:#0F463C; font-size:26px; line-height:1.3; font-weight:700;">${escapeHtml(text.heading)}</h1>
+                <p style="margin:0 0 26px; color:#454943; font-size:16px; line-height:1.6;">${escapeHtml(text.body)}</p>
+                <a href="/" style="display:inline-block; padding:13px 24px; background:#0F463C; color:#ffffff; border-radius:7px; font-size:14px; font-weight:700; text-decoration:none;">${escapeHtml(text.back)}</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 }

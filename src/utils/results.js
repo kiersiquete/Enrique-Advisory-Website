@@ -11,6 +11,10 @@ export function normalizeScore(value) {
   return (Number(value) / 5) * 100;
 }
 
+export function minimumScoredAnswers(total) {
+  return Math.ceil(Number(total || 0) / 2);
+}
+
 export function calculateResults(questions, answers) {
   const pillarScores = PILLARS.map((pillar) => {
     const pillarQuestions = questions.filter((question) => question.pillarId === pillar.id);
@@ -20,24 +24,35 @@ export function calculateResults(questions, answers) {
     const unknown = pillarQuestions.filter(
       (question) => answers[question.id] === UNKNOWN_ANSWER
     ).length;
+    const minimumScored = minimumScoredAnswers(pillarQuestions.length);
 
     const average =
       values.length > 0
         ? values.reduce((total, value) => total + value, 0) / values.length
         : 0;
+    const numericScore = normalizeScore(average);
+    const lowConfidence =
+      values.length > 0 && unknown > 0 && values.length < minimumScored;
+    const includedInOverall = values.length > 0 && !lowConfidence;
 
     return {
       id: pillar.id,
-      score: normalizeScore(average),
+      score: lowConfidence ? null : numericScore,
+      numericScore,
       average,
       answered: values.length + unknown,
       scored: values.length,
       unknown,
-      total: pillarQuestions.length
+      total: pillarQuestions.length,
+      minimumScored,
+      lowConfidence,
+      includedInOverall
     };
   });
 
-  const scoredPillars = pillarScores.filter((pillar) => pillar.scored > 0);
+  const scoredPillars = pillarScores.filter(
+    (pillar) => pillar.includedInOverall && Number.isFinite(pillar.score)
+  );
   const overall =
     scoredPillars.length > 0
       ? scoredPillars.reduce((total, pillar) => total + pillar.score, 0) / scoredPillars.length
@@ -57,7 +72,16 @@ export function calculateResults(questions, answers) {
         id: pillar.id,
         unknown: pillar.unknown,
         total: pillar.total
-      }))
+      })),
+      lowConfidenceByPillar: pillarScores
+        .filter((pillar) => pillar.lowConfidence)
+        .map((pillar) => ({
+          id: pillar.id,
+          scored: pillar.scored,
+          unknown: pillar.unknown,
+          total: pillar.total,
+          minimumScored: pillar.minimumScored
+        }))
     }
   };
 }

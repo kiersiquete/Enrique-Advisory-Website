@@ -737,9 +737,15 @@ Before handing off the website, confirm:
 - English and Spanish content are available.
 - Desktop, tablet, and mobile layouts have no horizontal overflow.
 
-## 23. Project Task List - Updated June 29, 2026
+## 23. Project Task List - Updated July 1, 2026
 
 Use this section as the single source of truth for project work. Add any new task here first so future changes stay tracked carefully.
+
+Latest source: Fathom meeting on July 1, 2026. Main direction: finish the site within a two-week window with precise, human-reviewed execution; simplify the self-assessment funnel; make comparison reports internal-only for Gilbert; and polish the consulting-site flow, copy, visuals, and brand system.
+
+Prior source: Enrique review meeting on June 29, 2026. Main direction: make the site feel like a robust consulting website for a technical, niche family-enterprise advisor. The assessment should become a secondary lead-generation tool, not the center of the whole site.
+
+Additional source: Gilbert Rev3 written checklist and identity exploration image shared July 1, 2026. Main direction: make the self-assessment feel more like the first step in a confidential advisory process, strengthen privacy/consent language, improve visibility of results, clarify follow-up/sharing flows, and apply the new brand palette.
 
 - [x] Advisor-first homepage positioning.
   - Home now explains who Gilbert is, what family-business problem he helps solve, and why the work matters before introducing the diagnostic.
@@ -757,6 +763,9 @@ Use this section as the single source of truth for project work. Add any new tas
 - [x] Invitation and comparison QA.
   - Verified the invitation and comparison flow work locally for the current implementation.
   - Confirmed the comparison experience supports private group links and participant count updates.
+  - Current invite direction is direct email invitation instead of copy-link sharing.
+  - Group logic is intended to lock at 3 participants.
+  - Airtable duplicate-entry issue was confirmed as fixed during the meeting demo.
 
 - [x] Email/report polish.
   - Polished the summary request and invitation email language.
@@ -767,19 +776,135 @@ Use this section as the single source of truth for project work. Add any new tas
   - Changed public contact references to `info@gilbertdevlyn.com`.
   - Kept entity/address language conservative until Gilbert confirms final business details.
 
+- [ ] July 1 mandate: simplify, de-duplicate, and finish.
+  - Remove redundant content and illogical flows that came from rapid iteration.
+  - Use precise, human-reviewed copy and interaction decisions before building.
+  - Keep the work focused on the two-week finish window and final client expectations.
+
+- [x] July 1 coordination follow-ups.
+  - Send the next meeting invite for Monday at the same time.
+  - Get Enrique's final palette hex codes if the sampled image colors are not official.
+  - Get Enrique's final logo file when ready.
+
+- [ ] Gilbert Rev3: About CTA and advisory-process framing.
+  - Change the assessment CTA in About to feel more like "let's work together" instead of a hard push into the assessment.
+  - Explain in more detail that the first step is a diagnostic/self-assessment, how it works, what the process looks like, and what the family will receive.
+  - Add much more detail about confidentiality, sensitive information handling, and the boundaries of the safe space.
+  - Add a clearer privacy heads-up before starting the self-assessment.
+  - Replace or reframe "for sensitive rooms" language around privacy/confidentiality.
+  - Add an in-questionnaire reminder that the self-assessment is a safe and confidential space.
+
+- [ ] Gilbert Rev3: Results, scoring, and report clarity.
+  - Enlarge the radar/spider results diagram for better visibility.
+  - Define and clearly explain how "I don't know" answers affect the final score.
+  - Review whether answers scored as 0 are correctly weighted in the result. If a dimension has several 0 answers and one 5 answer, the dimension should reflect the zeros instead of appearing as 5.
+  - Add "starting point" language to the diagnostic result so it is clear the output is not a defined plan.
+  - When the diagnostic is completed in Spanish, make sure the report/email arrives in Spanish.
+
+- [ ] Gilbert Rev3: Follow-up, consent, and email CTAs.
+  - Simplify the post-assessment action area to one primary "Save and email me my report" button.
+  - Do not ask the user to enter their email again because it was already collected at the start.
+  - Add an optional checkbox: "I would like Gilbert to contact me to discuss the results."
+  - If the checkbox is selected, trigger an email to Gilbert; if not selected, save/send the report without contact.
+  - In the individual results email, add three buttons: Download PDF, Schedule a Conversation with Gilbert, and Invite Someone.
+  - Make sure the results email also reaches `info@gilbertdevlyn.com` in Gilbert's Outlook, not only Hostinger.
+
+- [ ] Gilbert Rev3: Sharing and comparison experience.
+  - Add more visual explanation of why sharing the result with someone else is valuable.
+  - Explain that the value comes from comparing perspectives, not from judging one person.
+  - Replace the complex results-page invite section with a cleaner Invite Someone path from the results email.
+  - Create a dedicated invite page that explains the value of comparison, shows a visual example such as overlapping graphs, and includes the email input.
+  - Include a field where the user can enter the email address of the person they would like to invite.
+  - Make the invitation to participate in the self-assessment shareable and branded.
+
+- [ ] Gilbert Rev3: Data capture and operations.
+  - Create or connect a simple database where all completed self-assessments are registered.
+  - At minimum, track user login/contact details such as name and email.
+  - Confirm whether Google Sheets, Airtable, or both should be the operating source of truth.
+
+- [ ] Gilbert Rev3: Terminology consistency.
+  - Audit the site, assessment, emails, reports, and PDFs for consistent terminology.
+  - Use "self-assessment" consistently where Gilbert wants that term.
+  - Avoid mixed use of "diagnostic", "assessment", "assesment", and "diagnóstico" unless the bilingual copy intentionally requires it.
+
+- [ ] Gilbert Rev3: Board services copy.
+  - In the board services section, make the copy speak more directly to early-stage family enterprises.
+  - Position the service as help structuring a governance system, creating or professionalizing a board, and professionalizing the Consejo de Administración.
+
 - [ ] Video production and placement.
   - Film one interview or Q&A with Gilbert.
   - Edit a short Home page video introducing Gilbert and the advisory work.
   - Edit a longer About page video explaining Gilbert's background, lived experience, and way of working.
+  - Place the Home video early in the Home page flow once available.
   - Replace the current video placeholder/embed URLs with the final video embeds.
 
-- [ ] Confirm comparison-result email implementation in production.
-  - Confirm the live system sends or surfaces the intended comparison-result access/notification for participants and Gilbert.
-  - If this was completed outside this repo, document where it lives and how to test it.
+- [ ] Fix comparison-view return/access bug.
+  - Meeting bug: after the first post-completion redirect, users may not be able to return to the comparison view later.
+  - Likely root cause discussed in the meeting: caching or saved-state behavior.
+  - If the comparison view becomes internal-only, Gilbert/admin should still be able to return to the comparison after the group result is ready.
+
+- [x] Home page consulting-site overhaul.
+  - Rework the site so Gilbert is clearly positioned as a strong technical consultant in a niche family-enterprise advisory space.
+  - Remove redundant sections such as repeated "why advisory matters" and "how Gilbert works" content.
+  - Reorganize Home into the July 1 meeting flow: video, problem Gilbert solves, why advisory matters, consequences of ignoring the family dimension, and how Gilbert works.
+  - Go deeper on the specific problems he solves before asking visitors to take the self-assessment.
+  - Keep the self-assessment visible, but secondary to Gilbert's advisory positioning and services.
+
+- [ ] Services page problem-first expansion.
+  - Start the Services page with a deeper explanation of the core family-enterprise problems Gilbert helps solve.
+  - Present consulting projects, board service, executive coaching, and 1:1 advisory as solutions after the problem context.
+  - Add more detail on who each service is for, what Gilbert helps with, and what outcome the family should expect.
+
+- [ ] About page credentials cleanup.
+  - Keep About focused on Gilbert's credentials, experience, credibility, and lived perspective.
+  - Remove or reduce the large assessment CTA from About so the page does not over-push the diagnostic.
+  - Move deeper family-enterprise problem framing to Services or Home instead of forcing it into About.
+
+- [ ] Self-assessment intro, privacy, and safe-space framing.
+  - Add a clear first-page explanation of what the self-assessment is, why it exists, and how it supports the advisory process.
+  - Make clear that the self-assessment is a starting point, not a defined action plan.
+  - In the green box on the first page, replace "Built for sensitive rooms" with safe-space wording.
+  - Explain that information is handled privately and confidentially.
+  - Before the self-assessment begins, include a clear privacy notice or pop-up explaining how sensitive information will be handled.
+  - Keep the self-assessment visible, but secondary to Gilbert's advisory positioning and services.
+
+- [ ] UI/UX redesign for readability and polish.
+  - Reduce dense, cramped boxes, especially on the Home page.
+  - Use more white space, long-scroll sections, minimalistic diagrams, frameworks, icons, and professional images.
+  - Make the information feel beautiful, polished, and easy to read for the two-week finish window.
+
+- [ ] Design system refresh.
+  - Apply the identity exploration palette from the shared image: pine `#0E3B36`, cream `#F4EEE2`, lavender `#C9B2DE`, blue `#B9CEE3`, white `#FFFFFF`, gold `#F1C84C`, and coral `#EE5A3C`.
+  - Treat these sampled colors as working values until Enrique confirms official hex codes.
+  - Replace the current mustard/brown direction where it feels too heavy.
+  - Refresh typography, background tone, button colors, and visual hierarchy so the site feels more professional.
+  - Add the final logo when Enrique provides it.
+
+- [ ] Schedule conversation CTA flow.
+  - Add a direct "Schedule a Conversation with Gilbert" path for visitors who are ready to talk.
+  - Do not use iCal for this version.
+  - Trigger an email to Gilbert and redirect the user to a confirmation page saying: "Gilbert has been notified that you would like to speak with him."
+
+- [ ] Re-scope comparison reporting as internal-only.
+  - The comparative results report should only be sent to Gilbert.
+  - Users should receive individual reports only.
+  - Gilbert should receive or access the comparative report internally.
+  - Do not send complex comparison data to participants unless Gilbert/Enrique explicitly approve that later.
+  - Confirm how Gilbert is notified when enough participants complete a group for internal comparison.
 
 - [ ] Confirm production email settings.
   - Make sure production email environment variables send public contact and system notifications to the intended inbox.
-  - Keep `info@gilbertdevlyn.com` as the public-facing address unless Gilbert asks for another one.
+  - Confirm the exact final email/domain spelling because current site copy uses `info@gilbertdevlyn.com`, the July 1 Fathom summary mentions `info@gilbertdevlin.com`, and the Gilbert Rev3 checklist mentions `info@gilbertdevly.com`.
+  - Research forwarding options from the older host/domain setup to Gilbert's current inbox, including whether Gmail "Send mail as" or forwarding can solve it.
+  - Keep the confirmed `info@...` address as the public-facing address unless Gilbert asks for another one.
+
+- [ ] Confirm legacy architecture backlog items.
+  - Decide whether abandoned-intake and completed-but-not-booked email flows are still needed.
+  - Confirm whether the current SMTP/Hostinger setup is the final email platform or only a temporary provider.
+  - Confirm the exact unknown-answer threshold for the transparency insight.
+  - Confirm whether respondent PDFs should include profile details.
+  - Confirm whether legacy booking-click/booking-confirmed events still need backend tracking now that the July 1 direction is email-triggered scheduling.
+  - Confirm whether an internal endpoint/export is still needed in addition to Airtable or Google Sheets.
 
 - [ ] Short diagnostic decision.
   - Current docs mention a hidden short diagnostic route, but the public app currently focuses on the full diagnostic.

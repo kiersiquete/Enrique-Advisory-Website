@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createApp } from "../server/index.js";
+import { encodeActionToken } from "../server/summary-report.js";
 
 function validationError(message) {
   const error = new Error(message);
@@ -19,6 +20,12 @@ function listen(app) {
 async function requestJson(baseUrl, path, options = {}) {
   const response = await fetch(`${baseUrl}${path}`, options);
   const body = await response.json().catch(() => ({}));
+  return { response, body };
+}
+
+async function requestText(baseUrl, path, options = {}) {
+  const response = await fetch(`${baseUrl}${path}`, options);
+  const body = await response.text().catch(() => "");
   return { response, body };
 }
 
@@ -115,6 +122,33 @@ try {
   assert.equal(groupWrongMethod.response.status, 405);
   assert.equal(groupWrongMethod.response.headers.get("allow"), "GET");
   assert.equal(groupWrongMethod.body.error, "Method not allowed");
+
+  const scheduleToken = encodeActionToken({
+    name: "Kier",
+    email: "kier@example.com",
+    language: "en"
+  });
+  const scheduleOk = await requestText(baseUrl, `/api/schedule-call?data=${scheduleToken}`);
+  assert.equal(scheduleOk.response.status, 200);
+  assert.match(scheduleOk.body, /Gilbert has been notified/);
+
+  const scheduleEsToken = encodeActionToken({
+    name: "Kier",
+    email: "kier@example.com",
+    language: "es"
+  });
+  const scheduleEsOk = await requestText(baseUrl, `/api/schedule-call?data=${scheduleEsToken}`);
+  assert.equal(scheduleEsOk.response.status, 200);
+  assert.match(scheduleEsOk.body, /Gilbert fue notificado/);
+
+  const scheduleInvalid = await requestText(baseUrl, "/api/schedule-call?data=not-valid-base64url");
+  assert.equal(scheduleInvalid.response.status, 400);
+  assert.match(scheduleInvalid.body, /no longer valid/);
+
+  const scheduleWrongMethod = await requestJson(baseUrl, "/api/schedule-call", { method: "POST" });
+  assert.equal(scheduleWrongMethod.response.status, 405);
+  assert.equal(scheduleWrongMethod.response.headers.get("allow"), "GET");
+  assert.equal(scheduleWrongMethod.body.error, "Method not allowed");
 
   assert.deepEqual(
     calls.map((call) => call.type),

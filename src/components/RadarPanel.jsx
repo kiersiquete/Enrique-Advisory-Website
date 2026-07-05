@@ -46,30 +46,33 @@ export default function RadarPanel({ result, language }) {
   const isMobile = useViewportMatch("(max-width: 640px)");
   const data = useMemo(
     () =>
-      PILLARS.map((pillar) => ({
-        label: isMobile
-          ? MOBILE_RADAR_LABELS[language]?.[pillar.id] ?? pillar.shortLabels[language]
-          : pillar.shortLabels[language],
-        score: roundedScore(
-          result.pillarScores.find((item) => item.id === pillar.id)?.score ?? 0
-        )
-      })),
+      PILLARS.map((pillar) => {
+        const item = result.pillarScores.find((candidate) => candidate.id === pillar.id);
+        const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
+
+        return {
+          label: isMobile
+            ? MOBILE_RADAR_LABELS[language]?.[pillar.id] ?? pillar.shortLabels[language]
+            : pillar.shortLabels[language],
+          score: hasScore ? roundedScore(item.score) : 0
+        };
+      }),
     [isMobile, language, result]
   );
   const chartConfig = isMobile
     ? {
-        className: "h-[280px] w-full",
-        margin: { top: 18, right: 44, bottom: 18, left: 44 },
-        outerRadius: "90%",
-        angleTick: { fill: "#1C3D2E", fontSize: 13, fontWeight: 500 },
-        radiusTick: { fill: "#6B6B5F", fontSize: 11, dx: -7, dy: 6 }
+        className: "h-[340px] w-full",
+        margin: { top: 20, right: 48, bottom: 20, left: 48 },
+        outerRadius: "88%",
+        angleTick: { fill: "#1C3D2E", fontSize: 14, fontWeight: 500 },
+        radiusTick: { fill: "#6B6B5F", fontSize: 12, dx: -7, dy: 6 }
       }
     : {
-        className: "h-[260px] w-full sm:h-[430px]",
-        margin: { top: 24, right: 34, bottom: 24, left: 34 },
-        outerRadius: "74%",
-        angleTick: { fill: "#1C3D2E", fontSize: 12, fontWeight: 500 },
-        radiusTick: { fill: "#6B6B5F", fontSize: 12, dx: -10, dy: 8 }
+        className: "h-[340px] w-full sm:h-[560px]",
+        margin: { top: 28, right: 44, bottom: 28, left: 44 },
+        outerRadius: "80%",
+        angleTick: { fill: "#1C3D2E", fontSize: 14, fontWeight: 500 },
+        radiusTick: { fill: "#6B6B5F", fontSize: 13, dx: -10, dy: 8 }
       };
 
   return (

@@ -253,6 +253,10 @@ await persistAssessmentToAirtable(
       name: "Zero Score",
       email: "zero@example.com"
     },
+    answers: {
+      "en-full-vision-1": 0,
+      "en-full-vision-2": 0
+    },
     result: {
       ...sampleBody().result,
       overall: 0,

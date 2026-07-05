@@ -1,3 +1,5 @@
+import { answerValidationMessage, normalizeAssessmentSubmission } from "./scoring.js";
+
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 const MAX_GROUP_PARTICIPANTS = 3;
 
@@ -254,6 +256,11 @@ function validateAssessmentBody(body = {}) {
     throw validationError("Assessment answers are required");
   }
 
+  const answerError = answerValidationMessage(body);
+  if (answerError) {
+    throw validationError(answerError);
+  }
+
   const result = body.result ?? {};
   if (!Number.isFinite(Number(result.overall ?? body.overall))) {
     throw validationError("Assessment result score is required");
@@ -406,15 +413,16 @@ function getQuestionOrder(questionId) {
 }
 
 export async function persistAssessmentToAirtable(body) {
-  validateAssessmentBody(body);
+  const normalizedSubmission = normalizeAssessmentSubmission(body);
+  validateAssessmentBody(normalizedSubmission);
 
   if (!getConfig()) {
     throw new Error("Missing Airtable configuration");
   }
 
   const normalizedBody = {
-    ...body,
-    groupId: String(body.groupId ?? "").trim()
+    ...normalizedSubmission,
+    groupId: String(normalizedSubmission.groupId ?? "").trim()
   };
   const now = new Date().toISOString();
   const sessionKey = sessionKeyFor(normalizedBody);
@@ -449,7 +457,7 @@ export async function persistAssessmentToAirtable(body) {
     ? await getComparisonGroupFromAirtable(normalizedBody.groupId)
     : null;
 
-  return { ok: true, persistence: "airtable", sessionKey, group };
+  return { ok: true, persistence: "airtable", sessionKey, group, result: normalizedBody.result };
 }
 
 export async function getComparisonGroupFromAirtable(groupId) {
