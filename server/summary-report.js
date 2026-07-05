@@ -234,23 +234,42 @@ export function buildAdminReportPayload(body = {}, savedResult = {}) {
 }
 
 const COMPARISON_RELATIONSHIP_LABELS = {
-  founder: "Founder",
-  "family-working": "Family member working in the business",
-  "family-not-working": "Family member not working in the business",
-  "shareholder-non-family": "Shareholder, non-family",
-  "spouse-partner": "Spouse or partner",
-  other: "Other"
+  en: {
+    founder: "Founder",
+    "family-working": "Family member working in the business",
+    "family-not-working": "Family member not working in the business",
+    "shareholder-non-family": "Shareholder, non-family",
+    "spouse-partner": "Spouse or partner",
+    other: "Other"
+  },
+  es: {
+    founder: "Fundador/a",
+    "family-working": "Familiar que trabaja en la empresa",
+    "family-not-working": "Familiar que no trabaja en la empresa",
+    "shareholder-non-family": "Accionista no familiar",
+    "spouse-partner": "Cónyuge o pareja",
+    other: "Otro"
+  }
 };
 
 const COMPARISON_GENERATION_LABELS = {
-  first: "First generation (founder)",
-  second: "Second generation",
-  "third-plus": "Third generation or later"
+  en: {
+    first: "First generation (founder)",
+    second: "Second generation",
+    "third-plus": "Third generation or later"
+  },
+  es: {
+    first: "Primera generación (fundador/a)",
+    second: "Segunda generación",
+    "third-plus": "Tercera generación o posterior"
+  }
 };
 
-function comparisonParticipantLabel(participant, index) {
-  const role = COMPARISON_RELATIONSHIP_LABELS[participant.role] || participant.role || "Participant";
-  const generation = COMPARISON_GENERATION_LABELS[participant.generation] || participant.generation || "";
+function comparisonParticipantLabel(participant, index, language = "en") {
+  const relationshipLabels = COMPARISON_RELATIONSHIP_LABELS[language] || COMPARISON_RELATIONSHIP_LABELS.en;
+  const generationLabels = COMPARISON_GENERATION_LABELS[language] || COMPARISON_GENERATION_LABELS.en;
+  const role = relationshipLabels[participant.role] || participant.role || (language === "es" ? "Participante" : "Participant");
+  const generation = generationLabels[participant.generation] || participant.generation || "";
   return `P${index + 1}: ${[role, generation].filter(Boolean).join(" - ")}`;
 }
 
@@ -258,7 +277,7 @@ export function buildComparisonReportPayload(group = {}, language = "en") {
   const participants = (group.participants ?? []).slice(0, 3);
   const participantSummaries = participants.map((participant, index) => ({
     id: participant.id,
-    label: comparisonParticipantLabel(participant, index),
+    label: comparisonParticipantLabel(participant, index, language),
     country: participant.country || "",
     overall: hasFiniteScore(participant.result?.overall)
       ? Math.round(Number(participant.result.overall))
@@ -271,7 +290,7 @@ export function buildComparisonReportPayload(group = {}, language = "en") {
     (participant.result?.pillarScores ?? []).forEach((pillar) => {
       if (!hasFiniteScore(pillar.score)) return;
       if (!pillarMap.has(pillar.id)) {
-        pillarMap.set(pillar.id, { id: pillar.id, label: pillarLabel(pillar), scores: [] });
+        pillarMap.set(pillar.id, { id: pillar.id, label: pillarLabel(pillar, language), scores: [] });
       }
       pillarMap.get(pillar.id).scores.push({
         participantIndex: index,
@@ -854,8 +873,52 @@ export function createAdminPdfBuffer(payload) {
   return Buffer.from(doc.output("arraybuffer"));
 }
 
+function comparisonPdfText(language) {
+  if (language === "es") {
+    return {
+      headerEyebrow: "GILBERT DEVLYN - COMPARACIÓN GRUPAL",
+      confidential: "Confidencial - solo para el asesor",
+      groupComparison: "Comparación grupal",
+      group: (id) => `Grupo ${id}`,
+      completedPerspectives: (count) => `${count} perspectivas completadas`,
+      participants: "Participantes",
+      pillarComparison: "Comparación por pilar",
+      convergenceTitle: "Convergencia (brecha de 10 o menos)",
+      divergenceTitle: "Divergencia (brecha mayor a 20)",
+      noConvergence: "Todavía no hay convergencia clara.",
+      noDivergence: "No hay brechas mayores a 20 puntos.",
+      unknownAnswers: (count) => `Respuestas sin información: ${count}`,
+      gap: (value) => (value === null ? "Brecha: N/D" : `Brecha: ${value}`),
+      gapItem: (label, gap) => `${label} (brecha ${gap})`,
+      pageOf: (page, total) => `Página ${page} de ${total}`,
+      footerNote: "Comparación grupal confidencial - solo para el asesor"
+    };
+  }
+
+  return {
+    headerEyebrow: "GILBERT DEVLYN - GROUP COMPARISON",
+    confidential: "Confidential - advisor use only",
+    groupComparison: "Group comparison",
+    group: (id) => `Group ${id}`,
+    completedPerspectives: (count) => `${count} completed perspectives`,
+    participants: "Participants",
+    pillarComparison: "Pillar comparison",
+    convergenceTitle: "Convergence (gap 10 or less)",
+    divergenceTitle: "Divergence (gap over 20)",
+    noConvergence: "No clear convergence yet.",
+    noDivergence: "No major gaps above 20 points.",
+    unknownAnswers: (count) => `Unknown answers: ${count}`,
+    gap: (value) => (value === null ? "Gap: n/a" : `Gap: ${value}`),
+    gapItem: (label, gap) => `${label} (gap ${gap})`,
+    pageOf: (page, total) => `Page ${page} of ${total}`,
+    footerNote: "Confidential group comparison - advisor use only"
+  };
+}
+
 export function createComparisonPdfBuffer(payload) {
   const report = payload ?? {};
+  const language = report.language === "es" ? "es" : "en";
+  const text = comparisonPdfText(language);
   const participants = report.participants ?? [];
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -876,21 +939,21 @@ export function createComparisonPdfBuffer(payload) {
     doc.setTextColor(copper);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text("GILBERT DEVLYN - GROUP COMPARISON", margin, 38);
+    doc.text(text.headerEyebrow, margin, 38);
     doc.setTextColor("#ffffff");
     doc.setFontSize(22);
     doc.text(title, margin, 68);
     doc.setTextColor("#d8c7b2");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Confidential - advisor use only", pageWidth - margin, 38, { align: "right" });
+    doc.text(text.confidential, pageWidth - margin, 38, { align: "right" });
     y = 120;
   }
 
   function ensureSpace(height) {
     if (y + height <= pageHeight - 70) return;
     doc.addPage();
-    pageHeader("Group comparison");
+    pageHeader(text.groupComparison);
   }
 
   function sectionTitle(title) {
@@ -914,7 +977,7 @@ export function createComparisonPdfBuffer(payload) {
     doc.setTextColor(muted);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`Unknown answers: ${participant.unknownCount}`, margin + 16, y + 32);
+    doc.text(text.unknownAnswers(participant.unknownCount), margin + 16, y + 32);
     doc.setTextColor(forest);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
@@ -938,7 +1001,7 @@ export function createComparisonPdfBuffer(payload) {
     doc.setTextColor(row.gap === null ? muted : row.gap > 20 ? copper : forest);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text(row.gap === null ? "Gap: n/a" : `Gap: ${row.gap}`, pageWidth - margin - 14, y + 19, {
+    doc.text(text.gap(row.gap), pageWidth - margin - 14, y + 19, {
       align: "right"
     });
     y += 38;
@@ -967,30 +1030,30 @@ export function createComparisonPdfBuffer(payload) {
         doc.setTextColor(ink);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
-        doc.text(`${item.label} (gap ${item.gap})`, margin + 30, itemY);
+        doc.text(text.gapItem(item.label, item.gap), margin + 30, itemY);
         itemY += 16;
       });
     }
     y += cardHeight + 18;
   }
 
-  pageHeader(`Group ${report.groupId || ""}`);
+  pageHeader(text.group(report.groupId || ""));
   doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`${report.participantCount || 0} completed perspectives`, margin, y);
+  doc.text(text.completedPerspectives(report.participantCount || 0), margin, y);
   y += 24;
 
-  sectionTitle("Participants");
+  sectionTitle(text.participants);
   participants.forEach(participantRow);
 
   y += 6;
-  sectionTitle("Pillar comparison");
+  sectionTitle(text.pillarComparison);
   (report.pillarRows || []).forEach(pillarRow);
 
   y += 6;
-  listCard("Convergence (gap 10 or less)", report.convergence || [], "No clear convergence yet.", forest);
-  listCard("Divergence (gap over 20)", report.divergence || [], "No major gaps above 20 points.", copper);
+  listCard(text.convergenceTitle, report.convergence || [], text.noConvergence, forest);
+  listCard(text.divergenceTitle, report.divergence || [], text.noDivergence, copper);
 
   const comparisonPageCount = doc.getNumberOfPages();
   for (let page = 1; page <= comparisonPageCount; page += 1) {
@@ -998,8 +1061,8 @@ export function createComparisonPdfBuffer(payload) {
     doc.setTextColor(muted);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text(`Page ${page} of ${comparisonPageCount}`, pageWidth - margin, pageHeight - 28, { align: "right" });
-    doc.text("Confidential group comparison - advisor use only", margin, pageHeight - 28);
+    doc.text(text.pageOf(page, comparisonPageCount), pageWidth - margin, pageHeight - 28, { align: "right" });
+    doc.text(text.footerNote, margin, pageHeight - 28);
   }
 
   return Buffer.from(doc.output("arraybuffer"));

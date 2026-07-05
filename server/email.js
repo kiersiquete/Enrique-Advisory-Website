@@ -64,22 +64,16 @@ function scoreLine(item) {
   return `${item.label}: ${Math.round(Number(item.score))}/100`;
 }
 
-function priorityLines(body) {
-  const pillarScores = body.result?.pillarScores ?? [];
-  return [...pillarScores]
-    .filter((item) => hasFiniteScore(item.score))
-    .sort((a, b) => Number(a.score) - Number(b.score))
-    .slice(0, 3)
-    .map(scoreLine)
-    .filter(Boolean);
-}
-
 function participantName(body, fallback = "Participant") {
   return body.profile?.name || body.reportRequest?.recipientEmail || fallback;
 }
 
-function invitationStatus(body) {
-  return body.inviteLink || body.inviteEmail ? "Invitation created" : "No invitation created";
+function invitationStatus(body, language = "en") {
+  const hasInvitation = Boolean(body.inviteLink || body.inviteEmail);
+  if (language === "es") {
+    return hasInvitation ? "Invitación creada" : "Sin invitación creada";
+  }
+  return hasInvitation ? "Invitation created" : "No invitation created";
 }
 
 function createSummaryPdfUrl(body, savedResult, options = {}) {
@@ -584,56 +578,133 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
 </html>`;
 }
 
-function adminNotificationTitle(name, contactRequested) {
+function adminNotificationTitle(name, contactRequested, language = "en") {
+  if (language === "es") {
+    return contactRequested ? `${name} quiere hablar contigo` : `${name} acaba de terminar la autoevaluación`;
+  }
   return contactRequested ? `${name} wants to talk with you` : `${name} just finished assessment`;
 }
 
+function adminEmailLabels(language) {
+  if (language === "es") {
+    return {
+      name: "Nombre",
+      email: "Email",
+      phone: "Teléfono",
+      country: "País",
+      relationship: "Relación",
+      generation: "Generación",
+      language: "Idioma",
+      overallScore: "Puntaje general",
+      priorityAreas: "Áreas prioritarias",
+      wantsContact: "Quiere que lo contacten",
+      invitationStatus: "Estado de invitación",
+      invitedEmail: "Email invitado",
+      groupKey: "Clave de grupo",
+      inviteLink: "Liga de invitación",
+      advisorPdf: "PDF del asesor",
+      sessionKey: "Clave de sesión de Airtable",
+      retainedNote: "Las notas detalladas del asesor se conservan en el JSON de resultado en Airtable.",
+      notProvided: "No proporcionado",
+      unknown: "Desconocido",
+      yes: "Sí",
+      no: "No",
+      advisorNotification: "Notificación para el asesor",
+      bodyIntro:
+        "Esta persona terminó la Autoevaluación de Empresa Familiar y solicitó el reporte resumen. El PDF detallado para el asesor está adjunto e incluye el apéndice de preguntas y respuestas.",
+      unknownAnswers: "Respuestas sin información",
+      started: "Iniciado",
+      requested: "Solicitado",
+      viewPdf: "Ver y descargar PDF del asesor",
+      attachedNote:
+        "PDF adjunto: reporte detallado para el asesor con puntajes por dimensión, notas de contexto y respuestas por pregunta."
+    };
+  }
+
+  return {
+    name: "Name",
+    email: "Email",
+    phone: "Phone",
+    country: "Country",
+    relationship: "Relationship",
+    generation: "Generation",
+    language: "Language",
+    overallScore: "Overall score",
+    priorityAreas: "Priority areas",
+    wantsContact: "Wants to be contacted",
+    invitationStatus: "Invitation status",
+    invitedEmail: "Invited email",
+    groupKey: "Group key",
+    inviteLink: "Invite link",
+    advisorPdf: "Advisor PDF",
+    sessionKey: "Airtable session key",
+    retainedNote: "Detailed advisor notes are retained in the Airtable Raw Result JSON.",
+    notProvided: "Not provided",
+    unknown: "Unknown",
+    yes: "Yes",
+    no: "No",
+    advisorNotification: "Advisor notification",
+    bodyIntro:
+      "This person finished the Family Enterprise Self-Assessment and requested the summary report. The detailed advisor PDF is attached and includes the question-by-question appendix.",
+    unknownAnswers: "Unknown answers",
+    started: "Started",
+    requested: "Requested",
+    viewPdf: "View and download advisor PDF",
+    attachedNote:
+      "Attached PDF: detailed advisor report with dimension scores, context notes, and submitted question-level answers."
+  };
+}
+
 function adminEmailText(body, savedResult = {}, options = {}) {
+  const language = body.language === "es" ? "es" : "en";
+  const text = adminEmailLabels(language);
   const profile = body.profile ?? {};
   const name = participantName(body, "Participant");
   const score = Math.round(Number(body.result?.overall ?? body.overall ?? 0));
-  const priorities = priorityLines(body);
+  const priorities = buildAdminReportPayload(body, savedResult).focusAreas || [];
   const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return [
-    `${adminNotificationTitle(name, Boolean(body.reportRequest?.contactRequested))}.`,
+    `${adminNotificationTitle(name, Boolean(body.reportRequest?.contactRequested), language)}.`,
     "",
-    `Name: ${profile.name || "Unknown"}`,
-    `Email: ${profile.email || "Unknown"}`,
-    `Phone: ${profile.phoneInternational || profile.phoneNumber || "Not provided"}`,
-    `Country: ${profile.countryLabel || profile.country || "Not provided"}`,
-    `Relationship: ${profile.relationship || "Not provided"}`,
-    `Generation: ${profile.generation || "Not provided"}`,
-    `Language: ${body.language || "en"}`,
-    `Overall score: ${score}/100`,
-    priorities.length ? `Priority areas: ${priorities.join(", ")}` : "",
-    `Wants to be contacted: ${body.reportRequest?.contactRequested ? "Yes" : "No"}`,
-    `Invitation status: ${invitationStatus(body)}`,
-    body.inviteEmail ? `Invited email: ${body.inviteEmail}` : "Invited email: Not provided",
-    body.groupId ? `Group key: ${body.groupId}` : "",
-    body.inviteLink ? `Invite link: ${body.inviteLink}` : "",
-    adminPdfUrl ? `Advisor PDF: ${adminPdfUrl}` : "",
-    savedResult.sessionKey ? `Airtable session key: ${savedResult.sessionKey}` : "",
+    `${text.name}: ${profile.name || text.unknown}`,
+    `${text.email}: ${profile.email || text.unknown}`,
+    `${text.phone}: ${profile.phoneInternational || profile.phoneNumber || text.notProvided}`,
+    `${text.country}: ${profile.countryLabel || profile.country || text.notProvided}`,
+    `${text.relationship}: ${profile.relationship || text.notProvided}`,
+    `${text.generation}: ${profile.generation || text.notProvided}`,
+    `${text.language}: ${body.language || "en"}`,
+    `${text.overallScore}: ${score}/100`,
+    priorities.length ? `${text.priorityAreas}: ${priorities.join(", ")}` : "",
+    `${text.wantsContact}: ${body.reportRequest?.contactRequested ? text.yes : text.no}`,
+    `${text.invitationStatus}: ${invitationStatus(body, language)}`,
+    body.inviteEmail ? `${text.invitedEmail}: ${body.inviteEmail}` : `${text.invitedEmail}: ${text.notProvided}`,
+    body.groupId ? `${text.groupKey}: ${body.groupId}` : "",
+    body.inviteLink ? `${text.inviteLink}: ${body.inviteLink}` : "",
+    adminPdfUrl ? `${text.advisorPdf}: ${adminPdfUrl}` : "",
+    savedResult.sessionKey ? `${text.sessionKey}: ${savedResult.sessionKey}` : "",
     "",
-    "Detailed advisor notes are retained in the Airtable Raw Result JSON."
+    text.retainedNote
   ]
     .filter(Boolean)
     .join("\n");
 }
 
-function detailRow(label, value) {
+function detailRow(label, value, fallback = "Not provided") {
   return `<tr>
     <td style="padding:9px 0; color:#6f726d; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; vertical-align:top;">${escapeHtml(label)}</td>
-    <td style="padding:9px 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700; text-align:right;">${escapeHtml(value || "Not provided")}</td>
+    <td style="padding:9px 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700; text-align:right;">${escapeHtml(value || fallback)}</td>
   </tr>`;
 }
 
 export function htmlAdminEmail(body, savedResult = {}, options = {}) {
+  const language = body.language === "es" ? "es" : "en";
+  const text = adminEmailLabels(language);
   const report = buildAdminReportPayload(body, savedResult);
   const priorities = (report.focusAreas || []).slice(0, 3);
   const participant = report.participant ?? {};
   const name = participant.name || report.name || "Participant";
-  const completionTitle = adminNotificationTitle(name, Boolean(report.context?.contactRequested));
+  const completionTitle = adminNotificationTitle(name, Boolean(report.context?.contactRequested), language);
   const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return `<!doctype html>
@@ -653,46 +724,46 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:720px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
             <tr>
               <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Advisor notification</p>
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.advisorNotification)}</p>
                 <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(completionTitle)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
                 <h1 style="margin:0 0 12px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(name)}</h1>
-                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">This person finished the Family Enterprise Self-Assessment and requested the summary report. The detailed advisor PDF is attached and includes the question-by-question appendix.</p>
+                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">${escapeHtml(text.bodyIntro)}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Overall score</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScore)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.overall || 0))}<span style="font-size:16px; color:#6f726d;"> /100</span></p>
                     </td>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Unknown answers</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.unknownAnswers)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.transparency?.unknownCount || 0))}</p>
                     </td>
                   </tr>
                 </table>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
-                  ${detailRow("Email", participant.email)}
-                  ${detailRow("Phone", participant.phone)}
-                  ${detailRow("Country", participant.country)}
-                  ${detailRow("Relationship", participant.relationship)}
-                  ${detailRow("Generation", participant.generation)}
-                  ${detailRow("Started", report.timing?.startedAt)}
-                  ${detailRow("Requested", report.timing?.requestedAt)}
-                  ${detailRow("Wants to be contacted", report.context?.contactRequested ? "Yes" : "No")}
-                  ${detailRow("Invitation status", report.context?.inviteStatus)}
-                  ${detailRow("Invited email", report.context?.inviteEmail)}
-                  ${detailRow("Group key", report.context?.groupId)}
+                  ${detailRow(text.email, participant.email, text.notProvided)}
+                  ${detailRow(text.phone, participant.phone, text.notProvided)}
+                  ${detailRow(text.country, participant.country, text.notProvided)}
+                  ${detailRow(text.relationship, participant.relationship, text.notProvided)}
+                  ${detailRow(text.generation, participant.generation, text.notProvided)}
+                  ${detailRow(text.started, report.timing?.startedAt, text.notProvided)}
+                  ${detailRow(text.requested, report.timing?.requestedAt, text.notProvided)}
+                  ${detailRow(text.wantsContact, report.context?.contactRequested ? text.yes : text.no, text.notProvided)}
+                  ${detailRow(text.invitationStatus, report.context?.inviteStatus, text.notProvided)}
+                  ${detailRow(text.invitedEmail, report.context?.inviteEmail, text.notProvided)}
+                  ${detailRow(text.groupKey, report.context?.groupId, text.notProvided)}
                 </table>
 
                 ${
                   priorities.length
                     ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
-                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Priority areas</p>
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.priorityAreas)}</p>
                         ${priorities
                           .map(
                             (item) =>
@@ -708,14 +779,14 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
                     ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 18px;">
                         <tr>
                           <td style="background:#0F463C; border-radius:7px;">
-                            <a href="${escapeHtml(adminPdfUrl)}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">View and download advisor PDF</a>
+                            <a href="${escapeHtml(adminPdfUrl)}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">${escapeHtml(text.viewPdf)}</a>
                           </td>
                         </tr>
                       </table>`
                     : ""
                 }
 
-                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">Attached PDF: detailed advisor report with dimension scores, context notes, and submitted question-level answers.</p>
+                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
               </td>
             </tr>
           </table>
@@ -968,7 +1039,8 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
     replyTo: recipientEmail,
     subject: adminNotificationTitle(
       participantName(body, recipientEmail),
-      Boolean(body.reportRequest?.contactRequested)
+      Boolean(body.reportRequest?.contactRequested),
+      language
     ),
     text: adminText,
     html: htmlAdminEmail(body, savedResult, options),
@@ -990,32 +1062,35 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
 }
 
 function htmlCallRequestEmail(request = {}) {
-  const name = escapeHtml(request.name || "Someone");
+  const language = request.language === "es" ? "es" : "en";
+  const labels = adminEmailLabels(language);
+  const name = escapeHtml(request.name || (language === "es" ? "Alguien" : "Someone"));
   const email = escapeHtml(request.email || "");
   const participant = request.participant || {};
   const result = request.result || {};
   const context = request.context || {};
   const focusAreas = Array.isArray(result.focusAreas) ? result.focusAreas.slice(0, 3) : [];
 
-  const text = {
-    title: "Conversation request",
-    body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
-    profileTitle: "Participant profile",
-    resultTitle: "Result context",
-    focusTitle: "Focus areas",
-    contactTitle: "How to respond",
-    contactBody: "Reply to this email to contact this person directly.",
-    overallScore: "Overall score",
-    resultLevel: "Result level",
-    name: "Name",
-    email: "Email",
-    phone: "Phone",
-    country: "Country",
-    relationship: "Relationship",
-    generation: "Generation",
-    requested: "Requested",
-    groupKey: "Group key"
-  };
+  const text =
+    language === "es"
+      ? {
+          title: "Solicitud de conversación",
+          body: `${name} completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`,
+          profileTitle: "Perfil del participante",
+          focusTitle: "Áreas de enfoque",
+          contactTitle: "Cómo responder",
+          contactBody: "Responde a este correo para contactar directamente a esta persona.",
+          resultLevel: "Nivel de resultado"
+        }
+      : {
+          title: "Conversation request",
+          body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
+          profileTitle: "Participant profile",
+          focusTitle: "Focus areas",
+          contactTitle: "How to respond",
+          contactBody: "Reply to this email to contact this person directly.",
+          resultLevel: "Result level"
+        };
 
   return `<!doctype html>
 <html>
@@ -1031,7 +1106,7 @@ function htmlCallRequestEmail(request = {}) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
             <tr>
               <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Advisor notification</p>
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(labels.advisorNotification)}</p>
                 <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
               </td>
             </tr>
@@ -1042,26 +1117,26 @@ function htmlCallRequestEmail(request = {}) {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px;">
                   <tr>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScore)}</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(labels.overallScore)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:36px; line-height:1; font-weight:700;">${escapeHtml(result.overall ?? "N/A")}<span style="font-size:15px; color:#6f726d;"> /100</span></p>
                     </td>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
                       <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevel)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${escapeHtml(result.level || "Not provided")}</p>
+                      <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${escapeHtml(result.level || labels.notProvided)}</p>
                     </td>
                   </tr>
                 </table>
 
                 <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.profileTitle)}</p>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
-                  ${detailRow(text.name, request.name)}
-                  ${detailRow(text.email, request.email)}
-                  ${detailRow(text.phone, participant.phone)}
-                  ${detailRow(text.country, participant.country)}
-                  ${detailRow(text.relationship, participant.relationship)}
-                  ${detailRow(text.generation, participant.generation)}
-                  ${detailRow(text.requested, context.requestedAt)}
-                  ${detailRow(text.groupKey, context.groupId)}
+                  ${detailRow(labels.name, request.name, labels.notProvided)}
+                  ${detailRow(labels.email, request.email, labels.notProvided)}
+                  ${detailRow(labels.phone, participant.phone, labels.notProvided)}
+                  ${detailRow(labels.country, participant.country, labels.notProvided)}
+                  ${detailRow(labels.relationship, participant.relationship, labels.notProvided)}
+                  ${detailRow(labels.generation, participant.generation, labels.notProvided)}
+                  ${detailRow(labels.requested, context.requestedAt, labels.notProvided)}
+                  ${detailRow(labels.groupKey, context.groupId, labels.notProvided)}
                 </table>
 
                 ${
@@ -1104,35 +1179,48 @@ export async function sendCallRequestNotification(request = {}) {
     return { skipped: true, reason: "missing-requester-email" };
   }
 
-  const name = request.name || "Someone";
+  const language = request.language === "es" ? "es" : "en";
+  const labels = adminEmailLabels(language);
+  const name = request.name || (language === "es" ? "Alguien" : "Someone");
   const focusAreas = Array.isArray(request.result?.focusAreas) ? request.result.focusAreas.slice(0, 3) : [];
+  const resultLevelLabel = language === "es" ? "Nivel de resultado" : "Result level";
+  const replyNote =
+    language === "es"
+      ? "Responde a este correo para contactar directamente a esta persona."
+      : "Reply to this email to reach them directly.";
+  const introLine =
+    language === "es"
+      ? `${name} (${requesterEmail}) completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`
+      : `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`;
+
   const message = await sendSmtpEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: requesterEmail,
-    subject: `${name} would like to speak with you`,
+    subject: adminNotificationTitle(name, true, language),
     text: [
-      `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
+      introLine,
       "",
-      `Overall score: ${request.result?.overall ?? "Not provided"}/100`,
-      `Result level: ${request.result?.level || "Not provided"}`,
-      focusAreas.length ? `Focus areas: ${focusAreas.join(", ")}` : "",
+      `${labels.overallScore}: ${request.result?.overall ?? labels.notProvided}/100`,
+      `${resultLevelLabel}: ${request.result?.level || labels.notProvided}`,
+      focusAreas.length ? `${labels.priorityAreas}: ${focusAreas.join(", ")}` : "",
       "",
-      `Phone: ${request.participant?.phone || "Not provided"}`,
-      `Country: ${request.participant?.country || "Not provided"}`,
-      `Relationship: ${request.participant?.relationship || "Not provided"}`,
-      `Generation: ${request.participant?.generation || "Not provided"}`,
-      `Requested: ${request.context?.requestedAt || "Not provided"}`,
-      `Group key: ${request.context?.groupId || "Not provided"}`,
+      `${labels.phone}: ${request.participant?.phone || labels.notProvided}`,
+      `${labels.country}: ${request.participant?.country || labels.notProvided}`,
+      `${labels.relationship}: ${request.participant?.relationship || labels.notProvided}`,
+      `${labels.generation}: ${request.participant?.generation || labels.notProvided}`,
+      `${labels.requested}: ${request.context?.requestedAt || labels.notProvided}`,
+      `${labels.groupKey}: ${request.context?.groupId || labels.notProvided}`,
       "",
-      "Reply to this email to reach them directly."
+      replyNote
     ]
       .filter(Boolean)
       .join("\n"),
     html: htmlCallRequestEmail({
       ...request,
       name,
-      email: requesterEmail
+      email: requesterEmail,
+      language
     })
   });
 
@@ -1152,16 +1240,45 @@ function comparisonViewUrl(groupId, language, options = {}) {
 }
 
 function htmlComparisonReadyEmail(payload, viewUrl) {
+  const language = payload.language === "es" ? "es" : "en";
+  const labels = adminEmailLabels(language);
   const participants = payload.participants || [];
   const convergence = payload.convergence || [];
   const divergence = payload.divergence || [];
+
+  const text =
+    language === "es"
+      ? {
+          title: "Comparación grupal lista",
+          intro: `${payload.participantCount} personas completaron la autoevaluación en el grupo <strong>${escapeHtml(payload.groupId)}</strong>. Esta comparación es solo para el asesor; los participantes no ven esta vista.`,
+          averageGap: "Brecha promedio",
+          largestGap: "Brecha más grande",
+          notAvailable: "No disponible",
+          participants: "Participantes",
+          divergenceTitle: "Divergencia (brecha mayor a 20)",
+          convergenceTitle: "Convergencia (brecha de 10 o menos)",
+          viewButton: "Ver la comparación completa en el navegador",
+          attachedNote: "PDF adjunto: comparación grupal completa con brechas por dimensión."
+        }
+      : {
+          title: "Group comparison ready",
+          intro: `${payload.participantCount} people have completed the self-assessment in group <strong>${escapeHtml(payload.groupId)}</strong>. This comparison is for advisor use only, respondents do not see this view.`,
+          averageGap: "Average gap",
+          largestGap: "Largest gap",
+          notAvailable: "Not available",
+          participants: "Participants",
+          divergenceTitle: "Divergence (gap over 20)",
+          convergenceTitle: "Convergence (gap 10 or less)",
+          viewButton: "View full comparison in browser",
+          attachedNote: "Attached PDF: full group comparison with pillar-by-pillar gaps."
+        };
 
   return `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Group comparison ready</title>
+    <title>${escapeHtml(text.title)}</title>
   </head>
   <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
@@ -1170,36 +1287,40 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
             <tr>
               <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Advisor notification</p>
-                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">Group comparison ready</p>
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(labels.advisorNotification)}</p>
+                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
-                <p style="margin:0 0 20px; color:#454943; font-size:16px; line-height:1.65;">${payload.participantCount} people have completed the self-assessment in group <strong>${escapeHtml(payload.groupId)}</strong>. This comparison is for advisor use only, respondents do not see this view.</p>
+                <p style="margin:0 0 20px; color:#454943; font-size:16px; line-height:1.65;">${text.intro}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-collapse:separate; border-spacing:0;">
                   <tr>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Average gap</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.averageGap)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:32px; line-height:1; font-weight:700;">${payload.averageGap}<span style="font-size:14px; color:#6f726d;"> pts</span></p>
                     </td>
                     <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">Largest gap</p>
+                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.largestGap)}</p>
                       <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${
                         payload.biggestGap
                           ? escapeHtml(`${payload.biggestGap.label} (${payload.biggestGap.gap} pts)`)
-                          : "Not available"
+                          : escapeHtml(text.notAvailable)
                       }</p>
                     </td>
                   </tr>
                 </table>
 
-                <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Participants</p>
+                <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.participants)}</p>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
                   ${participants
                     .map((participant) =>
-                      detailRow(participant.label, participant.overall === null ? "N/A" : `${participant.overall}/100`)
+                      detailRow(
+                        participant.label,
+                        participant.overall === null ? "N/A" : `${participant.overall}/100`,
+                        labels.notProvided
+                      )
                     )
                     .join("")}
                 </table>
@@ -1207,7 +1328,7 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
                 ${
                   divergence.length
                     ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
-                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Divergence (gap over 20)</p>
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.divergenceTitle)}</p>
                         ${divergence
                           .map(
                             (row) =>
@@ -1221,7 +1342,7 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
                 ${
                   convergence.length
                     ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
-                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">Convergence (gap 10 or less)</p>
+                        <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.convergenceTitle)}</p>
                         ${convergence
                           .map(
                             (row) =>
@@ -1232,9 +1353,9 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
                     : ""
                 }
 
-                ${actionButtonRow([{ url: viewUrl, label: "View full comparison in browser", accent: "#0F463C" }])}
+                ${actionButtonRow([{ url: viewUrl, label: text.viewButton, accent: "#0F463C" }])}
 
-                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">Attached PDF: full group comparison with pillar-by-pillar gaps.</p>
+                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
               </td>
             </tr>
           </table>
@@ -1259,23 +1380,52 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
 
   const viewUrl = comparisonViewUrl(payload.groupId, language, options);
   const pdf = createComparisonPdfBuffer(payload);
-  const subject = `Group comparison ready - ${payload.participantCount} perspectives (${payload.groupId})`;
 
-  const text = [
-    `A group comparison is ready for group ${payload.groupId}.`,
-    "",
-    `Completed perspectives: ${payload.participantCount}`,
-    `Average score gap: ${payload.averageGap} points`,
-    payload.biggestGap ? `Largest gap: ${payload.biggestGap.label} (${payload.biggestGap.gap} points)` : "",
-    payload.convergence.length ? `Convergence areas: ${payload.convergence.map((row) => row.label).join(", ")}` : "",
-    payload.divergence.length ? `Divergence areas: ${payload.divergence.map((row) => row.label).join(", ")}` : "",
-    "",
-    viewUrl ? `View the full comparison in your browser: ${viewUrl}` : "",
-    "",
-    "This comparison is for advisor use only. Respondents do not see this view."
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const subject =
+    language === "es"
+      ? `Comparación grupal lista - ${payload.participantCount} perspectivas (${payload.groupId})`
+      : `Group comparison ready - ${payload.participantCount} perspectives (${payload.groupId})`;
+
+  const text =
+    language === "es"
+      ? [
+          `Una comparación grupal está lista para el grupo ${payload.groupId}.`,
+          "",
+          `Perspectivas completadas: ${payload.participantCount}`,
+          `Brecha promedio: ${payload.averageGap} puntos`,
+          payload.biggestGap ? `Brecha más grande: ${payload.biggestGap.label} (${payload.biggestGap.gap} puntos)` : "",
+          payload.convergence.length
+            ? `Áreas de convergencia: ${payload.convergence.map((row) => row.label).join(", ")}`
+            : "",
+          payload.divergence.length
+            ? `Áreas de divergencia: ${payload.divergence.map((row) => row.label).join(", ")}`
+            : "",
+          "",
+          viewUrl ? `Ver la comparación completa en el navegador: ${viewUrl}` : "",
+          "",
+          "Esta comparación es solo para el asesor. Los participantes no ven esta vista."
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : [
+          `A group comparison is ready for group ${payload.groupId}.`,
+          "",
+          `Completed perspectives: ${payload.participantCount}`,
+          `Average score gap: ${payload.averageGap} points`,
+          payload.biggestGap ? `Largest gap: ${payload.biggestGap.label} (${payload.biggestGap.gap} points)` : "",
+          payload.convergence.length
+            ? `Convergence areas: ${payload.convergence.map((row) => row.label).join(", ")}`
+            : "",
+          payload.divergence.length
+            ? `Divergence areas: ${payload.divergence.map((row) => row.label).join(", ")}`
+            : "",
+          "",
+          viewUrl ? `View the full comparison in your browser: ${viewUrl}` : "",
+          "",
+          "This comparison is for advisor use only. Respondents do not see this view."
+        ]
+          .filter(Boolean)
+          .join("\n");
 
   const message = await sendSmtpEmail(config, {
     from: config.from,
