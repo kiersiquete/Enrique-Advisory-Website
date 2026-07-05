@@ -1821,7 +1821,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
 
       <HomeAssessmentEntrySection copy={copy} language={language} />
 
-      <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
+      <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px] overflow-hidden rounded-lg bg-forest text-white shadow-soft lg:grid lg:grid-cols-[minmax(0,1fr)_420px]">
           <div className="px-6 py-10 sm:px-10 lg:px-14 lg:py-12">
             <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
