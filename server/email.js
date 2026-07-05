@@ -228,9 +228,24 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
     .join("\n");
 }
 
+function invitationInviterName(invitation = {}, language = "en") {
+  const fallback = language === "es" ? "Un familiar" : "A family member";
+  return String(invitation.inviterName || fallback)
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim() || fallback;
+}
+
+function invitationSubject(invitation = {}, language = "en") {
+  const invitedBy = invitationInviterName(invitation, language);
+  return language === "es"
+    ? `${invitedBy} te invitó a la autoevaluación`
+    : `${invitedBy} invited you to the self-assessment`;
+}
+
 function plainInvitationEmail(invitation = {}) {
-  const invitedBy = invitation.inviterName || "A family member";
   const language = invitation.language === "es" ? "es" : "en";
+  const invitedBy = invitationInviterName(invitation, language);
 
   if (language === "es") {
     return [
@@ -267,30 +282,33 @@ function plainInvitationEmail(invitation = {}) {
 
 function htmlInvitationEmail(invitation = {}) {
   const language = invitation.language === "es" ? "es" : "en";
-  const invitedBy = escapeHtml(invitation.inviterName || (language === "es" ? "Un familiar" : "A family member"));
+  const invitedByName = invitationInviterName(invitation, language);
+  const invitedBy = escapeHtml(invitedByName);
   const inviteLink = escapeHtml(invitation.inviteLink);
 
   const text =
     language === "es"
       ? {
-          title: "Te invitaron a la autoevaluación familiar",
-          preheader: "Completa la autoevaluación y súmate a la comparación familiar privada.",
+          title: `${invitedByName} te invitó a la autoevaluación familiar`,
+          preheader: `${invitedByName} te invitó a completar la autoevaluación y sumarte a la comparación familiar privada.`,
+          header: `${invitedByName} te invitó`,
+          headerLine: "Autoevaluación de Empresa Familiar de Gilbert Devlyn",
           eyebrow: "Invitación privada",
           body: `${invitedBy} te invitó a completar la Autoevaluación de Empresa Familiar de Gilbert Devlyn. Toma cerca de 10 minutos y ayuda a comparar perspectivas por pilar dentro del mismo grupo familiar.`,
           button: "Abrir autoevaluación",
           privacy:
-            "La comparación solo muestra diferencias por pilar. No comparte respuestas individuales pregunta por pregunta.",
-          footer: "Gilbert Devlyn - Asesoría para empresas familiares"
+            "La comparación solo muestra diferencias por pilar. No comparte respuestas individuales pregunta por pregunta."
         }
       : {
-          title: "You have been invited to the family self-assessment",
-          preheader: "Complete the self-assessment and join the private family comparison.",
+          title: `${invitedByName} invited you to the family self-assessment`,
+          preheader: `${invitedByName} invited you to complete the self-assessment and join the private family comparison.`,
+          header: `${invitedByName} invited you`,
+          headerLine: "Gilbert Devlyn Family Enterprise Self-Assessment",
           eyebrow: "Private invitation",
           body: `${invitedBy} invited you to complete the Gilbert Devlyn Family Enterprise Self-Assessment. It takes about 10 minutes and helps compare pillar-level perspectives within the same family group.`,
           button: "Open self-assessment",
           privacy:
-            "The comparison only shows pillar-level differences. It does not share individual answers or question-by-question details.",
-          footer: "Gilbert Devlyn - Family Enterprise Advisory"
+            "The comparison only shows pillar-level differences. It does not share individual answers or question-by-question details."
         };
 
   return `<!doctype html>
@@ -308,8 +326,9 @@ function htmlInvitationEmail(invitation = {}) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
             <tr>
               <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Gilbert Devlyn</p>
-                <p style="margin:0; color:#f8f3ea; font-size:18px; line-height:1.4; font-weight:700;">${escapeHtml(text.footer)}</p>
+                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
+                <p style="margin:0; color:#f8f3ea; font-size:22px; line-height:1.25; font-weight:700;">${escapeHtml(text.header)}</p>
+                <p style="margin:8px 0 0; color:#d8c7b2; font-size:14px; line-height:1.45;">${escapeHtml(text.headerLine)}</p>
               </td>
             </tr>
             <tr>
@@ -345,17 +364,20 @@ function actionButtonRow(buttons) {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
     <tr>
       ${visible
-        .map(
-          (button, index) => `<td style="padding:${index === 0 ? "0" : "10px 0 0"};">
+        .map((button, index) => {
+          const textColor = button.textColor || "#ffffff";
+          return `<td style="padding:${index === 0 ? "0" : "10px 0 0"};">
             <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
               <tr>
-                <td style="background:${button.accent}; border-radius:7px;" align="center">
-                  <a href="${escapeHtml(button.url)}" style="display:block; padding:15px 22px; color:${button.textColor || "#ffffff"}; font-size:15px; font-weight:700; text-decoration:none;">${escapeHtml(button.label)}</a>
+                <td style="background:${button.accent}; border-radius:7px; padding:15px 22px; color:${textColor}; font-size:15px; font-weight:700; line-height:1.2; mso-padding-alt:15px 22px;" align="center">
+                  <a href="${escapeHtml(button.url)}" style="display:inline-block; width:100%; color:${textColor} !important; font-size:15px; font-weight:700; line-height:1.2; text-decoration:none !important;">
+                    <span style="color:${textColor}; text-decoration:none;">${escapeHtml(button.label)}</span>
+                  </a>
                 </td>
               </tr>
             </table>
-          </td>`
-        )
+          </td>`;
+        })
         .join("</tr><tr>")}
     </tr>
   </table>`;
@@ -898,7 +920,7 @@ export async function sendInvitationEmail(invitation = {}) {
     from: config.from,
     to: invitedEmail,
     replyTo: invitation.inviterEmail || config.replyTo,
-    subject: language === "es" ? "Invitación a la autoevaluación de Gilbert Devlyn" : "Gilbert Devlyn self-assessment invitation",
+    subject: invitationSubject(invitation, language),
     text: plainInvitationEmail({ ...invitation, invitedEmail, inviteLink, language }),
     html: htmlInvitationEmail({ ...invitation, invitedEmail, inviteLink, language })
   });
@@ -968,54 +990,32 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
 }
 
 function htmlCallRequestEmail(request = {}) {
-  const language = request.language === "es" ? "es" : "en";
-  const name = escapeHtml(request.name || (language === "es" ? "Alguien" : "Someone"));
+  const name = escapeHtml(request.name || "Someone");
   const email = escapeHtml(request.email || "");
   const participant = request.participant || {};
   const result = request.result || {};
   const context = request.context || {};
   const focusAreas = Array.isArray(result.focusAreas) ? result.focusAreas.slice(0, 3) : [];
 
-  const text =
-    language === "es"
-      ? {
-          title: "Solicitud de conversación",
-          body: `${name} completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`,
-          profileTitle: "Perfil del participante",
-          resultTitle: "Resultado de referencia",
-          focusTitle: "Áreas de enfoque",
-          contactTitle: "Cómo responder",
-          contactBody: "Responde a este correo para contactar directamente a esta persona.",
-          overallScore: "Puntaje general",
-          resultLevel: "Nivel de resultado",
-          name: "Nombre",
-          email: "Email",
-          phone: "Teléfono",
-          country: "País",
-          relationship: "Relación",
-          generation: "Generación",
-          requested: "Solicitado",
-          groupKey: "Grupo"
-        }
-      : {
-          title: "Conversation request",
-          body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
-          profileTitle: "Participant profile",
-          resultTitle: "Result context",
-          focusTitle: "Focus areas",
-          contactTitle: "How to respond",
-          contactBody: "Reply to this email to contact this person directly.",
-          overallScore: "Overall score",
-          resultLevel: "Result level",
-          name: "Name",
-          email: "Email",
-          phone: "Phone",
-          country: "Country",
-          relationship: "Relationship",
-          generation: "Generation",
-          requested: "Requested",
-          groupKey: "Group key"
-        };
+  const text = {
+    title: "Conversation request",
+    body: `${name} completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
+    profileTitle: "Participant profile",
+    resultTitle: "Result context",
+    focusTitle: "Focus areas",
+    contactTitle: "How to respond",
+    contactBody: "Reply to this email to contact this person directly.",
+    overallScore: "Overall score",
+    resultLevel: "Result level",
+    name: "Name",
+    email: "Email",
+    phone: "Phone",
+    country: "Country",
+    relationship: "Relationship",
+    generation: "Generation",
+    requested: "Requested",
+    groupKey: "Group key"
+  };
 
   return `<!doctype html>
 <html>
@@ -1104,15 +1104,13 @@ export async function sendCallRequestNotification(request = {}) {
     return { skipped: true, reason: "missing-requester-email" };
   }
 
-  const language = request.language === "es" ? "es" : "en";
-  const name = request.name || (language === "es" ? "Alguien" : "Someone");
+  const name = request.name || "Someone";
   const focusAreas = Array.isArray(request.result?.focusAreas) ? request.result.focusAreas.slice(0, 3) : [];
   const message = await sendSmtpEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: requesterEmail,
-    subject:
-      language === "es" ? `${name} quiere hablar contigo` : `${name} would like to speak with you`,
+    subject: `${name} would like to speak with you`,
     text: [
       `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`,
       "",
@@ -1134,8 +1132,7 @@ export async function sendCallRequestNotification(request = {}) {
     html: htmlCallRequestEmail({
       ...request,
       name,
-      email: requesterEmail,
-      language
+      email: requesterEmail
     })
   });
 

@@ -8,7 +8,7 @@
     "dev:web": "vite --host 0.0.0.0",
     "dev:api": "node --use-system-ca server/index.js",
     "build": "vite build",
-    "verify": "node --check server/airtable.js && node --check server/email.js && node --check server/scoring.js && node --check server/summary-report.js && node --check server/index.js && node --check api/results.js && node --check api/invitations.js && node --check api/summary-pdf.js && node --check api/schedule-call.js && node --check api/comparison.js && node --check api/group-status.js && npm run verify:scoring && npm run verify:config && npm run verify:lockfile && npm run verify:ui && npm run verify:airtable && npm run verify:api && npm run verify:serverless && npm run build",
+    "verify": "node --check server/airtable.js && node --check server/email.js && node --check server/scoring.js && node --check server/summary-report.js && node --check server/index.js && node --check api/results.js && node --check api/invitations.js && node --check api/summary-pdf.js && node --check api/schedule-call.js && node --check api/comparison.js && node --check api/group-status.js && npm run verify:scoring && npm run verify:config && npm run verify:lockfile && npm run verify:ui && npm run verify:airtable && npm run verify:api && npm run verify:serverless && npm run verify:i18n && npm run build",
     "verify:config": "node scripts/verify-config.mjs",
     "verify:lockfile": "node scripts/verify-lockfile.mjs",
     "verify:scoring": "node scripts/verify-scoring.mjs",
@@ -16,6 +16,7 @@
     "verify:airtable": "node scripts/verify-airtable-persistence.mjs",
     "verify:ui": "node scripts/verify-ui-copy.mjs",
     "verify:serverless": "node scripts/verify-serverless-handlers.mjs",
+    "verify:i18n": "node scripts/verify-summary-report-i18n.mjs",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {

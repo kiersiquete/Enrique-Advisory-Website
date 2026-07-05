@@ -1,5 +1,7 @@
 import { jsPDF } from "jspdf";
-import { FULL_QUESTIONS } from "../src/data/assessment.js";
+import { FULL_QUESTIONS, PILLARS } from "../src/data/assessment.js";
+
+const PILLARS_BY_ID = new Map(PILLARS.map((pillar) => [pillar.id, pillar]));
 
 const STAGE_LABELS = {
   emerging: "Level 1 - Emerging",
@@ -64,14 +66,21 @@ function hasFiniteScore(value) {
   return value !== null && value !== "" && Number.isFinite(Number(value));
 }
 
-function stageLabel(stage) {
-  if (!stage) return "Self-assessment summary";
+function stageLabel(stage, language = "en") {
+  const fallback = language === "es" ? "Resumen de autoevaluación" : "Self-assessment summary";
+  if (!stage) return fallback;
   if (typeof stage === "string") return STAGE_LABELS[stage] || stage;
-  return stage.label || stage.title || STAGE_LABELS[stage.id] || stage.id || "Self-assessment summary";
+
+  const level = stage.level?.[language] || stage.level?.en || "";
+  const label = stage.labels?.[language] || stage.labels?.en || stage.label || stage.title || "";
+  const localized = [level, label].filter(Boolean).join(" - ");
+
+  return localized || STAGE_LABELS[stage.id] || stage.id || fallback;
 }
 
-function pillarLabel(pillar) {
-  return pillar.label || pillar.title || PILLAR_LABELS[pillar.id] || pillar.id || "Dimension";
+function pillarLabel(pillar, language = "en") {
+  const localized = PILLARS_BY_ID.get(pillar.id)?.labels?.[language];
+  return localized || pillar.label || pillar.title || PILLAR_LABELS[pillar.id] || pillar.id || "Dimension";
 }
 
 function scoreLine(item) {
@@ -122,32 +131,45 @@ function buildAnswerRows(body = {}) {
 export function buildSummaryReportPayload(body = {}, savedResult = {}) {
   const profile = body.profile ?? {};
   const result = body.result ?? {};
+  const language = body.language === "es" ? "es" : "en";
   const overall = Math.round(safeNumber(result.overall ?? body.overall));
   const pillarScores = (result.pillarScores ?? [])
     .map((pillar) => ({
       id: pillar.id,
-      label: pillarLabel(pillar),
+      label: pillarLabel(pillar, language),
       score: hasFiniteScore(pillar.score) ? Math.round(Number(pillar.score)) : null,
       unknown: Math.round(safeNumber(pillar.unknown))
     }))
     .filter((pillar) => pillar.label && hasFiniteScore(pillar.score));
   const sortedByScore = [...pillarScores].sort((a, b) => a.score - b.score);
 
-  return {
-    name: profile.name || "there",
-    email: profile.email || body.reportRequest?.recipientEmail || "",
-    language: body.language || "en",
-    generatedAt: body.reportRequest?.requestedAt || body.finalizedAt || new Date().toISOString(),
-    overall,
-    level: stageLabel(result.stage),
-    interpretation:
-      "This summary is a starting point for reflection and conversation. It is not a grade or verdict, but a way to see where the family may have clarity, tension, or areas worth discussing further.",
-    resultSummary:
-      overall >= 75
+  const interpretation =
+    language === "es"
+      ? "Este resumen es un punto de partida para la reflexión y la conversación. No es una calificación ni un veredicto, sino una forma de ver dónde la familia puede tener claridad, tensión o temas que valga la pena conversar."
+      : "This summary is a starting point for reflection and conversation. It is not a grade or verdict, but a way to see where the family may have clarity, tension, or areas worth discussing further.";
+
+  const resultSummary =
+    language === "es"
+      ? overall >= 75
+        ? "La familia parece tener bases sólidas de gobierno. El siguiente trabajo es mantener el desempeño a medida que las decisiones se vuelven más complejas."
+        : overall >= 60
+          ? "La familia parece tener bases de gobierno útiles ya establecidas. El siguiente trabajo es fortalecer cómo funcionan esas estructuras cuando las decisiones se vuelven sensibles o complejas."
+          : "La familia podría beneficiarse de acuerdos más claros, mayor visibilidad y una secuencia más estructurada de conversaciones."
+      : overall >= 75
         ? "The family appears to have strong governance foundations. The next work is maintaining performance as decisions become more complex."
         : overall >= 60
           ? "The family appears to have useful governance foundations already in place. The next work is strengthening how those structures perform when decisions become sensitive or complex."
-          : "The family may benefit from clearer agreements, better visibility, and a more structured sequence of conversations.",
+          : "The family may benefit from clearer agreements, better visibility, and a more structured sequence of conversations.";
+
+  return {
+    name: profile.name || "there",
+    email: profile.email || body.reportRequest?.recipientEmail || "",
+    language,
+    generatedAt: body.reportRequest?.requestedAt || body.finalizedAt || new Date().toISOString(),
+    overall,
+    level: stageLabel(result.stage, language),
+    interpretation,
+    resultSummary,
     pillarScores,
     focusAreas: sortedByScore.slice(0, 3).map(scoreLine),
     strengths: [...pillarScores].sort((a, b) => b.score - a.score).slice(0, 3).map(scoreLine),
@@ -292,18 +314,88 @@ function wrapText(doc, text, x, y, maxWidth, lineHeight) {
   return y + lines.length * lineHeight;
 }
 
-function formatDate(value) {
+function formatDate(value, language = "en") {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(language === "es" ? "es" : "en", {
     year: "numeric",
     month: "short",
     day: "numeric"
   }).format(date);
 }
 
+function summaryPdfText(language) {
+  if (language === "es") {
+    return {
+      eyebrow: "AUTOEVALUACIÓN DE EMPRESA FAMILIAR",
+      title: "Reporte resumen",
+      forName: (name) => `para ${name}`,
+      intro:
+        "Un mapa conciso de conversación que muestra el resultado general, los puntajes por dimensión, las áreas de enfoque y la siguiente conversación sugerida.",
+      brandName: "Gilbert Devlyn",
+      brandLine: "Asesoría para Empresas Familiares",
+      generated: (date) => `Generado ${date}`,
+      overallScore: "Puntaje general",
+      fallbackLevel: "Resumen de autoevaluación",
+      whatThisSuggests: "Qué sugiere esto",
+      focusAreas: "Áreas de enfoque",
+      relativeStrengths: "Fortalezas relativas",
+      noItemsRecorded: "No hay elementos registrados.",
+      suggestedNextConversation: "Conversación sugerida",
+      nextConversationBody:
+        "Elige una conversación prioritaria en lugar de intentar resolver todos los temas de gobierno a la vez. Gilbert puede ayudar a convertir estas señales en una secuencia práctica de conversaciones y acuerdos.",
+      pageOneOfTwo: "Página 1 de 2",
+      confidentialFooter:
+        "Resumen confidencial. Esto no es una calificación, asesoría legal, ni sustituye un proceso facilitado de gobierno familiar.",
+      scoresByDimension: "Puntajes por dimensión",
+      dimensionScoresGlance: "Puntajes por dimensión de un vistazo",
+      dimensionIntro:
+        "Cada puntaje es una señal para la conversación. Los puntajes bajos no son fracasos; simplemente señalan temas que pueden necesitar acuerdos más claros, mejor comunicación o un ritmo de gobierno más deliberado.",
+      howToUsePage: "Cómo usar esta página",
+      howToUseBody:
+        "Usa los puntajes por dimensión para elegir una conversación con la que empezar. El mejor reporte no es el que tiene el puntaje más alto; es el que ayuda a la familia a decidir qué conversar primero.",
+      pageTwoOfTwo: "Página 2 de 2",
+      participantFallback: "Participante"
+    };
+  }
+
+  return {
+    eyebrow: "FAMILY ENTERPRISE SELF-ASSESSMENT",
+    title: "Summary report",
+    forName: (name) => `for ${name}`,
+    intro:
+      "A concise conversation map showing the overall result, dimension scores, focus areas, and suggested next conversation.",
+    brandName: "Gilbert Devlyn",
+    brandLine: "Family Enterprise Advisory",
+    generated: (date) => `Generated ${date}`,
+    overallScore: "Overall score",
+    fallbackLevel: "Self-assessment summary",
+    whatThisSuggests: "What this suggests",
+    focusAreas: "Focus areas",
+    relativeStrengths: "Relative strengths",
+    noItemsRecorded: "No items recorded.",
+    suggestedNextConversation: "Suggested next conversation",
+    nextConversationBody:
+      "Choose one priority conversation rather than trying to solve every governance topic at once. Gilbert can help turn these signals into a practical sequence of conversations and agreements.",
+    pageOneOfTwo: "Page 1 of 2",
+    confidentialFooter:
+      "Confidential summary. This is not a grade, legal advice, or a substitute for a facilitated family governance process.",
+    scoresByDimension: "Scores by dimension",
+    dimensionScoresGlance: "Dimension scores at a glance",
+    dimensionIntro:
+      "Each score is a signal for conversation. Lower scores are not failures; they simply point to topics that may need clearer agreements, better communication, or a more deliberate governance rhythm.",
+    howToUsePage: "How to use this page",
+    howToUseBody:
+      "Use the dimension scores to choose one conversation to begin with. The strongest report is not the one with the highest score; it is the one that helps the family decide what to discuss next.",
+    pageTwoOfTwo: "Page 2 of 2",
+    participantFallback: "Participant"
+  };
+}
+
 export function createSummaryPdfBuffer(payload) {
   const report = payload ?? {};
+  const language = report.language === "es" ? "es" : "en";
+  const text = summaryPdfText(language);
   const doc = new jsPDF({ unit: "pt", format: "letter" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -327,15 +419,15 @@ export function createSummaryPdfBuffer(payload) {
     doc.setTextColor(muted);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text("Confidential summary. This is not a grade, legal advice, or a substitute for a facilitated family governance process.", margin, pageHeight - 29);
+    doc.text(text.confidentialFooter, margin, pageHeight - 29);
     doc.text(pageLabel, pageWidth - margin, pageHeight - 29, { align: "right" });
   }
 
-  function sectionLabel(text, x, y) {
+  function sectionLabel(label, x, y) {
     doc.setTextColor(copper);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.text(String(text).toUpperCase(), x, y);
+    doc.text(String(label).toUpperCase(), x, y);
   }
 
   function drawMetricCard(x, y, width, height, label, value, detail, accent = forest) {
@@ -366,7 +458,7 @@ export function createSummaryPdfBuffer(payload) {
       doc.setTextColor(muted);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      wrapText(doc, "No items recorded.", x + 18, itemY, width - 36, 12);
+      wrapText(doc, text.noItemsRecorded, x + 18, itemY, width - 36, 12);
       return;
     }
 
@@ -409,44 +501,39 @@ export function createSummaryPdfBuffer(payload) {
   doc.setTextColor(copper);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("FAMILY ENTERPRISE SELF-ASSESSMENT", margin, 52);
+  doc.text(text.eyebrow, margin, 52);
 
   doc.setTextColor("#ffffff");
   doc.setFontSize(36);
-  doc.text("Summary report", margin, 96);
+  doc.text(text.title, margin, 96);
   doc.setFontSize(18);
-  doc.text(`for ${report.name || "Participant"}`, margin, 126);
+  doc.text(text.forName(report.name || text.participantFallback), margin, 126);
 
   doc.setTextColor("#d8c7b2");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  wrapText(
-    doc,
-    "A concise conversation map showing the overall result, dimension scores, focus areas, and suggested next conversation.",
-    margin,
-    160,
-    390,
-    15
-  );
+  wrapText(doc, text.intro, margin, 160, 390, 15);
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor("#ffffff");
   doc.setFontSize(13);
-  doc.text("Gilbert Devlyn", margin, 234);
+  doc.text(text.brandName, margin, 234);
   doc.setFont("helvetica", "normal");
   doc.setTextColor("#d8c7b2");
   doc.setFontSize(9);
-  doc.text("Family Enterprise Advisory", margin + 100, 234);
-  doc.text(`Generated ${formatDate(report.generatedAt)}`, pageWidth - margin, 234, { align: "right" });
+  doc.text(text.brandLine, margin + 100, 234);
+  doc.text(text.generated(formatDate(report.generatedAt, language)), pageWidth - margin, 234, {
+    align: "right"
+  });
 
   drawMetricCard(
     margin,
     284,
     178,
     135,
-    "Overall score",
+    text.overallScore,
     `${Math.round(safeNumber(report.overall))}`,
-    `${report.level || "Self-assessment summary"}`
+    `${report.level || text.fallbackLevel}`
   );
 
   const summaryX = margin + 198;
@@ -456,7 +543,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(22);
-  doc.text("What this suggests", summaryX + 22, 318);
+  doc.text(text.whatThisSuggests, summaryX + 22, 318);
   doc.setTextColor(ink);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -464,8 +551,8 @@ export function createSummaryPdfBuffer(payload) {
 
   let y = 452;
   const colWidth = (pageWidth - margin * 2 - 16) / 2;
-  drawListCard(margin, y, colWidth, 142, "Focus areas", report.focusAreas, copper);
-  drawListCard(margin + colWidth + 16, y, colWidth, 142, "Relative strengths", report.strengths, forest);
+  drawListCard(margin, y, colWidth, 142, text.focusAreas, report.focusAreas, copper);
+  drawListCard(margin + colWidth + 16, y, colWidth, 142, text.relativeStrengths, report.strengths, forest);
 
   y += 172;
   doc.setFillColor(forest);
@@ -473,38 +560,24 @@ export function createSummaryPdfBuffer(payload) {
   doc.setTextColor("#ffffff");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("Suggested next conversation", margin + 20, y + 30);
+  doc.text(text.suggestedNextConversation, margin + 20, y + 30);
   doc.setFont("helvetica", "normal");
   doc.setTextColor("#d8c7b2");
   doc.setFontSize(10);
-  wrapText(
-    doc,
-    "Choose one priority conversation rather than trying to solve every governance topic at once. Gilbert can help turn these signals into a practical sequence of conversations and agreements.",
-    margin + 20,
-    y + 53,
-    pageWidth - margin * 2 - 40,
-    13
-  );
-  footer("Page 1 of 2");
+  wrapText(doc, text.nextConversationBody, margin + 20, y + 53, pageWidth - margin * 2 - 40, 13);
+  footer(text.pageOneOfTwo);
 
   doc.addPage();
   pageBackground();
-  sectionLabel("Scores by dimension", margin, 56);
+  sectionLabel(text.scoresByDimension, margin, 56);
   doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
-  doc.text("Dimension scores at a glance", margin, 88);
+  doc.text(text.dimensionScoresGlance, margin, 88);
   doc.setTextColor(ink);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  wrapText(
-    doc,
-    "Each score is a signal for conversation. Lower scores are not failures; they simply point to topics that may need clearer agreements, better communication, or a more deliberate governance rhythm.",
-    margin,
-    118,
-    pageWidth - margin * 2 - 70,
-    14
-  );
+  wrapText(doc, text.dimensionIntro, margin, 118, pageWidth - margin * 2 - 70, 14);
 
   y = 154;
   for (const pillar of (report.pillarScores || []).slice(0, 8)) {
@@ -517,19 +590,12 @@ export function createSummaryPdfBuffer(payload) {
   doc.setTextColor(forest);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("How to use this page", margin + 18, y + 31);
+  doc.text(text.howToUsePage, margin + 18, y + 31);
   doc.setTextColor(ink);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
-  wrapText(
-    doc,
-    "Use the dimension scores to choose one conversation to begin with. The strongest report is not the one with the highest score; it is the one that helps the family decide what to discuss next.",
-    margin + 18,
-    y + 51,
-    pageWidth - margin * 2 - 36,
-    12
-  );
-  footer("Page 2 of 2");
+  wrapText(doc, text.howToUseBody, margin + 18, y + 51, pageWidth - margin * 2 - 36, 12);
+  footer(text.pageTwoOfTwo);
 
   return Buffer.from(doc.output("arraybuffer"));
 }

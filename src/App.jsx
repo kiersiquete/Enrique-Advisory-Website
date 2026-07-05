@@ -4866,7 +4866,7 @@ function getCompareInviteCopy(language) {
           body: "Esa persona completa la misma autoevaluación de forma privada, a su propio ritmo."
         },
         {
-          title: "Vean en qué coinciden y en qué difieren",
+          title: "Descubre en qué coinciden y en qué difieren",
           body: "Una vista de comparación simple muestra acuerdos y brechas por tema, no pregunta por pregunta."
         }
       ],
