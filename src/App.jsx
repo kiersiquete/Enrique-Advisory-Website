@@ -1834,17 +1834,9 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             <button
               type="button"
               className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-4 text-xs font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-              onClick={startConversation}
-            >
-              {finalCta.primary}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-            <button
-              type="button"
-              className="mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-white/24 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-[#C9B2DE] hover:text-[#C9B2DE] active:translate-y-px active:scale-[0.99] sm:ml-3 sm:mt-8 sm:w-auto sm:px-5 sm:text-sm"
               onClick={onStartAssessment}
             >
-              {finalCta.secondary}
+              {finalCta.primary}
               <ArrowRight aria-hidden="true" size={18} />
             </button>
           </div>
@@ -4818,8 +4810,7 @@ function getHomeFinalCtaCopy(language) {
         "Si la familia ya sabe que necesita claridad, el siguiente paso no tiene que ser más contenido. Puede ser una conversación directa sobre lo que está pasando y cómo empezar con cuidado.",
       note:
         "La autoevaluación sigue disponible como punto de partida si la familia quiere ordenar primero sus ideas.",
-      primary: "Trabajemos juntos",
-      secondary: "Tomar la autoevaluación"
+      primary: "Trabajemos juntos"
     };
   }
 
@@ -4829,8 +4820,7 @@ function getHomeFinalCtaCopy(language) {
       "If the family already knows it needs more clarity, the next step does not have to be more content. It can be a direct conversation about what is happening and how to begin carefully.",
     note:
       "The self-assessment remains available as a starting point when the family wants to organize its thinking first.",
-    primary: "Let's work together",
-    secondary: "Take the self-assessment"
+    primary: "Let's work together"
   };
 }
 
