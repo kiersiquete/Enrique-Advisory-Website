@@ -49,7 +49,8 @@ export default function RadarPanel({ result, language }) {
     () =>
       PILLARS.map((pillar) => {
         const item = result.pillarScores.find((candidate) => candidate.id === pillar.id);
-        const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
+        const hasScore =
+          item?.score !== null && item?.scored > 0 && Number.isFinite(Number(item?.score));
 
         return {
           label: isMobile || useCompactLabels

@@ -2370,24 +2370,24 @@ export const COPY = {
     questionOf: "Pregunta",
     of: "de",
     pillar: "Tema",
-    scorePrompt: "¿En qué medida está presente hoy?",
+    scorePrompt: "¿Qué tan cierto es esto para tu familia hoy?",
     scale: [
-      "No está presente",
-      "Muy limitado",
-      "Ocasional",
-      "Parcialmente presente",
-      "Mayormente presente",
-      "Presente de forma consistente"
+      "No es cierto para nosotros",
+      "Rara vez es cierto",
+      "A veces es cierto",
+      "Frecuentemente es cierto",
+      "Mayormente es cierto",
+      "Es muy cierto para nosotros"
     ],
     scaleNote:
       "Consejo: Puedes presionar 0-5 en tu teclado para elegir una respuesta y luego presionar Enter o Espacio para continuar. Elige No estoy seguro / No sé cuando no tengas suficiente visibilidad. No contará contra el puntaje.",
     scaleAnchors: [
-      "Para nada",
-      "Muy limitado",
-      "Primeras señales",
-      "Parcialmente",
-      "Mayormente instalado",
-      "Completamente instalado"
+      "No es cierto para nosotros",
+      "Rara vez es cierto",
+      "A veces es cierto",
+      "Frecuentemente es cierto",
+      "Mayormente es cierto",
+      "Es muy cierto para nosotros"
     ],
     unknownOption: {
       label: "No lo sé",

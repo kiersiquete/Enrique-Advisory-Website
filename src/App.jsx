@@ -1204,7 +1204,6 @@ export default function App() {
           copy={copy}
           language={language}
           onNavigate={navigate}
-          onStartAssessment={startAssessment}
         />
       )}
 
@@ -1717,7 +1716,7 @@ function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver
   );
 }
 
-function HomePage({ copy, language, onNavigate, onStartAssessment }) {
+function HomePage({ copy, language, onNavigate }) {
   const heroStats = [
     {
       value: "12+",
@@ -1834,7 +1833,7 @@ function HomePage({ copy, language, onNavigate, onStartAssessment }) {
             <button
               type="button"
               className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-4 text-xs font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-              onClick={onStartAssessment}
+              onClick={() => onNavigate("about")}
             >
               {finalCta.primary}
               <ArrowRight aria-hidden="true" size={18} />
@@ -1893,7 +1892,7 @@ function HomeProblemSection({ copy, language }) {
                   key={item.title}
                   className="grid grid-cols-[40px_1fr] gap-4 rounded-lg bg-[#F4EEE2] p-4 shadow-line"
                 >
-                  <span className="grid h-10 w-10 place-items-center rounded-md bg-forest text-white">
+                  <span className="grid h-10 w-10 place-items-center rounded-md bg-lavender text-forest">
                     <Icon aria-hidden="true" size={18} />
                   </span>
                   <div>
@@ -2001,7 +2000,7 @@ function HomeHowGilbertWorksSection({ copy, language }) {
                 key={service.title}
                 className="flex min-h-[220px] flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
               >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-forest">
                   <Icon aria-hidden="true" size={20} />
                 </div>
                 <h4 className="font-display text-2xl font-semibold leading-tight text-forest">
@@ -2149,7 +2148,7 @@ function ServiceDetailCard({ service, icon: Icon, labels, index }) {
       style={{ "--index": index }}
     >
       <div className="flex items-start justify-between gap-5">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-forest text-white">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-lavender text-forest">
           <Icon aria-hidden="true" size={22} />
         </div>
         <span className="font-display text-5xl font-semibold leading-none text-copper/30">
@@ -2477,7 +2476,7 @@ function AboutContextSection({ copy }) {
                 key={item.title}
                 className="rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
               >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-forest text-white">
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-forest">
                   <Icon aria-hidden="true" size={20} />
                 </div>
                 <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
@@ -2648,7 +2647,7 @@ function AssessmentLanding({ copy, language, onStart }) {
           <aside className="flex flex-col justify-between gap-8 bg-[#fbf8f2] p-6 sm:p-8 lg:p-10">
             <div>
               <div className="flex items-start gap-4">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-forest text-white shadow-line">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-lavender text-forest shadow-line">
                   <ClipboardCheck aria-hidden="true" size={24} />
                 </span>
                 <span>
@@ -2678,7 +2677,7 @@ function AssessmentLanding({ copy, language, onStart }) {
                   const Icon = outcomeIcons[index] ?? Compass;
                   return (
                     <article key={item.title} className="flex gap-4">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-forest/10 text-forest">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-lavender/30 text-forest">
                         <Icon aria-hidden="true" size={18} />
                       </span>
                       <span>
@@ -4770,7 +4769,8 @@ function buildComparisonRows(participants, language) {
   return PILLARS.map((pillar) => {
     const scores = participants.map((participant) => {
       const item = participant.result.pillarScores.find((score) => score.id === pillar.id);
-      const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
+      const hasScore =
+        item?.score !== null && item?.scored > 0 && Number.isFinite(Number(item?.score));
       return {
         participant,
         score: hasScore ? roundedScore(item.score) : null,
@@ -4805,22 +4805,20 @@ function getResultDetailCopy(language) {
 function getHomeFinalCtaCopy(language) {
   if (language === "es") {
     return {
-      title: "Empieza una conversación con Gilbert",
+      title: "Conoce a Gilbert",
       body:
-        "Si la familia ya sabe que necesita claridad, el siguiente paso no tiene que ser más contenido. Puede ser una conversación directa sobre lo que está pasando y cómo empezar con cuidado.",
-      note:
-        "La autoevaluación sigue disponible como punto de partida si la familia quiere ordenar primero sus ideas.",
-      primary: "Trabajemos juntos"
+        "Toda conversación sobre propiedad, sucesión o gobierno corporativo funciona mejor cuando se conoce a quien la guía. Descubre la trayectoria, experiencia y forma de trabajar de Gilbert antes de escribirle.",
+      note: "Más de 12 años dentro de empresa familiar, formado en FFI e IMD.",
+      primary: "Conoce a Gilbert"
     };
   }
 
   return {
-    title: "Start a conversation with Gilbert",
+    title: "Get to know Gilbert",
     body:
-      "If the family already knows it needs more clarity, the next step does not have to be more content. It can be a direct conversation about what is happening and how to begin carefully.",
-    note:
-      "The self-assessment remains available as a starting point when the family wants to organize its thinking first.",
-    primary: "Let's work together"
+      "Every conversation about ownership, succession, or governance works better when you know who is guiding it. See Gilbert's background, experience, and approach before you reach out.",
+    note: "12+ years inside family enterprise, trained through FFI and IMD.",
+    primary: "Get to know Gilbert"
   };
 }
 
@@ -4999,8 +4997,9 @@ function getSaveErrorMessage(error, finalCopy) {
 
 function getPillarBand(item, language) {
   const detailCopy = getResultDetailCopy(language);
-  const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
-  if (!item || item.scored === 0 || item.lowConfidence || !hasScore) {
+  const hasScore =
+    item?.score !== null && item?.scored > 0 && Number.isFinite(Number(item?.score));
+  if (!item || item.lowConfidence || !hasScore) {
     return { id: "noScore", ...detailCopy.scoreBands.noScore };
   }
 
@@ -5043,7 +5042,8 @@ function buildPillarBreakdowns(result, language) {
   return PILLARS.map((pillar) => {
     const item = result.pillarScores.find((score) => score.id === pillar.id);
     const band = getPillarBand(item, language);
-    const hasScore = item?.score !== null && Number.isFinite(Number(item?.score));
+    const hasScore =
+      item?.score !== null && item?.scored > 0 && Number.isFinite(Number(item?.score));
     const score = hasScore ? roundedScore(item.score) : null;
     const pillarGuidance = guidance[pillar.id] ?? PILLAR_GUIDANCE.en[pillar.id];
 

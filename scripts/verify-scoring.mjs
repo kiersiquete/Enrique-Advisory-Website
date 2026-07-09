@@ -43,14 +43,64 @@ const mixedUnknownResult = calculateResults(FULL_QUESTIONS.en, {
   [question("ownership", 1)]: 5,
   [question("ownership", 2)]: UNKNOWN_ANSWER,
   [question("ownership", 3)]: 0,
-  [question("ownership", 4)]: 5
+  [question("ownership", 4)]: 5,
+  [question("ownership", 5)]: 3,
+  [question("ownership", 6)]: 2
 });
 const mixedOwnership = mixedUnknownResult.pillarScores.find((pillar) => pillar.id === "ownership");
-assert.equal(mixedOwnership.scored, 3, "unknown answers should not count as numeric scores");
+assert.equal(mixedOwnership.scored, 5, "unknown answers should not count as numeric scores");
 assert.equal(mixedOwnership.unknown, 1, "unknown answers should be counted for transparency");
-assert.equal(mixedOwnership.answered, 4, "answered count should include numeric and unknown answers");
-assert.equal(roundedScore(mixedOwnership.score), 67, "5, 0, and 5 should average to 3.33 out of 5");
+assert.equal(mixedOwnership.answered, 6, "answered count should include numeric and unknown answers");
+assert.equal(roundedScore(mixedOwnership.score), 60, "5, 0, 5, 3, and 2 should average to 3 out of 5");
 assert.equal(mixedUnknownResult.transparency.unknownCount, 1);
+
+// 6-question pillar, exactly 50% unknown (3 of 6) -> not-determined.
+const halfUnknownEvenResult = calculateResults(FULL_QUESTIONS.en, {
+  [question("board", 1)]: 5,
+  [question("board", 2)]: 5,
+  [question("board", 3)]: 5,
+  [question("board", 4)]: UNKNOWN_ANSWER,
+  [question("board", 5)]: UNKNOWN_ANSWER,
+  [question("board", 6)]: UNKNOWN_ANSWER
+});
+const halfUnknownBoard = halfUnknownEvenResult.pillarScores.find((pillar) => pillar.id === "board");
+assert.equal(halfUnknownBoard.lowConfidence, true, "50% unknown on an even pillar should be low confidence");
+assert.equal(halfUnknownBoard.score, null, "50% unknown on an even pillar should not display a score");
+
+// 6-question pillar, just under 50% unknown (2 of 6) -> still confidently scored.
+const underHalfUnknownEvenResult = calculateResults(FULL_QUESTIONS.en, {
+  [question("management", 1)]: 5,
+  [question("management", 2)]: 5,
+  [question("management", 3)]: 5,
+  [question("management", 4)]: 5,
+  [question("management", 5)]: UNKNOWN_ANSWER,
+  [question("management", 6)]: UNKNOWN_ANSWER
+});
+const underHalfUnknownManagement = underHalfUnknownEvenResult.pillarScores.find(
+  (pillar) => pillar.id === "management"
+);
+assert.equal(
+  underHalfUnknownManagement.lowConfidence,
+  false,
+  "just under 50% unknown on an even pillar should still be scored"
+);
+assert.equal(roundedScore(underHalfUnknownManagement.score), 100);
+
+// 7-question pillar, 4 of 7 unknown (>50%) -> not-determined, matching the majority-unknown rule.
+const majorityUnknownOddResult = calculateResults(FULL_QUESTIONS.en, {
+  [question("next-generation", 1)]: 5,
+  [question("next-generation", 2)]: 4,
+  [question("next-generation", 3)]: 3,
+  [question("next-generation", 4)]: UNKNOWN_ANSWER,
+  [question("next-generation", 5)]: UNKNOWN_ANSWER,
+  [question("next-generation", 6)]: UNKNOWN_ANSWER,
+  [question("next-generation", 7)]: UNKNOWN_ANSWER
+});
+const majorityUnknownNextGen = majorityUnknownOddResult.pillarScores.find(
+  (pillar) => pillar.id === "next-generation"
+);
+assert.equal(majorityUnknownNextGen.lowConfidence, true, "4 of 7 unknown should be low confidence");
+assert.equal(majorityUnknownNextGen.score, null, "4 of 7 unknown should not display a score");
 
 const zeroAndPerfectResult = calculateResults(FULL_QUESTIONS.en, {
   [question("vision", 1)]: 0,
@@ -82,7 +132,7 @@ assert.equal(unknownHeavyVision.includedInOverall, false);
 assert.equal(unknownHeavyVision.score, null, "one scored answer plus many unknowns should not display as 100/100");
 assert.equal(unknownHeavyResult.overall, 0, "low-confidence-only results should not inflate the overall score");
 assert.deepEqual(unknownHeavyResult.transparency.lowConfidenceByPillar, [
-  { id: "vision", scored: 1, unknown: 5, total: 6, minimumScored: 3 }
+  { id: "vision", scored: 1, unknown: 5, total: 6, minimumScored: 4 }
 ]);
 
 assert.equal(getStage(25).id, "foundational");

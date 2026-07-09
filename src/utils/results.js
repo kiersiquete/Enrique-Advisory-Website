@@ -12,7 +12,7 @@ export function normalizeScore(value) {
 }
 
 export function minimumScoredAnswers(total) {
-  return Math.ceil(Number(total || 0) / 2);
+  return Math.floor(Number(total || 0) / 2) + 1;
 }
 
 export function calculateResults(questions, answers) {
