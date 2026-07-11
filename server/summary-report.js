@@ -419,13 +419,13 @@ export function createSummaryPdfBuffer(payload) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 46;
-  const forest = "#1c3d2e";
-  const copper = "#c46f3a";
-  const parchment = "#f6f0e7";
-  const mist = "#e9dfd2";
-  const muted = "#6f726d";
-  const ink = "#3f433f";
-  const softForest = "#eaf0eb";
+  const forest = "#0F463C";
+  const copper = "#EF563D";
+  const parchment = "#F4EEE2";
+  const mist = "#EDE3D0";
+  const muted = "#5F6A60";
+  const ink = "#17352E";
+  const softForest = "#EDE3D0";
 
   function pageBackground() {
     doc.setFillColor(parchment);
@@ -433,7 +433,7 @@ export function createSummaryPdfBuffer(payload) {
   }
 
   function footer(pageLabel) {
-    doc.setDrawColor("#ded4c6");
+    doc.setDrawColor("#EDE3D0");
     doc.line(margin, pageHeight - 46, pageWidth - margin, pageHeight - 46);
     doc.setTextColor(muted);
     doc.setFont("helvetica", "normal");
@@ -515,7 +515,7 @@ export function createSummaryPdfBuffer(payload) {
   pageBackground();
   doc.setFillColor(forest);
   doc.rect(0, 0, pageWidth, 246, "F");
-  doc.setFillColor("#244b3b");
+  doc.setFillColor("#1B5A4D");
   doc.rect(0, 215, pageWidth, 31, "F");
   doc.setTextColor(copper);
   doc.setFont("helvetica", "bold");
@@ -528,7 +528,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setFontSize(18);
   doc.text(text.forName(report.name || text.participantFallback), margin, 126);
 
-  doc.setTextColor("#d8c7b2");
+  doc.setTextColor("#EDE3D0");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   wrapText(doc, text.intro, margin, 160, 390, 15);
@@ -538,7 +538,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setFontSize(13);
   doc.text(text.brandName, margin, 234);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor("#d8c7b2");
+  doc.setTextColor("#EDE3D0");
   doc.setFontSize(9);
   doc.text(text.brandLine, margin + 100, 234);
   doc.text(text.generated(formatDate(report.generatedAt, language)), pageWidth - margin, 234, {
@@ -581,7 +581,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setFontSize(18);
   doc.text(text.suggestedNextConversation, margin + 20, y + 30);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor("#d8c7b2");
+  doc.setTextColor("#EDE3D0");
   doc.setFontSize(10);
   wrapText(doc, text.nextConversationBody, margin + 20, y + 53, pageWidth - margin * 2 - 40, 13);
   footer(text.pageOneOfTwo);
@@ -625,13 +625,13 @@ export function createAdminPdfBuffer(payload) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 46;
-  const forest = "#1c3d2e";
-  const copper = "#c46f3a";
-  const parchment = "#f8f3ea";
-  const mist = "#e9dfd2";
-  const softForest = "#eaf0eb";
-  const muted = "#6f726d";
-  const ink = "#3f433f";
+  const forest = "#0F463C";
+  const copper = "#EF563D";
+  const parchment = "#F4EEE2";
+  const mist = "#EDE3D0";
+  const softForest = "#EDE3D0";
+  const muted = "#5F6A60";
+  const ink = "#17352E";
   const bottomContentLimit = pageHeight - 82;
   let y = 0;
 
@@ -647,7 +647,7 @@ export function createAdminPdfBuffer(payload) {
     doc.setTextColor("#ffffff");
     doc.setFontSize(22);
     doc.text(title, margin, 68);
-    doc.setTextColor("#d8c7b2");
+    doc.setTextColor("#EDE3D0");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text("Confidential internal follow-up notes", pageWidth - margin, 38, { align: "right" });
@@ -924,11 +924,11 @@ export function createComparisonPdfBuffer(payload) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 46;
-  const forest = "#1c3d2e";
-  const copper = "#c46f3a";
-  const parchment = "#f8f3ea";
-  const muted = "#6f726d";
-  const ink = "#3f433f";
+  const forest = "#0F463C";
+  const copper = "#EF563D";
+  const parchment = "#F4EEE2";
+  const muted = "#5F6A60";
+  const ink = "#17352E";
   let y = 0;
 
   function pageHeader(title) {
@@ -943,7 +943,7 @@ export function createComparisonPdfBuffer(payload) {
     doc.setTextColor("#ffffff");
     doc.setFontSize(22);
     doc.text(title, margin, 68);
-    doc.setTextColor("#d8c7b2");
+    doc.setTextColor("#EDE3D0");
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(text.confidential, pageWidth - margin, 38, { align: "right" });

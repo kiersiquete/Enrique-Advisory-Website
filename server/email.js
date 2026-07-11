@@ -312,24 +312,24 @@ function htmlInvitationEmail(invitation = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(text.title)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#0F463C; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">${escapeHtml(text.preheader)}</span>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px; background:#ffffff; border:1px solid #EDE3D0; border-radius:10px; overflow:hidden;">
             <tr>
-              <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
-                <p style="margin:0; color:#f8f3ea; font-size:22px; line-height:1.25; font-weight:700;">${escapeHtml(text.header)}</p>
-                <p style="margin:8px 0 0; color:#d8c7b2; font-size:14px; line-height:1.45;">${escapeHtml(text.headerLine)}</p>
+              <td style="background:#0F463C; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
+                <p style="margin:0; color:#F4EEE2; font-size:22px; line-height:1.25; font-weight:700;">${escapeHtml(text.header)}</p>
+                <p style="margin:8px 0 0; color:#EDE3D0; font-size:14px; line-height:1.45;">${escapeHtml(text.headerLine)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
                 <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
-                <h1 style="margin:0 0 18px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(text.title)}</h1>
-                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">${text.body}</p>
+                <h1 style="margin:0 0 18px; color:#0F463C; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(text.title)}</h1>
+                <p style="margin:0 0 24px; color:#17352E; font-size:16px; line-height:1.65;">${text.body}</p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
@@ -339,8 +339,8 @@ function htmlInvitationEmail(invitation = {}) {
                   </tr>
                 </table>
 
-                <p style="margin:0 0 18px; color:#454943; font-size:14px; line-height:1.65;">${escapeHtml(text.privacy)}</p>
-                <p style="margin:0; color:#6f726d; font-size:12px; line-height:1.55; word-break:break-all;">${inviteLink}</p>
+                <p style="margin:0 0 18px; color:#17352E; font-size:14px; line-height:1.65;">${escapeHtml(text.privacy)}</p>
+                <p style="margin:0; color:#5F6A60; font-size:12px; line-height:1.55; word-break:break-all;">${inviteLink}</p>
               </td>
             </tr>
           </table>
@@ -461,92 +461,92 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(text.title)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#0F463C; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">
       ${escapeHtml(text.preheader)}
     </span>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #EDE3D0; border-radius:10px; overflow:hidden;">
             <tr>
-              <td style="background:#1c3d2e; padding:30px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Gilbert Devlyn</p>
-                <p style="margin:0; color:#f8f3ea; font-size:18px; line-height:1.4; font-weight:700;">${escapeHtml(text.footerLine)}</p>
+              <td style="background:#0F463C; padding:30px 34px;">
+                <p style="margin:0 0 7px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">Gilbert Devlyn</p>
+                <p style="margin:0; color:#F4EEE2; font-size:18px; line-height:1.4; font-weight:700;">${escapeHtml(text.footerLine)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
                 <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.eyebrow)}</p>
-                <h1 style="margin:0 0 18px; color:#1c3d2e; font-size:34px; line-height:1.08; font-weight:700;">${escapeHtml(text.heading)}</h1>
-                <p style="margin:0 0 22px; color:#454943; font-size:16px; line-height:1.65;">${text.intro}</p>
+                <h1 style="margin:0 0 18px; color:#0F463C; font-size:34px; line-height:1.08; font-weight:700;">${escapeHtml(text.heading)}</h1>
+                <p style="margin:0 0 22px; color:#17352E; font-size:16px; line-height:1.65;">${text.intro}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border-collapse:separate; border-spacing:0;">
                   <tr>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScoreLabel)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.overall || 0))}<span style="font-size:16px; color:#6f726d;"> /100</span></p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-radius:8px 0 0 8px;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScoreLabel)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.overall || 0))}<span style="font-size:16px; color:#5F6A60;"> /100</span></p>
                     </td>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevelLabel)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:18px; line-height:1.35; font-weight:700;">${escapeHtml(report.level)}</p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-left:0; border-radius:0 8px 8px 0;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevelLabel)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:18px; line-height:1.35; font-weight:700;">${escapeHtml(report.level)}</p>
                     </td>
                   </tr>
                 </table>
 
                 ${
                   focusAreas.length
-                    ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                    ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #EDE3D0; border-radius:8px;">
                         <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.focusAreasLabel)}</p>
                         ${focusAreas
                           .map(
                             (item) =>
-                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
+                              `<p style="margin:8px 0 0; color:#0F463C; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
                           )
                           .join("")}
                       </div>`
                     : ""
                 }
 
-                <p style="margin:0 0 24px; color:#454943; font-size:15px; line-height:1.65;">${escapeHtml(text.disclaimer)}</p>
+                <p style="margin:0 0 24px; color:#17352E; font-size:15px; line-height:1.65;">${escapeHtml(text.disclaimer)}</p>
 
-                <div style="margin:0 0 22px; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px;">
+                <div style="margin:0 0 22px; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-radius:8px;">
                   <p style="margin:0 0 8px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.nextStepsLabel)}</p>
-                  <p style="margin:0 0 16px; color:#454943; font-size:14px; line-height:1.6;">${escapeHtml(text.nextStepsIntro)}</p>
+                  <p style="margin:0 0 16px; color:#17352E; font-size:14px; line-height:1.6;">${escapeHtml(text.nextStepsIntro)}</p>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                     <tr>
                       <td style="width:34px; vertical-align:top; padding:0 0 14px;">
                         <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#0F463C; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">1</span>
                       </td>
-                      <td style="padding:0 0 14px; color:#454943; font-size:14px; line-height:1.55;">
-                        <strong style="color:#1c3d2e;">${escapeHtml(text.downloadPdf)}</strong><br>${escapeHtml(text.downloadPdfHelp)}
+                      <td style="padding:0 0 14px; color:#17352E; font-size:14px; line-height:1.55;">
+                        <strong style="color:#0F463C;">${escapeHtml(text.downloadPdf)}</strong><br>${escapeHtml(text.downloadPdfHelp)}
                       </td>
                     </tr>
                     <tr>
                       <td style="width:34px; vertical-align:top; padding:0 0 14px;">
                         <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#F1C84C; color:#17352E; font-size:12px; line-height:24px; text-align:center; font-weight:700;">2</span>
                       </td>
-                      <td style="padding:0 0 14px; color:#454943; font-size:14px; line-height:1.55;">
-                        <strong style="color:#1c3d2e;">${escapeHtml(text.scheduleCall)}</strong><br>${escapeHtml(text.scheduleCallHelp)}
+                      <td style="padding:0 0 14px; color:#17352E; font-size:14px; line-height:1.55;">
+                        <strong style="color:#0F463C;">${escapeHtml(text.scheduleCall)}</strong><br>${escapeHtml(text.scheduleCallHelp)}
                       </td>
                     </tr>
                     ${
                       inviteShareUrl
                         ? `<tr>
                             <td style="width:34px; vertical-align:top; padding:0;">
-                              <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#EF563D; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
+                              <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#C9B2DE; color:#0F463C; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
                             </td>
-                            <td style="padding:0; color:#454943; font-size:14px; line-height:1.55;">
-                              <strong style="color:#1c3d2e;">${escapeHtml(text.inviteSomeone)}</strong><br>${escapeHtml(text.inviteSomeoneHelp)}
+                            <td style="padding:0; color:#17352E; font-size:14px; line-height:1.55;">
+                              <strong style="color:#0F463C;">${escapeHtml(text.inviteSomeone)}</strong><br>${escapeHtml(text.inviteSomeoneHelp)}
                             </td>
                           </tr>`
                         : groupIsFull
                           ? `<tr>
                               <td style="width:34px; vertical-align:top; padding:0;">
-                                <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#EF563D; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
+                                <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#C9B2DE; color:#0F463C; font-size:12px; line-height:24px; text-align:center; font-weight:700;">3</span>
                               </td>
-                              <td style="padding:0; color:#454943; font-size:14px; line-height:1.55;">
-                                <strong style="color:#1c3d2e;">${escapeHtml(text.groupComplete)}</strong><br>${escapeHtml(text.groupCompleteHelp)}
+                              <td style="padding:0; color:#17352E; font-size:14px; line-height:1.55;">
+                                <strong style="color:#0F463C;">${escapeHtml(text.groupComplete)}</strong><br>${escapeHtml(text.groupCompleteHelp)}
                               </td>
                             </tr>`
                           : ""
@@ -557,17 +557,17 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                 ${actionButtonRow([
                   { url: pdfUrl, label: text.downloadPdf, accent: "#0F463C" },
                   { url: scheduleCallUrl, label: text.scheduleCall, accent: "#F1C84C", textColor: "#17352E" },
-                  { url: inviteShareUrl, label: text.inviteSomeone, accent: "#EF563D" }
+                  { url: inviteShareUrl, label: text.inviteSomeone, accent: "#C9B2DE", textColor: "#0F463C" }
                 ])}
 
-                <p style="margin:0 0 18px; color:#454943; font-size:14px; line-height:1.65;">${escapeHtml(text.comparisonNote)}</p>
-                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">${escapeHtml(text.footerNote)}</p>
+                <p style="margin:0 0 18px; color:#17352E; font-size:14px; line-height:1.65;">${escapeHtml(text.comparisonNote)}</p>
+                <p style="margin:0; color:#5F6A60; font-size:13px; line-height:1.55;">${escapeHtml(text.footerNote)}</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:22px 34px; background:#1c3d2e;">
-                <p style="margin:0; color:#f8f3ea; font-size:14px; line-height:1.5; font-weight:700;">${escapeHtml(text.footerName)}</p>
-                <p style="margin:2px 0 0; color:#d8c7b2; font-size:12px; line-height:1.5;">${escapeHtml(text.footerLine)}</p>
+              <td style="padding:22px 34px; background:#0F463C;">
+                <p style="margin:0; color:#F4EEE2; font-size:14px; line-height:1.5; font-weight:700;">${escapeHtml(text.footerName)}</p>
+                <p style="margin:2px 0 0; color:#EDE3D0; font-size:12px; line-height:1.5;">${escapeHtml(text.footerLine)}</p>
               </td>
             </tr>
           </table>
@@ -692,8 +692,8 @@ function adminEmailText(body, savedResult = {}, options = {}) {
 
 function detailRow(label, value, fallback = "Not provided") {
   return `<tr>
-    <td style="padding:9px 0; color:#6f726d; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; vertical-align:top;">${escapeHtml(label)}</td>
-    <td style="padding:9px 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700; text-align:right;">${escapeHtml(value || fallback)}</td>
+    <td style="padding:9px 0; color:#5F6A60; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; vertical-align:top;">${escapeHtml(label)}</td>
+    <td style="padding:9px 0; color:#0F463C; font-size:14px; line-height:1.45; font-weight:700; text-align:right;">${escapeHtml(value || fallback)}</td>
   </tr>`;
 }
 
@@ -714,39 +714,39 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(completionTitle)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#0F463C; font-family:Arial, Helvetica, sans-serif;">
     <span style="display:none; visibility:hidden; opacity:0; height:0; width:0; overflow:hidden;">
       ${escapeHtml(completionTitle)}.
     </span>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:720px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:720px; background:#ffffff; border:1px solid #EDE3D0; border-radius:10px; overflow:hidden;">
             <tr>
-              <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.advisorNotification)}</p>
-                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(completionTitle)}</p>
+              <td style="background:#0F463C; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(text.advisorNotification)}</p>
+                <p style="margin:0; color:#F4EEE2; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(completionTitle)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
-                <h1 style="margin:0 0 12px; color:#1c3d2e; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(name)}</h1>
-                <p style="margin:0 0 24px; color:#454943; font-size:16px; line-height:1.65;">${escapeHtml(text.bodyIntro)}</p>
+                <h1 style="margin:0 0 12px; color:#0F463C; font-size:32px; line-height:1.1; font-weight:700;">${escapeHtml(name)}</h1>
+                <p style="margin:0 0 24px; color:#17352E; font-size:16px; line-height:1.65;">${escapeHtml(text.bodyIntro)}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScore)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.overall || 0))}<span style="font-size:16px; color:#6f726d;"> /100</span></p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-radius:8px 0 0 8px;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.overallScore)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.overall || 0))}<span style="font-size:16px; color:#5F6A60;"> /100</span></p>
                     </td>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.unknownAnswers)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.transparency?.unknownCount || 0))}</p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-left:0; border-radius:0 8px 8px 0;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.unknownAnswers)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:38px; line-height:1; font-weight:700;">${Math.round(Number(report.transparency?.unknownCount || 0))}</p>
                     </td>
                   </tr>
                 </table>
 
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px; border-top:1px solid #EDE3D0; border-bottom:1px solid #EDE3D0;">
                   ${detailRow(text.email, participant.email, text.notProvided)}
                   ${detailRow(text.phone, participant.phone, text.notProvided)}
                   ${detailRow(text.country, participant.country, text.notProvided)}
@@ -762,12 +762,12 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
 
                 ${
                   priorities.length
-                    ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                    ? `<div style="margin:0 0 24px; padding:18px; border:1px solid #EDE3D0; border-radius:8px;">
                         <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.priorityAreas)}</p>
                         ${priorities
                           .map(
                             (item) =>
-                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
+                              `<p style="margin:8px 0 0; color:#0F463C; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
                           )
                           .join("")}
                       </div>`
@@ -786,7 +786,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
                     : ""
                 }
 
-                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
+                <p style="margin:0; color:#5F6A60; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
               </td>
             </tr>
           </table>
@@ -1099,36 +1099,36 @@ function htmlCallRequestEmail(request = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(text.title)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#0F463C; font-family:Arial, Helvetica, sans-serif;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px; background:#ffffff; border:1px solid #EDE3D0; border-radius:10px; overflow:hidden;">
             <tr>
-              <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(labels.advisorNotification)}</p>
-                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
+              <td style="background:#0F463C; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(labels.advisorNotification)}</p>
+                <p style="margin:0; color:#F4EEE2; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:30px 34px;">
-                <p style="margin:0 0 18px; color:#454943; font-size:16px; line-height:1.6;">${text.body}</p>
+                <p style="margin:0 0 18px; color:#17352E; font-size:16px; line-height:1.6;">${text.body}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px;">
                   <tr>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(labels.overallScore)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:36px; line-height:1; font-weight:700;">${escapeHtml(result.overall ?? "N/A")}<span style="font-size:15px; color:#6f726d;"> /100</span></p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-radius:8px 0 0 8px;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(labels.overallScore)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:36px; line-height:1; font-weight:700;">${escapeHtml(result.overall ?? "N/A")}<span style="font-size:15px; color:#5F6A60;"> /100</span></p>
                     </td>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevel)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${escapeHtml(result.level || labels.notProvided)}</p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-left:0; border-radius:0 8px 8px 0;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.resultLevel)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:16px; line-height:1.35; font-weight:700;">${escapeHtml(result.level || labels.notProvided)}</p>
                     </td>
                   </tr>
                 </table>
 
                 <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.profileTitle)}</p>
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #EDE3D0; border-bottom:1px solid #EDE3D0;">
                   ${detailRow(labels.name, request.name, labels.notProvided)}
                   ${detailRow(labels.email, request.email, labels.notProvided)}
                   ${detailRow(labels.phone, participant.phone, labels.notProvided)}
@@ -1141,22 +1141,22 @@ function htmlCallRequestEmail(request = {}) {
 
                 ${
                   focusAreas.length
-                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #EDE3D0; border-radius:8px;">
                         <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.focusTitle)}</p>
                         ${focusAreas
                           .map(
                             (item) =>
-                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
+                              `<p style="margin:8px 0 0; color:#0F463C; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(item)}</p>`
                           )
                           .join("")}
                       </div>`
                     : ""
                 }
 
-                <div style="margin:0; padding:16px 18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px;">
-                  <p style="margin:0 0 6px; color:#1c3d2e; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(text.contactTitle)}</p>
-                  <p style="margin:0 0 10px; color:#454943; font-size:14px; line-height:1.55;">${escapeHtml(text.contactBody)}</p>
-                  <p style="margin:0; color:#1c3d2e; font-size:15px; line-height:1.6; font-weight:700;">${email}</p>
+                <div style="margin:0; padding:16px 18px; background:#F4EEE2; border:1px solid #EDE3D0; border-radius:8px;">
+                  <p style="margin:0 0 6px; color:#0F463C; font-size:15px; line-height:1.45; font-weight:700;">${escapeHtml(text.contactTitle)}</p>
+                  <p style="margin:0 0 10px; color:#17352E; font-size:14px; line-height:1.55;">${escapeHtml(text.contactBody)}</p>
+                  <p style="margin:0; color:#0F463C; font-size:15px; line-height:1.6; font-weight:700;">${email}</p>
                 </div>
               </td>
             </tr>
@@ -1280,30 +1280,30 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${escapeHtml(text.title)}</title>
   </head>
-  <body style="margin:0; padding:0; background:#F4EEE2; color:#1c3d2e; font-family:Arial, Helvetica, sans-serif;">
+  <body style="margin:0; padding:0; background:#F4EEE2; color:#0F463C; font-family:Arial, Helvetica, sans-serif;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#F4EEE2; padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #ded8cf; border-radius:10px; overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px; background:#ffffff; border:1px solid #EDE3D0; border-radius:10px; overflow:hidden;">
             <tr>
-              <td style="background:#1c3d2e; padding:28px 34px;">
-                <p style="margin:0 0 7px; color:#d07a42; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(labels.advisorNotification)}</p>
-                <p style="margin:0; color:#f8f3ea; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
+              <td style="background:#0F463C; padding:28px 34px;">
+                <p style="margin:0 0 7px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">${escapeHtml(labels.advisorNotification)}</p>
+                <p style="margin:0; color:#F4EEE2; font-size:20px; line-height:1.35; font-weight:700;">${escapeHtml(text.title)}</p>
               </td>
             </tr>
             <tr>
               <td style="padding:34px;">
-                <p style="margin:0 0 20px; color:#454943; font-size:16px; line-height:1.65;">${text.intro}</p>
+                <p style="margin:0 0 20px; color:#17352E; font-size:16px; line-height:1.65;">${text.intro}</p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-collapse:separate; border-spacing:0;">
                   <tr>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-radius:8px 0 0 8px;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.averageGap)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:32px; line-height:1; font-weight:700;">${payload.averageGap}<span style="font-size:14px; color:#6f726d;"> pts</span></p>
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-radius:8px 0 0 8px;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.averageGap)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:32px; line-height:1; font-weight:700;">${payload.averageGap}<span style="font-size:14px; color:#5F6A60;"> pts</span></p>
                     </td>
-                    <td style="width:50%; padding:18px; background:#f8f3ea; border:1px solid #e5ded4; border-left:0; border-radius:0 8px 8px 0;">
-                      <p style="margin:0 0 8px; color:#6f726d; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.largestGap)}</p>
-                      <p style="margin:0; color:#1c3d2e; font-size:16px; line-height:1.35; font-weight:700;">${
+                    <td style="width:50%; padding:18px; background:#F4EEE2; border:1px solid #EDE3D0; border-left:0; border-radius:0 8px 8px 0;">
+                      <p style="margin:0 0 8px; color:#5F6A60; font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;">${escapeHtml(text.largestGap)}</p>
+                      <p style="margin:0; color:#0F463C; font-size:16px; line-height:1.35; font-weight:700;">${
                         payload.biggestGap
                           ? escapeHtml(`${payload.biggestGap.label} (${payload.biggestGap.gap} pts)`)
                           : escapeHtml(text.notAvailable)
@@ -1313,7 +1313,7 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
                 </table>
 
                 <p style="margin:0 0 10px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.participants)}</p>
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #e5ded4; border-bottom:1px solid #e5ded4;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 22px; border-top:1px solid #EDE3D0; border-bottom:1px solid #EDE3D0;">
                   ${participants
                     .map((participant) =>
                       detailRow(
@@ -1327,12 +1327,12 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
 
                 ${
                   divergence.length
-                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #EDE3D0; border-radius:8px;">
                         <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.divergenceTitle)}</p>
                         ${divergence
                           .map(
                             (row) =>
-                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700;">${escapeHtml(row.label)} - ${row.gap} pts</p>`
+                              `<p style="margin:8px 0 0; color:#0F463C; font-size:14px; line-height:1.45; font-weight:700;">${escapeHtml(row.label)} - ${row.gap} pts</p>`
                           )
                           .join("")}
                       </div>`
@@ -1341,12 +1341,12 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
 
                 ${
                   convergence.length
-                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #e5ded4; border-radius:8px;">
+                    ? `<div style="margin:0 0 22px; padding:18px; border:1px solid #EDE3D0; border-radius:8px;">
                         <p style="margin:0 0 12px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;">${escapeHtml(text.convergenceTitle)}</p>
                         ${convergence
                           .map(
                             (row) =>
-                              `<p style="margin:8px 0 0; color:#1c3d2e; font-size:14px; line-height:1.45; font-weight:700;">${escapeHtml(row.label)}</p>`
+                              `<p style="margin:8px 0 0; color:#0F463C; font-size:14px; line-height:1.45; font-weight:700;">${escapeHtml(row.label)}</p>`
                           )
                           .join("")}
                       </div>`
@@ -1355,7 +1355,7 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
 
                 ${actionButtonRow([{ url: viewUrl, label: text.viewButton, accent: "#0F463C" }])}
 
-                <p style="margin:0; color:#6f726d; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
+                <p style="margin:0; color:#5F6A60; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
               </td>
             </tr>
           </table>
@@ -1491,12 +1491,12 @@ export function renderScheduleCallConfirmationPage(language = "en", ok = true) {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="min-height:100vh; padding:48px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px; background:#ffffff; border:1px solid #ded8cf; border-radius:12px; overflow:hidden; text-align:center;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px; background:#ffffff; border:1px solid #EDE3D0; border-radius:12px; overflow:hidden; text-align:center;">
             <tr>
               <td style="padding:44px 36px;">
                 <div style="margin:0 auto 20px; width:56px; height:56px; border-radius:50%; background:#F1C84C; line-height:56px; font-size:26px; font-weight:700; color:#17352E;">&#10003;</div>
                 <h1 style="margin:0 0 14px; color:#0F463C; font-size:26px; line-height:1.3; font-weight:700;">${escapeHtml(text.heading)}</h1>
-                <p style="margin:0 0 26px; color:#454943; font-size:16px; line-height:1.6;">${escapeHtml(text.body)}</p>
+                <p style="margin:0 0 26px; color:#17352E; font-size:16px; line-height:1.6;">${escapeHtml(text.body)}</p>
                 <a href="/" style="display:inline-block; padding:13px 24px; background:#0F463C; color:#ffffff; border-radius:7px; font-size:14px; font-weight:700; text-decoration:none;">${escapeHtml(text.back)}</a>
               </td>
             </tr>

@@ -275,12 +275,12 @@ function renderMissingStaticAppPage(baseUrl) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Website unavailable</title>
   </head>
-  <body style="margin:0; padding:40px; font-family:Arial, Helvetica, sans-serif; color:#1c3d2e; background:#f8f3ea;">
+  <body style="margin:0; padding:40px; font-family:Arial, Helvetica, sans-serif; color:#0F463C; background:#F4EEE2;">
     <main style="max-width:640px;">
-      <p style="margin:0 0 8px; color:#c4713a; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;">Website unavailable</p>
+      <p style="margin:0 0 8px; color:#EF563D; font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;">Website unavailable</p>
       <h1 style="margin:0 0 14px; font-size:32px; line-height:1.15;">Open the website from the web app server.</h1>
       <p style="margin:0 0 24px; font-size:16px; line-height:1.6;">This local API server cannot serve the website files right now.</p>
-      <a href="${homeUrl}" style="display:inline-block; padding:13px 18px; border-radius:7px; background:#1c3d2e; color:#fff; font-weight:700; text-decoration:none;">Open website</a>
+      <a href="${homeUrl}" style="display:inline-block; padding:13px 18px; border-radius:7px; background:#0F463C; color:#fff; font-weight:700; text-decoration:none;">Open website</a>
     </main>
   </body>
 </html>`;

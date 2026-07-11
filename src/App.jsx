@@ -48,9 +48,14 @@ const MAX_GROUP_PARTICIPANTS = 3;
 const MIN_COMPARISON_PARTICIPANTS = 2;
 const PHONE_COUNTRY_LOOKUP = new Map(PHONE_COUNTRY_OPTIONS.map((option) => [option.id, option]));
 const COMPARISON_COLORS = [
-  { line: "#1C3D2E", soft: "rgba(28, 61, 46, 0.1)" },
-  { line: "#C4713A", soft: "rgba(196, 113, 58, 0.12)" },
-  { line: "#2E7C73", soft: "rgba(46, 124, 115, 0.12)" }
+  { line: "#0F463C", soft: "rgba(15, 70, 60, 0.1)" },
+  { line: "#EF563D", soft: "rgba(239, 86, 61, 0.12)" },
+  { line: "#3E6557", soft: "rgba(62, 101, 87, 0.12)" }
+];
+const NEXT_STEP_BADGE_STYLES = [
+  "border-coral bg-coral text-white",
+  "border-gold bg-gold text-forest",
+  "border-lavender bg-lavender text-forest"
 ];
 const SCREEN_ROUTES = {
   home: "/",
@@ -1810,8 +1815,6 @@ function HomePage({ copy, language, onNavigate }) {
         </div>
       </section>
 
-      <VideoPlaceholderSection video={copy.home.video} language={language} />
-
       <HomeProblemSection copy={copy} language={language} />
 
       <HomeFamilyDimensionSection copy={copy} />
@@ -2314,8 +2317,6 @@ function AdvisorPortrait({ language }) {
 function AboutPage({ copy, language, onNavigate }) {
   return (
     <section className="w-full">
-      <AboutVideoSection video={copy.about.video} language={language} />
-
       <section className="px-5 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-16 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-stretch">
           <div className="flex flex-col gap-4 lg:h-full">
@@ -2948,7 +2949,11 @@ function AssessmentProfileIntake({
               <ol className="mt-3 space-y-3">
                 {intake.nextSteps.map((step, index) => (
                   <li key={step} className="flex gap-3 text-sm leading-6 text-white/85">
-                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-copper bg-copper text-xs font-semibold text-white">
+                    <span
+                      className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-semibold ${
+                        NEXT_STEP_BADGE_STYLES[index % NEXT_STEP_BADGE_STYLES.length]
+                      }`}
+                    >
                       {index + 1}
                     </span>
                     <span>{step}</span>
@@ -3024,7 +3029,7 @@ function AssessmentProfileIntake({
                 aria-invalid={profileTouched && !emailIsValid}
               />
               {showEmailError && (
-                <p className="mt-2 text-sm font-semibold text-[#9F3F32]">{intake.invalidEmail}</p>
+                <p className="mt-2 text-sm font-semibold text-coral">{intake.invalidEmail}</p>
               )}
             </label>
 
@@ -3129,7 +3134,7 @@ function AssessmentProfileIntake({
                 />
               </div>
               {showPhoneError && (
-                <p className="mt-2 text-sm font-semibold text-[#9F3F32]">{intake.invalidPhone}</p>
+                <p className="mt-2 text-sm font-semibold text-coral">{intake.invalidPhone}</p>
               )}
             </label>
 
@@ -3219,7 +3224,7 @@ function AssessmentProfileIntake({
 
           <div className="mt-7 flex flex-col gap-4 border-t border-forest/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
             {showProfileError ? (
-              <p className="text-sm font-semibold text-[#9F3F32]">{intake.completeMessage}</p>
+              <p className="text-sm font-semibold text-coral">{intake.completeMessage}</p>
             ) : (
               <div className="space-y-2">
                 <p className="text-sm text-ink/60">{intake.requiredNote}</p>
@@ -3950,7 +3955,7 @@ function ResultsScreen({
 
             <button
               type="button"
-              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-copper px-4 text-left text-sm font-semibold text-white transition hover:bg-[#AA5E2E] disabled:cursor-not-allowed disabled:bg-copper/60"
+              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-lavender px-4 text-left text-sm font-bold text-[#3D1F52] transition hover:bg-[#B79FCE] disabled:cursor-not-allowed disabled:bg-lavender/60"
               onClick={submitResult}
               disabled={submitPending || submitted}
             >
@@ -4415,7 +4420,7 @@ function LargestGapSpotlight({ row, language, copy, visualCopy, comparisonCopy }
             {visualCopy.largestGapTitle(row.shortLabel, row.gap)}
           </h2>
         </div>
-        <span className="w-fit rounded-full bg-[#A64B3C]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-[#76362D]">
+        <span className="w-fit rounded-full bg-coral/14 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-coral">
           {comparisonCopy.scoreGap}: {row.gap}
         </span>
       </div>
@@ -4606,7 +4611,7 @@ function ComparisonMapRow({ row, language, copy, visualCopy, comparisonCopy }) {
                     style={{
                       width: score.score === null ? "100%" : `${width}%`,
                       backgroundColor:
-                        score.score === null ? "rgba(28, 61, 46, 0.18)" : color.line
+                        score.score === null ? "rgba(15, 70, 60, 0.18)" : color.line
                     }}
                   />
                 </div>
@@ -4755,13 +4760,13 @@ function getComparisonGapBand(gap, visualCopy) {
   if (gap <= 20) {
     return {
       label: visualCopy.watch,
-      className: "border-copper/20 bg-copper/10 text-[#8A4F2F]"
+      className: "border-copper/20 bg-copper/10 text-copper"
     };
   }
 
   return {
     label: visualCopy.discuss,
-    className: "border-[#A64B3C]/25 bg-[#A64B3C]/10 text-[#76362D]"
+    className: "border-coral/40 bg-coral/14 text-coral"
   };
 }
 
@@ -5080,8 +5085,8 @@ function getStrongBreakdowns(breakdowns) {
 }
 
 function pillarBandClasses(bandId) {
-  if (bandId === "priority") return "border-[#A64B3C]/30 bg-[#A64B3C]/8 text-[#76362D]";
-  if (bandId === "focus") return "border-copper/30 bg-copper/10 text-[#8A4F2F]";
+  if (bandId === "priority") return "border-coral/40 bg-coral/14 text-coral";
+  if (bandId === "focus") return "border-copper/30 bg-copper/10 text-copper";
   if (bandId === "strength") return "border-forest/20 bg-forest/8 text-forest";
   if (bandId === "noScore") return "border-forest/10 bg-forest/5 text-muted";
   return "border-forest/14 bg-parchment/70 text-forest";
@@ -5125,8 +5130,8 @@ function getFooterContent(language) {
 }
 
 function pillarBarColor(score) {
-  if (score < 40) return "bg-[#A64B3C]";
-  if (score < 65) return "bg-copper";
+  if (score < 40) return "bg-coral";
+  if (score < 65) return "bg-copper/70";
   return "bg-forest";
 }
 
@@ -5135,7 +5140,7 @@ function ScoreRing({ score }) {
     <div
       className="grid h-28 w-28 shrink-0 place-items-center rounded-full p-2 sm:h-36 sm:w-36"
       style={{
-        background: `conic-gradient(#C4713A ${Math.max(0, Math.min(100, score)) * 3.6}deg, rgba(255,255,255,0.16) 0deg)`
+        background: `conic-gradient(#EF563D ${Math.max(0, Math.min(100, score)) * 3.6}deg, rgba(255,255,255,0.16) 0deg)`
       }}
       aria-label={`Score ${roundedScore(score)}`}
     >

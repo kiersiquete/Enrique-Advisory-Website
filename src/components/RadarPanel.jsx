@@ -66,15 +66,15 @@ export default function RadarPanel({ result, language }) {
         className: "h-[380px] w-full",
         margin: { top: 14, right: 54, bottom: 14, left: 54 },
         outerRadius: "94%",
-        angleTick: { fill: "#1C3D2E", fontSize: 14, fontWeight: 500 },
-        radiusTick: { fill: "#6B6B5F", fontSize: 12, dx: -7, dy: 6 }
+        angleTick: { fill: "#0F463C", fontSize: 14, fontWeight: 500 },
+        radiusTick: { fill: "#5F6A60", fontSize: 12, dx: -7, dy: 6 }
       }
     : {
         className: "h-[420px] w-full sm:h-[650px]",
         margin: { top: 18, right: 68, bottom: 18, left: 68 },
         outerRadius: "94%",
-        angleTick: { fill: "#1C3D2E", fontSize: 14, fontWeight: 500 },
-        radiusTick: { fill: "#6B6B5F", fontSize: 13, dx: -10, dy: 8 }
+        angleTick: { fill: "#0F463C", fontSize: 14, fontWeight: 500 },
+        radiusTick: { fill: "#5F6A60", fontSize: 13, dx: -10, dy: 8 }
       };
 
   return (
@@ -85,7 +85,7 @@ export default function RadarPanel({ result, language }) {
           outerRadius={chartConfig.outerRadius}
           margin={chartConfig.margin}
         >
-          <PolarGrid stroke="#ded7ca" />
+          <PolarGrid stroke="#EDE3D0" />
           <PolarAngleAxis
             dataKey="label"
             tick={chartConfig.angleTick}
@@ -102,14 +102,14 @@ export default function RadarPanel({ result, language }) {
             cursor={false}
             contentStyle={{
               borderRadius: 12,
-              border: "1px solid rgba(28, 61, 46, 0.14)",
-              color: "#2A2A2A"
+              border: "1px solid rgba(15, 70, 60, 0.14)",
+              color: "#17352E"
             }}
           />
           <Radar
             dataKey="score"
-            stroke="#1C3D2E"
-            fill="#1C3D2E"
+            stroke="#0F463C"
+            fill="#0F463C"
             fillOpacity={0.24}
             strokeWidth={2}
             isAnimationActive
