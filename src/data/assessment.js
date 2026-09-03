@@ -723,7 +723,7 @@ export const COPY = {
     home: {
       title: "Gilbert Devlyn Family Enterprise Advisory",
       subtitle:
-        "Guidance for business families on ownership, succession, and next-generation roles — before pressure turns into conflict.",
+        "Helping business families make important decisions about ownership, succession, and next-generation roles before misunderstandings become conflict.",
       body:
         "Gilbert Devlyn brings lived experience as a family member, owner, executive, and board participant inside a multigenerational enterprise. He helps families name the conversations that are being avoided, organize who needs to be involved, and move toward agreements that can hold under pressure.",
       gilbertTitle: "Who is Gilbert?",
@@ -739,7 +739,7 @@ export const COPY = {
       },
       primaryCta: "Learn about Gilbert",
       heroCta: "Start a conversation",
-      secondaryCta: "Explore the self-assessment",
+      secondaryCta: "Begin the self-assessment",
       valueTitle: "Why the advisory matters",
       valueBody:
         "Family business decisions carry more than operational weight. They affect trust, continuity, ownership, and future roles. Gilbert gives families a neutral space to separate the issues, align around priorities, and turn sensitive conversations into workable agreements.",
@@ -749,13 +749,15 @@ export const COPY = {
       frameworkIntro:
         "A neutral space to untangle family, ownership, and business — then turn conversations into agreements that last.",
       helpingTitle: "Families usually reach out when",
+      helpingIntro:
+        "Things often work well for years. Then a transition, a disagreement or an important decision exposes questions the family has never needed to answer before.",
       helpingItems: [
         "A founder or senior generation wants continuity but has not aligned the family around what comes next",
         "The next generation wants to participate but roles, expectations, or timing are unclear",
         "Shareholders need clearer rights, responsibilities, information flow, and decision rules",
         "A board, family council, or ownership group needs a better way to handle sensitive topics"
       ],
-      challengeTitle: "The real work is not only governance. It is the conversation behind it.",
+      challengeTitle: "The real work is not only how decisions are made. It is the conversation behind it.",
       challengeIntro:
         "Ownership, succession, board roles, family councils, employment expectations, wealth, and next-generation participation each carry emotion and business consequences. Gilbert helps families separate the issues, decide who belongs in the room, and move from tension to agreements.",
       challengeItems: [
@@ -770,7 +772,7 @@ export const COPY = {
             "Move from general concern to practical conversations about readiness, timing, criteria, and trust."
         },
         {
-          title: "Governance",
+          title: "How decisions are made",
           body:
             "Make family, ownership, board, and executive roles distinct enough that decisions do not blur."
         },
@@ -792,26 +794,24 @@ export const COPY = {
       ],
       evidence: {
         label: "Why this matters",
-        title: "What can happen when the family dimension is not clearly defined",
+        title: "Things can work well for years, until an important decision becomes harder than expected.",
         intro:
-          "Many family businesses do not fail because the business is weak. They struggle because expectations, decision rules, and succession conversations were never made clear.",
-        sourceNote:
-          "Benchmarks below are drawn from public PwC, Deloitte, and EY / University of St.Gallen family-business research. They are industry indicators, not private Gilbert Devlyn client results.",
+          "It is common for roles, expectations and ways of making decisions to remain informal. The difficulty usually appears when the family grows, leadership changes or people have different ideas about what should happen next.",
         stats: [
           {
-            value: "30%",
+            title: "Decisions become harder",
             label:
-              "of family businesses make it to the third generation"
+              "A decision that used to feel simple now involves more people, more expectations and more consequences."
           },
           {
-            value: "23%",
+            title: "Roles remain unspoken",
             label:
-              "of surveyed family businesses are actively implementing CEO succession plans"
+              "Family members may be working from different assumptions about responsibility, ownership or the future."
           },
           {
-            value: "19%",
+            title: "Conversations get postponed",
             label:
-              "of surveyed family businesses have a formal conflict-resolution mechanism"
+              "Important topics are often delayed because no one is sure how to begin without creating tension."
           }
         ],
         comparisonHeaders: {
@@ -834,8 +834,8 @@ export const COPY = {
               "Values and purpose may be understood by senior leaders but remain unwritten or weakly communicated across generations.",
             informalShort: "Values are understood by leaders but rarely written down.",
             advisory:
-              "The family documents shared principles, decision rights, and communication cadences so alignment is not dependent on memory or hierarchy.",
-            advisoryShort: "Shared principles and decision rights are documented for everyone."
+              "The family documents shared principles, who decides what, and communication rhythms so shared understanding is not dependent on memory or hierarchy.",
+            advisoryShort: "Shared principles and who decides what are documented for everyone."
           },
           {
             theme: "Conflict",
@@ -947,18 +947,18 @@ export const COPY = {
         "When used at the right moment, it gives Gilbert and the family a shared language for the first advisory conversation."
       ],
       toolCta: "See how the self-assessment works",
-      ctaTitle: "Learn how Gilbert works with families",
+      ctaTitle: "Ready to make the next decision clearer?",
       ctaBody:
-        "Start with who Gilbert is, the experience he brings, and the kinds of family-enterprise moments where his work is useful.",
-      ctaButton: "Learn about Gilbert",
+        "Most family businesses do not struggle because the business is weak. The challenges usually begin when roles, expectations and important decisions remain unclear for too long.",
+      ctaButton: "Start a conversation",
       ctaNote: "The self-assessment is available when the family is ready for a structured first read."
     },
     services: {
       label: "Services",
-      title: "How Gilbert works with business families",
+      title: "The right support depends on the decision your family needs to make.",
       intro:
-        "Different families need different kinds of support. Some need a focused project to clarify governance or succession. Others need a board voice, executive coaching, or a private advisory space for one person carrying a sensitive role.",
-      promiseTitle: "Advisory shaped around the decision in front of the family",
+        "Some families need help with one important decision. Others need ongoing support as roles, ownership or leadership change.",
+      promiseTitle: "Support shaped around the decision in front of the family",
       promiseBody:
         "The work starts by understanding the family system, the business context, and the conversation that has become difficult to hold. From there, Gilbert helps structure the right forum, sequence the work, and keep the family moving toward decisions it can use.",
       previewLabel: "How Gilbert Helps",
@@ -973,29 +973,29 @@ export const COPY = {
         {
           title: "Consulting projects",
           summary:
-            "Focused advisory projects for families that need structure around governance, succession, ownership, or family decision-making.",
+            "Focused projects that help families clarify how decisions are made, prepare for succession and agree on ownership roles and expectations.",
           forWhom:
-            "Families, ownership groups, family councils, or leadership teams facing a specific transition, unresolved topic, or governance gap.",
+            "Families, ownership groups, family councils, or leadership teams facing a specific transition, unresolved topic, or area that has not been clearly defined yet.",
           helpsWith:
             "Clarifying the issue, mapping who needs to be involved, designing the conversation process, facilitating key sessions, and turning agreements into practical next steps.",
           outcome:
             "A clearer decision path, documented agreements or priorities, and a practical rhythm for continuing the work after the project."
         },
         {
-          title: "Board service",
+          title: "Board & Governance Advisory",
           summary:
-            "Helping business families create a new board of directors or professionalize an existing one — a voice that connects business strategy with family context.",
+            "Helping business families create a board for the first time or bring clearer roles, responsibilities and ways of working to an existing board.",
           forWhom:
-            "Early-stage and growing businesses structuring a governance system for the first time, as well as established family-owned companies whose board needs to mature, professionalize, or better align with ownership.",
+            "Early-stage and growing businesses deciding how the board should work and who should be involved, as well as established family-owned companies whose board needs clearer connection with ownership.",
           helpsWith:
-            "Designing the board's structure and charter from the ground up, defining roles and decision rights, helping recruit the right mix of family and independent directors, and bringing family-enterprise perspective into board discussion so it understands family dynamics without becoming trapped by them.",
+            "Designing the board's structure and charter from the ground up, clarifying who decides what, helping recruit the right mix of family and independent directors, and bringing family-enterprise perspective into board discussion so it understands family dynamics without becoming trapped by them.",
           outcome:
-            "A functioning board — newly created or professionalized — that clearly separates ownership, management, family, and long-term continuity decisions."
+            "A functioning board that clearly separates ownership, management, family, and long-term continuity decisions."
         },
         {
           title: "Executive coaching",
           summary:
-            "Coaching for leaders operating inside family-business complexity, especially when authority, family expectations, and business performance overlap.",
+            "Coaching for leaders when authority, family expectations, and business performance overlap.",
           forWhom:
             "Family executives, non-family executives, successors, or senior leaders who need to lead with clarity while navigating family dynamics.",
           helpsWith:
@@ -1006,7 +1006,7 @@ export const COPY = {
         {
           title: "1:1 advisory",
           summary:
-            "Private advisory for owners, next-generation members, founders, or family leaders who need a confidential thinking partner.",
+            "Private advisory for owners, next-generation members, founders, or family leaders who need space to think through a difficult role, decision or conversation.",
           forWhom:
             "Individuals carrying a sensitive family-business role or preparing for a conversation that affects ownership, succession, leadership, or family trust.",
           helpsWith:
@@ -1015,15 +1015,15 @@ export const COPY = {
             "A clearer personal position, a more considered next move, and a better chance that the conversation happens with structure instead of impulse."
         }
       ],
-      ctaTitle: "Start with the kind of support the moment requires",
+      ctaTitle: "Start with the decision that needs attention now.",
       ctaBody:
-        "Some families begin with a self-assessment. Others begin with a conversation about a specific decision, transition, or governance question.",
-      diagnosticCta: "Let's work together",
-      aboutCta: "Learn about Gilbert"
+        "Some families begin with the self-assessment. Others begin with a conversation about a specific transition, role or decision.",
+      diagnosticCta: "Start a conversation",
+      aboutCta: "Begin the self-assessment"
     },
     about: {
       label: "About Gilbert",
-      title: "Lived family-enterprise experience, used with discretion",
+      title: "Experience from inside the family business, used to help other families move forward with clarity.",
       bio: [
         "Gilbert Devlyn comes from a multigenerational family business and has worked inside the complexity that often sits behind continuity: a cousin consortium, a board, a family council, shareholders, executives, and multiple decision-making spaces that do not always align.",
         "Across that system, different generations, perspectives, and life stages coexist: founders, siblings, cousins, and next-generation members looking to step in and take a role. Each brings valid expectations, but not always the same timeline or view of the future.",
@@ -1038,7 +1038,7 @@ export const COPY = {
           label: "years inside family enterprise"
         },
         {
-          value: "4 roles",
+          value: "Four Perspectives",
           label: "family member, owner, executive, board participant"
         },
         {
@@ -1055,9 +1055,9 @@ export const COPY = {
         embedUrl: ""
       },
       contextLabel: "Why lived experience matters",
-      contextTitle: "He understands the system from more than one seat",
+      contextTitle: "He understands the family business from more than one perspective",
       contextBody:
-        "Family-enterprise work is rarely about one issue. A succession conversation can touch ownership rights, sibling trust, board authority, employment expectations, wealth, and next-generation identity at the same time. Gilbert's value is not only that he has studied those dynamics. He has lived inside them and learned how to turn them into structured conversations.",
+        "Most families already know how to run the business. The harder part is agreeing on ownership, roles, expectations and the conversations that shape the future. Those questions are normal, but postponing them can make later decisions much harder.",
       contextItems: [
         {
           title: "Credibility across generations",
@@ -1065,17 +1065,17 @@ export const COPY = {
             "Gilbert can relate to senior generations protecting continuity and to next-generation members trying to find a responsible role."
         },
         {
-          title: "Strategic, not theoretical",
+          title: "Practical, not theoretical",
           body:
             "He knows the difference between governance that exists on paper and governance that families actually trust and use."
         },
         {
-          title: "Neutral rooms for hard topics",
+          title: "A structured space for difficult conversations",
           body:
             "He helps families slow the conversation down, separate the issues, and keep sensitive topics specific enough to move forward."
         },
         {
-          title: "Discretion as a working rule",
+          title: "Trust and discretion from the outset",
           body:
             "The work often involves private family concerns, owner expectations, and leadership questions. Trust and confidentiality shape the process from the beginning."
         }
@@ -1092,16 +1092,16 @@ export const COPY = {
       focusTitle: "Areas of Focus",
       focusItems: [
         "Family governance and council facilitation",
-        "Structuring and professionalizing the family system",
-        "Ownership transition and succession",
+        "Bringing clearer roles and ways of working to the family",
+        "Passing ownership and responsibility to the next generation",
         "Next-generation development and readiness",
-        "Board advisory and role clarity",
+        "Clarifying the board's role and how decisions are made",
         "Coaching for difficult conversations",
         "Coaching and mentorship for next-generation members stepping into ownership and leadership roles"
       ],
       testimonialsTitle: "Discreet by design",
       testimonialsSubtitle:
-        "Most of the work happens in moments that are not meant to be public: family conversations, ownership decisions, and transitions that require trust and confidentiality. For that reason, client relationships are handled privately and references are shared directly, when appropriate.",
+        "Much of this work involves private family conversations and sensitive ownership decisions. Client relationships are handled discreetly, and references are shared directly when appropriate.",
       situationsTitle: "Where this work helps",
       situations: [
         "A family preparing how next-generation members step into ownership and leadership",
@@ -1307,7 +1307,7 @@ export const COPY = {
     assessmentIntro: {
       title: "Start with a simple self-assessment",
       body:
-        "In about 10 minutes, see how clearly your family works together across eight practical family-business topics.",
+        "In about 10 minutes, see how clearly your family makes decisions and works together across eight practical areas.",
       startingPointNote:
         "This is a starting point for conversation - not a defined action plan, and not a judgment of the family or the business.",
       introBadge: "Simple starting point",
@@ -1327,23 +1327,23 @@ export const COPY = {
         {
           title: "Turn answers into a map",
           body:
-            "The result highlights maturity, priority topics, transparency signals, and a comparison link."
+            "See the answers in a simple visual map with clear summary points and focus areas."
         }
       ],
       resultSignalsLabel: "You leave with",
       resultSignals: [
-        "Maturity stage",
-        "Priority topics",
+        "A clear picture of where things stand today",
+        "The conversations that may need attention first",
         "Comparison link"
       ],
       notAuditTitle: "A safe, confidential space",
       gilbertContextTitle: "Why Gilbert starts here",
       gilbertContextBody:
-        "The assessment gives families a neutral map before the harder conversation begins. Gilbert uses it to identify where clarity, trust, and practical governance work should come first.",
+        "The self-assessment helps families see what is already working, what feels unclear and which conversation may need to happen first.",
       coverageLabel: "8 Family Business Topics",
       coverageTitle: "A shared map for the conversations families often avoid",
       coverageBody:
-        "Each topic reflects how family, ownership, and business intersect - highlighting where more clarity may be needed.",
+        "Each topic reflects how family, ownership, and business decisions overlap - highlighting where more clarity may be needed.",
       outcomesLabel: "What you receive",
       outcomesTitle: "A practical starting point",
       outcomes: [
@@ -1366,12 +1366,12 @@ export const COPY = {
       conversationTitle: "Begin with the assessment",
       conversationBody:
         "A complete view for family meetings, ownership conversations, and advisory discussions.",
-      conversationCta: "Start the assessment",
+      conversationCta: "Start the self-assessment",
     },
     intro:
-      "A guided self-assessment for family-owned businesses to understand clarity across eight family-enterprise topics.",
+      "A guided self-assessment for family-owned businesses to understand clarity across eight practical areas that shape how the family makes decisions and works together.",
     notAudit:
-      "This is a self-assessment, not an audit, test, or ranking. Your answers are handled privately and confidentially, and are used only to support a better conversation - never to judge the family or the business.",
+      "Your answers are private and are used only to prepare a more useful conversation. The self-assessment is not a test, audit or public benchmark.",
     preAssessmentPrivacy: {
       title: "Before you begin",
       body:
@@ -1505,7 +1505,7 @@ export const COPY = {
     loadingTitle: "Preparing your result",
     loadingBody: "Your responses are being organized across the eight topics.",
     overallScore: "Overall score",
-    maturityStage: "Maturity stage",
+    maturityStage: "Where things stand today",
     pillarScores: "Topic view",
     noScore: "Not scored",
     whatCanDo: "What the family can do",

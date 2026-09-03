@@ -1728,7 +1728,7 @@ function HomePage({ copy, language, onNavigate }) {
       label: language === "es" ? "años dentro de empresa familiar" : "years inside family enterprise"
     },
     {
-      value: "4 roles",
+      value: language === "es" ? "4 roles" : "Four Perspectives",
       label:
         language === "es"
           ? "familiar, propietario, ejecutivo y consejero"
@@ -1873,12 +1873,12 @@ function HomeProblemSection({ copy, language }) {
             {copy.home.helpingTitle}
           </h2>
           <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg sm:leading-9">
-            {copy.home.challengeIntro}
+            {copy.home.helpingIntro ?? copy.home.challengeIntro}
           </p>
           <p className="mt-6 border-l-2 border-[#C9B2DE] pl-4 text-sm font-semibold leading-6 text-forest/76">
             {language === "es"
               ? "El punto no es agregar más gobierno. Es separar los temas correctos para que la familia pueda decidir con calma."
-              : "The point is not to add more governance. It is to separate the right issues so the family can make decisions with more calm."}
+              : "The point is not to add more structure for its own sake. It is to separate the right issues so the family can make decisions with more calm."}
           </p>
         </div>
 
@@ -1931,9 +1931,11 @@ function HomeFamilyDimensionSection({ copy }) {
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {evidence.stats.map((stat) => (
-            <div key={stat.value} className="rounded-lg border border-forest/10 bg-parchment/32 p-6">
-              <p className="font-display text-5xl font-semibold text-forest">{stat.value}</p>
+          {evidence.stats.map((stat, index) => (
+            <div key={`${stat.title ?? stat.value}-${index}`} className="rounded-lg border border-forest/10 bg-parchment/32 p-6">
+              <p className="font-display text-2xl font-semibold leading-tight text-forest">
+                {stat.title ?? stat.value}
+              </p>
               <p className="mt-2 text-sm leading-6 text-ink/68">{stat.label}</p>
             </div>
           ))}
@@ -1959,7 +1961,9 @@ function HomeFamilyDimensionSection({ copy }) {
           ))}
         </div>
 
-        <p className="mt-4 text-xs font-medium leading-5 text-muted">{evidence.sourceNote}</p>
+        {evidence.sourceNote ? (
+          <p className="mt-4 text-xs font-medium leading-5 text-muted">{evidence.sourceNote}</p>
+        ) : null}
       </div>
     </section>
   );
@@ -4819,11 +4823,11 @@ function getHomeFinalCtaCopy(language) {
   }
 
   return {
-    title: "Get to know Gilbert",
+    title: "Ready to make the next decision clearer?",
     body:
-      "Every conversation about ownership, succession, or governance works better when you know who is guiding it. See Gilbert's background, experience, and approach before you reach out.",
+      "Start with the decision, role or transition that needs attention now.",
     note: "12+ years inside family enterprise, trained through FFI and IMD.",
-    primary: "Get to know Gilbert"
+    primary: "Start a conversation"
   };
 }
 
