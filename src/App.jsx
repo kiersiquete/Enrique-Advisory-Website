@@ -116,7 +116,7 @@ const RESULT_DETAIL_COPY = {
   en: {
     implementationGapTitle: "The implementation gap",
     implementationGapBody:
-      "After the self-assessment, most families can see the problem and even agree on the solution. The harder part is execution: who leads the work, how decisions are financed, how much time the family can commit, and how to keep momentum when sensitive conversations appear. Gilbert's role is to help convert insight into a sequence of conversations, agreements, and practical governance work.",
+      "After the self-assessment, most families can see the problem and may even agree on the solution. The harder part is deciding who leads the work, how decisions are funded, how much time the family can commit, and how to keep moving when sensitive conversations appear. Gilbert helps turn that insight into a sequence of conversations, agreements, and practical next steps.",
     topicSummaryLabel: "Topic map",
     topicSummaryTitle: "Results by topic",
     topicSummaryIntro:
@@ -159,7 +159,7 @@ const RESULT_DETAIL_COPY = {
   es: {
     implementationGapTitle: "La brecha de ejecución",
     implementationGapBody:
-      "Después de la autoevaluación, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es ejecutar: quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo sostener el avance cuando aparecen conversaciones sensibles. El rol de Gilbert es ayudar a convertir la autoevaluación en una secuencia de conversaciones, acuerdos y trabajo práctico de gobierno.",
+      "Después de la autoevaluación, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es decidir quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo seguir avanzando cuando aparecen conversaciones sensibles. Gilbert ayuda a convertir esa claridad en una secuencia de conversaciones, acuerdos y siguientes pasos prácticos.",
     topicSummaryLabel: "Mapa de temas",
     topicSummaryTitle: "Resultados por tema",
     topicSummaryIntro:
@@ -219,7 +219,7 @@ const PILLAR_GUIDANCE = {
         "Prioritize the rules that affect employment, ownership, information access, and conflict handling."
       ],
       executionRisk:
-        "Protocols can become documents that nobody uses if the family skips the hard alignment conversations.",
+        "Protocols can become documents that nobody uses if the family skips the hard conversations needed to get on the same page.",
       gilbertHelp:
         "Gilbert can help separate sensitive issues, sequence decisions, and turn a protocol into a living agreement."
     },
@@ -239,7 +239,7 @@ const PILLAR_GUIDANCE = {
         "Create an owner communication rhythm before tension appears around liquidity or control."
       ],
       executionRisk:
-        "Ownership alignment can stall when financial expectations are discussed informally or too late.",
+        "Owners can struggle to reach a shared understanding when financial expectations are discussed informally or too late.",
       gilbertHelp:
         "Gilbert can help owners separate emotional concerns from economic decisions and define a practical owner agenda."
     },
@@ -251,7 +251,7 @@ const PILLAR_GUIDANCE = {
       executionRisk:
         "Boards can look formal while still avoiding succession, risk, or performance conversations.",
       gilbertHelp:
-        "Gilbert can help clarify board roles and improve the connection between governance, strategy, and family context."
+        "Gilbert can help clarify board roles and connect its decisions with business strategy and family context."
     },
     management: {
       familyActions: [
@@ -259,14 +259,14 @@ const PILLAR_GUIDANCE = {
         "Separate family membership from management accountability."
       ],
       executionRisk:
-        "Professionalization gets difficult when role clarity touches family identity, compensation, or legacy expectations.",
+        "Bringing clearer roles and structure to management gets difficult when family identity, compensation, or legacy expectations are involved.",
       gilbertHelp:
-        "Gilbert can help frame professionalization as continuity work rather than a judgment on family members."
+        "Gilbert can help frame clearer management roles as continuity work rather than a judgment on family members."
     },
     "next-generation": {
       familyActions: [
         "Create a learning pathway for future owners before asking them to take formal roles.",
-        "Define participation rules, mentorship, and expectations for joining the business or governance spaces."
+        "Define participation rules, mentorship, and expectations for joining the business or family decision-making groups."
       ],
       executionRisk:
         "Next generation work often fails when younger members are either excluded or invited before they are prepared.",
@@ -321,7 +321,7 @@ const PILLAR_GUIDANCE = {
         "Crear un ritmo de comunicación entre propietarios antes de que aparezca tensión por liquidez o control."
       ],
       executionRisk:
-        "La alineación de propietarios se atora cuando las expectativas financieras se conversan informalmente o demasiado tarde.",
+        "A los propietarios les cuesta llegar a un entendimiento compartido cuando las expectativas financieras se conversan informalmente o demasiado tarde.",
       gilbertHelp:
         "Gilbert puede ayudar a separar preocupaciones emocionales de decisiones económicas y definir una agenda práctica de propietarios."
     },
@@ -333,7 +333,7 @@ const PILLAR_GUIDANCE = {
       executionRisk:
         "Un consejo puede verse formal y aun así evitar conversaciones de sucesión, riesgo o desempeño.",
       gilbertHelp:
-        "Gilbert puede ayudar a aclarar roles del consejo y conectar gobierno, estrategia y contexto familiar."
+        "Gilbert puede ayudar a aclarar los roles del consejo y conectar sus decisiones con la estrategia del negocio y el contexto familiar."
     },
     management: {
       familyActions: [
@@ -341,14 +341,14 @@ const PILLAR_GUIDANCE = {
         "Separar pertenencia familiar de rendición de cuentas en la gestión."
       ],
       executionRisk:
-        "La profesionalización se vuelve difícil cuando la claridad de roles toca identidad familiar, compensación o legado.",
+        "Dar mayor claridad y estructura a los roles de gestión se vuelve difícil cuando entran en juego la identidad familiar, la compensación o el legado.",
       gilbertHelp:
-        "Gilbert puede enmarcar la profesionalización como trabajo de continuidad, no como juicio sobre miembros de la familia."
+        "Gilbert puede presentar la claridad de los roles de gestión como trabajo de continuidad, no como juicio sobre miembros de la familia."
     },
     "next-generation": {
       familyActions: [
         "Crear una ruta de aprendizaje para futuros propietarios antes de pedirles roles formales.",
-        "Definir reglas de participación, mentoría y expectativas para entrar al negocio o a espacios de gobierno."
+        "Definir reglas de participación, mentoría y expectativas para entrar al negocio o a los espacios familiares de decisión."
       ],
       executionRisk:
         "El trabajo NextGen falla cuando los jóvenes son excluidos o invitados antes de estar preparados.",
@@ -1223,6 +1223,7 @@ export default function App() {
       {screen === "services" && (
         <ServicesPage
           copy={copy}
+          language={language}
           onNavigate={navigate}
         />
       )}
@@ -1728,11 +1729,11 @@ function HomePage({ copy, language, onNavigate }) {
       label: language === "es" ? "años dentro de empresa familiar" : "years inside family enterprise"
     },
     {
-      value: language === "es" ? "4 roles" : "Four Perspectives",
+      value: language === "es" ? "Cuatro perspectivas" : "Four Perspectives",
       label:
         language === "es"
-          ? "familiar, propietario, ejecutivo y consejero"
-          : "family member, owner, executive, board participant"
+          ? "familiar • propietario • ejecutivo • consejero"
+          : "family member • owner • executive • board participant"
     },
     {
       value: "FFI + IMD",
@@ -1833,14 +1834,24 @@ function HomePage({ copy, language, onNavigate }) {
               {finalCta.body}
             </p>
             <p className="mt-4 text-sm font-semibold text-white/58">{finalCta.note}</p>
-            <button
-              type="button"
-              className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-4 text-xs font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-              onClick={() => onNavigate("about")}
-            >
-              {finalCta.primary}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-4 text-xs font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
+                onClick={startConversation}
+              >
+                {finalCta.primary}
+                <ArrowRight aria-hidden="true" size={18} />
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-white/24 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
+                onClick={() => onNavigate("assessment-home")}
+              >
+                {finalCta.secondary}
+                <ArrowRight aria-hidden="true" size={18} />
+              </button>
+            </div>
           </div>
           <div className="relative hidden min-h-full overflow-hidden lg:block">
             <img
@@ -1877,8 +1888,8 @@ function HomeProblemSection({ copy, language }) {
           </p>
           <p className="mt-6 border-l-2 border-[#C9B2DE] pl-4 text-sm font-semibold leading-6 text-forest/76">
             {language === "es"
-              ? "El punto no es agregar más gobierno. Es separar los temas correctos para que la familia pueda decidir con calma."
-              : "The point is not to add more structure for its own sake. It is to separate the right issues so the family can make decisions with more calm."}
+              ? "El punto no es agregar más procesos. Es separar los temas correctos para que la familia pueda decidir con mayor claridad y menos tensión."
+              : "The point is not to add more structure for its own sake. It is to separate the right issues so the family can decide with greater clarity and less tension."}
           </p>
         </div>
 
@@ -1993,8 +2004,8 @@ function HomeHowGilbertWorksSection({ copy, language }) {
             className="h-full w-full object-cover object-[78%_center]"
             src="/gilbert-advisory-wall-session-gilbert-facing-family.png"
             alt={language === "es"
-              ? "Familia empresaria revisando un marco de gobierno en una sesión de asesoría"
-              : "Family enterprise group reviewing a governance framework in an advisory session"}
+              ? "Familia empresaria conversando sobre una decisión importante con Gilbert"
+              : "Business family discussing an important decision with Gilbert"}
           />
         </div>
 
@@ -2024,7 +2035,6 @@ function HomeHowGilbertWorksSection({ copy, language }) {
 }
 
 function HomeAssessmentEntrySection({ copy, language }) {
-  const assessmentCopy = getHomeAssessmentCopy(language);
   const steps = getHomeAssessmentSteps(language);
 
   return (
@@ -2032,7 +2042,7 @@ function HomeAssessmentEntrySection({ copy, language }) {
       <div className="mx-auto grid max-w-[1400px] gap-10 rounded-lg bg-[#F4EEE2] p-6 shadow-line sm:p-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {assessmentCopy.label}
+            {copy.nav.assessment}
           </p>
           <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
             {copy.home.toolTitle}
@@ -2044,13 +2054,6 @@ function HomeAssessmentEntrySection({ copy, language }) {
               {paragraph}
             </p>
           ))}
-          <div className="mt-2 flex gap-3 border-l-2 border-[#C9B2DE] pl-4">
-            <ShieldCheck aria-hidden="true" className="mt-1 shrink-0 text-forest" size={20} />
-            <div>
-              <p className="text-sm font-bold text-forest">{assessmentCopy.privacyTitle}</p>
-              <p className="mt-1 text-sm leading-6 text-ink/70">{assessmentCopy.privacyBody}</p>
-            </div>
-          </div>
           <ol className="mt-4 grid gap-4 sm:grid-cols-3">
             {steps.map((step, index) => (
               <li key={step} className="border-l border-forest/18 pl-4">
@@ -2067,8 +2070,15 @@ function HomeAssessmentEntrySection({ copy, language }) {
   );
 }
 
-function ServicesPage({ copy, onNavigate }) {
+function ServicesPage({ copy, language, onNavigate }) {
   const serviceIcons = [Compass, Landmark, Handshake, UsersRound];
+  const startConversation = () => {
+    const subject =
+      language === "es"
+        ? "Conversación con Gilbert Devlyn"
+        : "Conversation with Gilbert Devlyn";
+    window.location.href = `mailto:${copy.contactEmail}?subject=${encodeURIComponent(subject)}`;
+  };
 
   return (
     <section className="w-full">
@@ -2128,7 +2138,7 @@ function ServicesPage({ copy, onNavigate }) {
             <button
               type="button"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99]"
-              onClick={() => onNavigate("assessment-home")}
+              onClick={startConversation}
             >
               {copy.services.diagnosticCta}
               <ArrowRight aria-hidden="true" size={18} />
@@ -2136,7 +2146,7 @@ function ServicesPage({ copy, onNavigate }) {
             <button
               type="button"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/24 px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
-              onClick={() => onNavigate("about")}
+              onClick={() => onNavigate("assessment-home")}
             >
               {copy.services.aboutCta}
               <ArrowRight aria-hidden="true" size={18} />
@@ -2430,14 +2440,6 @@ function AboutPage({ copy, language, onNavigate }) {
 
             <p className="mt-6 text-base leading-7 text-white/76">{copy.about.toolReceiveBody}</p>
 
-            <div className="mt-6 flex gap-3 rounded-lg border border-white/16 bg-white/8 p-5">
-              <ShieldCheck aria-hidden="true" className="mt-1 shrink-0 text-[#F1C84C]" size={22} />
-              <div>
-                <p className="text-sm font-bold text-white">{copy.about.toolPrivacyTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-white/72">{copy.about.toolPrivacyBody}</p>
-              </div>
-            </div>
-
             <button
               type="button"
               className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-[#F1C84C] px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99]"
@@ -2525,13 +2527,13 @@ function AssessmentLanding({ copy, language, onStart }) {
           { value: "50", label: "preguntas" },
           { value: "8", label: "temas clave" },
           { value: "~10", label: "minutos" },
-          { value: "0", label: "preparación" }
+          { value: "Sin", label: "preparación necesaria" }
         ]
       : [
           { value: "50", label: "questions" },
           { value: "8", label: "key topics" },
           { value: "~10", label: "minutes" },
-          { value: "0", label: "prep needed" }
+          { value: "No", label: "preparation needed" }
         ];
   const deliverables =
     language === "es"
@@ -4814,38 +4816,22 @@ function getResultDetailCopy(language) {
 function getHomeFinalCtaCopy(language) {
   if (language === "es") {
     return {
-      title: "Conoce a Gilbert",
+      title: "¿Listos para aclarar la siguiente decisión?",
       body:
-        "Toda conversación sobre propiedad, sucesión o gobierno corporativo funciona mejor cuando se conoce a quien la guía. Descubre la trayectoria, experiencia y forma de trabajar de Gilbert antes de escribirle.",
-      note: "Más de 12 años dentro de empresa familiar, formado en FFI e IMD.",
-      primary: "Conoce a Gilbert"
+        "La mayoría de las empresas familiares no tienen dificultades porque el negocio sea débil. Los problemas suelen comenzar cuando los roles, las expectativas y las decisiones importantes permanecen sin aclarar durante demasiado tiempo.",
+      note: "Comienza por la decisión, el rol o la transición que necesita atención ahora.",
+      primary: "Iniciar una conversación",
+      secondary: "Comenzar la autoevaluación"
     };
   }
 
   return {
     title: "Ready to make the next decision clearer?",
     body:
-      "Start with the decision, role or transition that needs attention now.",
-    note: "12+ years inside family enterprise, trained through FFI and IMD.",
-    primary: "Start a conversation"
-  };
-}
-
-function getHomeAssessmentCopy(language) {
-  if (language === "es") {
-    return {
-      label: "Autoevaluación",
-      privacyTitle: "Privado y confidencial",
-      privacyBody:
-        "La información sensible se maneja con cuidado. La autoevaluación ayuda a preparar una conversación, no a exponer respuestas individuales en público."
-    };
-  }
-
-  return {
-    label: "Self-assessment",
-    privacyTitle: "Private and confidential",
-    privacyBody:
-      "Sensitive information is handled carefully. The self-assessment prepares a conversation, not a public review of individual answers."
+      "Most family businesses do not struggle because the business is weak. The challenges usually begin when roles, expectations and important decisions remain unclear for too long.",
+    note: "Start with the decision, role, or transition that needs attention now.",
+    primary: "Start a conversation",
+    secondary: "Begin the self-assessment"
   };
 }
 
@@ -5028,8 +5014,8 @@ function getPillarProblem(pillar, item, band, language) {
   }
   if (band.id === "priority") {
     return language === "es"
-      ? `El puntaje sugiere que este pilar puede depender demasiado de acuerdos informales. ${description} Cuando la complejidad aumenta, esa informalidad puede retrasar decisiones o crear interpretaciones distintas.`
-      : `The score suggests this pillar may depend too much on informal agreements. ${description} When complexity increases, that informality can delay decisions or create competing interpretations.`;
+      ? `El puntaje sugiere que este tema puede depender demasiado de acuerdos informales. ${description} Cuando participan más personas o las decisiones tienen mayores consecuencias, esa informalidad puede causar retrasos o interpretaciones distintas.`
+      : `The score suggests this topic may depend too much on informal agreements. ${description} When more people are involved or decisions carry greater consequences, that informality can cause delays or competing interpretations.`;
   }
   if (band.id === "focus") {
     return language === "es"
@@ -5099,7 +5085,7 @@ function pillarBandClasses(bandId) {
 function getFooterContent(language) {
   if (language === "es") {
     return {
-      trusted: "Acompañamiento confidencial para familias que navegan propiedad, sucesión y gobierno",
+      trusted: "Ayudando a las familias a aclarar decisiones sobre propiedad, sucesión y consejo",
       credentialsLabel: "Credenciales y confianza",
       credentials: [
         "IMBA · University of Denver",
@@ -5111,12 +5097,12 @@ function getFooterContent(language) {
       linkedinUrl: "https://www.linkedin.com/in/gilbert-devlyn-advisory",
       socialLabel: "Canales sociales",
       emailLabel: "Email",
-      trustLine: "Asesoría discreta y confidencial. Los materiales sensibles se comparten solo después de alineación."
+      trustLine: "Las conversaciones privadas y la información sensible se manejan con discreción."
     };
   }
 
   return {
-    trusted: "Trusted by families navigating ownership, succession, and governance",
+    trusted: "Helping families clarify ownership, succession, and board decisions",
     credentialsLabel: "Credentials & trust",
     credentials: [
       "IMBA · University of Denver",
@@ -5128,8 +5114,7 @@ function getFooterContent(language) {
     linkedinUrl: "https://www.linkedin.com/in/gilbert-devlyn-advisory",
     socialLabel: "Social channels",
     emailLabel: "Email",
-    trustLine:
-      "Discreet, confidentiality-first advisory. Sensitive materials shared only after alignment."
+    trustLine: "Private conversations and sensitive information are handled discreetly."
   };
 }
 
