@@ -28,6 +28,18 @@ function normalizeLocalPublicOrigin(origin) {
   }
 }
 
+export function trustedPublicOrigin() {
+  try {
+    const url = new URL(String(process.env.PUBLIC_SITE_URL || ""));
+    const allowedProtocol =
+      url.protocol === "https:" || (url.protocol === "http:" && process.env.NODE_ENV !== "production");
+    const rootOnly = !url.username && !url.password && ["", "/"].includes(url.pathname) && !url.search && !url.hash;
+    return allowedProtocol && rootOnly ? url.origin : "";
+  } catch {
+    return "";
+  }
+}
+
 export function requestOrigin(req, fallbackProtocol = "http") {
   const headers = req.headers || {};
   const protocol = headerValue(headers, "x-forwarded-proto") || req.protocol || fallbackProtocol;
@@ -36,14 +48,26 @@ export function requestOrigin(req, fallbackProtocol = "http") {
 }
 
 export function publicBaseUrl(req, fallbackProtocol = "https") {
-  if (process.env.PUBLIC_SITE_URL) return process.env.PUBLIC_SITE_URL.replace(/\/$/, "");
+  const configured = trustedPublicOrigin();
+  if (configured) return configured;
 
-  const headers = req.headers || {};
-  const origin = originFrom(headerValue(headers, "origin"));
-  if (origin) return normalizeLocalPublicOrigin(origin);
+  if (process.env.NODE_ENV === "production") return "";
 
-  const referer = originFrom(headerValue(headers, "referer") || headerValue(headers, "referrer"));
-  if (referer) return normalizeLocalPublicOrigin(referer);
+  const requestHeaders = req?.headers || {};
+  const suppliedOrigin = normalizeLocalPublicOrigin(originFrom(headerValue(requestHeaders, "origin")));
+  try {
+    const suppliedUrl = new URL(suppliedOrigin);
+    if (["localhost", "127.0.0.1"].includes(suppliedUrl.hostname)) return suppliedUrl.origin;
+  } catch {
+    // Fall back to the request host for local command-line and integration tests.
+  }
 
-  return normalizeLocalPublicOrigin(requestOrigin(req, fallbackProtocol));
+  const current = requestOrigin(req, fallbackProtocol);
+  const local = normalizeLocalPublicOrigin(current);
+  try {
+    const url = new URL(local);
+    return ["localhost", "127.0.0.1"].includes(url.hostname) ? url.origin : "";
+  } catch {
+    return "";
+  }
 }

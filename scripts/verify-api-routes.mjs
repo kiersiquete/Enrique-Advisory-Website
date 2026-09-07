@@ -1,18 +1,65 @@
 import assert from "node:assert/strict";
-import { createApp } from "../server/index.js";
-import { encodeActionToken } from "../server/summary-report.js";
 
-function validationError(message) {
-  const error = new Error(message);
-  error.code = "VALIDATION_ERROR";
-  return error;
+import { createApp } from "../server/index.js";
+import { resetRateLimitsForTests } from "../server/http-security.js";
+import { PRIVACY_POLICY_VERSION, validationError } from "../server/validation.js";
+import { FULL_QUESTIONS } from "../src/data/assessment.js";
+
+delete process.env.TRUST_PROXY;
+delete process.env.VERCEL;
+
+const GROUP_ID = "a".repeat(32);
+const FULL_GROUP_ID = "f".repeat(32);
+const COMPLETE_ANSWERS = Object.fromEntries(FULL_QUESTIONS.en.map((question) => [question.id, 3]));
+
+function sampleBody(name = "Kier Test") {
+  const createdAt = "2026-09-07T01:00:00.000Z";
+  const finalizedAt = "2026-09-07T01:05:00.000Z";
+  return {
+    createdAt,
+    finalizedAt,
+    mode: "full",
+    language: "en",
+    profile: {
+      name,
+      email: `${name.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "")}@example.com`,
+      phoneCountry: "mx",
+      phoneCountryLabel: "MX",
+      phoneDialCode: "+52",
+      phoneNumber: "55 1234 5678",
+      phoneDigits: "5512345678",
+      phoneInternational: "+52 55 1234 5678",
+      relationship: "founder",
+      relationshipLabel: "Founder",
+      relationshipOther: "",
+      generation: "first",
+      generationLabel: "First generation",
+      country: "mx",
+      countryLabel: "Mexico"
+    },
+    answers: COMPLETE_ANSWERS,
+    groupId: GROUP_ID,
+    participantId: "1".repeat(32),
+    privacyConsent: {
+      accepted: true,
+      policyVersion: PRIVACY_POLICY_VERSION,
+      acceptedAt: "2026-09-07T01:00:30.000Z"
+    },
+    reportRequest: {
+      type: "summary",
+      status: "requested",
+      recipientEmail: `${name.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "")}@example.com`,
+      language: "en",
+      contactRequested: false,
+      requestedAt: finalizedAt
+    }
+  };
 }
 
 function listen(app) {
   return new Promise((resolve) => {
     const server = app.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      resolve({ server, baseUrl: `http://127.0.0.1:${address.port}` });
+      resolve({ server, baseUrl: `http://127.0.0.1:${server.address().port}` });
     });
   });
 }
@@ -23,54 +70,52 @@ async function requestJson(baseUrl, path, options = {}) {
   return { response, body };
 }
 
-async function requestText(baseUrl, path, options = {}) {
-  const response = await fetch(`${baseUrl}${path}`, options);
-  const body = await response.text().catch(() => "");
-  return { response, body };
-}
-
 const calls = [];
+resetRateLimitsForTests();
 const app = createApp({
   async persistAssessment(body) {
     calls.push({ type: "persist", body });
-    if (body?.forceValidationError) throw validationError("Respondent email is required");
-    if (body?.forceServerError) throw new Error("Airtable is sad");
-    if (body?.forceComparisonReady) {
-      return {
-        ok: true,
-        persistence: "airtable",
-        sessionKey: "session-test",
-        group: { id: "GROUP123", participants: [{ id: "p1" }, { id: "p2" }] }
-      };
-    }
-    return { ok: true, persistence: "airtable", sessionKey: "session-test" };
+    if (body.profile.name === "Persistence Validation") throw validationError("Persistence rejected the record");
+    if (body.profile.name === "Persistence Error") throw new Error("Internal persistence detail");
+    const comparisonReady = body.profile.name === "Comparison Ready";
+    const duplicate = body.profile.name === "Duplicate Submission";
+    return {
+      ok: true,
+      persistence: "airtable",
+      result: body.result,
+      groupStatus: {
+        participantCount: comparisonReady ? 2 : 1,
+        maxParticipants: 3,
+        isComplete: false
+      },
+      isNewSubmission: !duplicate,
+      sessionKey: "must-not-leak",
+      group: {
+        participants: [{ email: "other@example.com", answers: { secret: 5 } }]
+      }
+    };
   },
   async getComparisonGroup(groupId) {
-    calls.push({ type: "group", groupId });
-    if (!groupId) throw new Error("Missing group key");
-    if (groupId === "FAIL") throw new Error("Lookup failed");
-    return { id: groupId, participants: [] };
+    calls.push({ type: "advisor-group", groupId });
+    return {
+      id: groupId,
+      participants: [
+        { id: "1".repeat(32), answers: { secret: 5 }, result: { overall: 60, pillarScores: [] } },
+        { id: "2".repeat(32), answers: { secret: 1 }, result: { overall: 40, pillarScores: [] } }
+      ]
+    };
   },
   async getGroupCount(groupId) {
     calls.push({ type: "group-count", groupId });
-    if (groupId === "FAIL") throw new Error("Lookup failed");
-    return groupId === "FULLGROUP" ? 3 : 1;
+    return groupId === FULL_GROUP_ID ? 3 : 1;
   },
   async sendSummaryEmails(body, result, options) {
-    calls.push({ type: "email", body, result, options });
-    return { skipped: true, reason: "test-email-sender" };
+    calls.push({ type: "summary-email", body, result, options });
+    return { sent: true, provider: "test", messageId: "private-message-id" };
   },
-  async sendInviteEmail(body) {
-    calls.push({ type: "invite-email", body });
-    return { sent: true, provider: "test-invite-sender" };
-  },
-  async sendCallRequest(body) {
-    calls.push({ type: "call-request", body });
-    return { sent: true, provider: "test-call-sender" };
-  },
-  async sendComparisonEmail(group, options) {
-    calls.push({ type: "comparison-email", group, options });
-    return { sent: true, provider: "test-comparison-sender" };
+  async sendComparisonEmail(group) {
+    calls.push({ type: "comparison-email", group });
+    return { sent: true, provider: "test" };
   }
 });
 
@@ -82,165 +127,132 @@ try {
   const saveOk = await requestJson(baseUrl, "/api/results", {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: "http://localhost:5173" },
-    body: JSON.stringify({ profile: { email: "kier@example.com" } })
+    body: JSON.stringify(sampleBody())
   });
   assert.equal(saveOk.response.status, 200);
   assert.equal(saveOk.body.persistence, "airtable");
-  assert.equal(saveOk.body.email.reason, "test-email-sender");
-  assert.equal(calls.find((call) => call.type === "email").options.baseUrl, "http://localhost:5173");
+  assert.equal(saveOk.body.email.sent, true);
+  assert.equal(saveOk.body.email.messageId, undefined, "provider identifiers must remain private");
+  assert.equal(saveOk.body.group, undefined, "participant responses must not include advisor group data");
+  assert.equal(saveOk.body.sessionKey, undefined);
+  assert.doesNotMatch(JSON.stringify(saveOk.body), /other@example\.com|"answers"|secret/);
+  assert.match(saveOk.response.headers.get("cache-control"), /no-store/);
+  assert.equal(saveOk.response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(saveOk.response.headers.get("x-frame-options"), "DENY");
+  assert.equal(saveOk.response.headers.get("x-powered-by"), null);
+  assert.equal(calls.find((call) => call.type === "summary-email").options.baseUrl, "http://localhost:5173");
 
-  const validation = await requestJson(baseUrl, "/api/results", {
+  const invalid = await requestJson(baseUrl, "/api/results", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ forceValidationError: true })
+    body: JSON.stringify({})
   });
-  assert.equal(validation.response.status, 400);
-  assert.equal(validation.body.error, "Respondent email is required");
+  assert.equal(invalid.response.status, 400);
+  assert.equal(invalid.body.error, "Respondent name is invalid");
 
-  const saveFailure = await requestJson(baseUrl, "/api/results", {
+  const malformedResponse = await fetch(`${baseUrl}/api/results`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ forceServerError: true })
+    body: "{not-json"
   });
-  assert.equal(saveFailure.response.status, 500);
-  assert.equal(saveFailure.body.error, "Unable to save assessment result");
+  const malformedBody = await malformedResponse.text();
+  assert.equal(malformedResponse.status, 400);
+  assert.match(malformedBody, /Request body must be valid JSON/);
+  assert.doesNotMatch(malformedBody, /D:\\|server[\\/]index\.js|SyntaxError/);
 
-  const resultWrongMethod = await requestJson(baseUrl, "/api/results", { method: "GET" });
-  assert.equal(resultWrongMethod.response.status, 405);
-  assert.equal(resultWrongMethod.response.headers.get("allow"), "POST");
-  assert.equal(resultWrongMethod.body.error, "Method not allowed");
+  resetRateLimitsForTests();
 
-  const inviteOk = await requestJson(baseUrl, "/api/invitations", {
+  const oversizedResponse = await fetch(`${baseUrl}/api/results`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      invitedEmail: "family@example.com",
-      inviteLink: "https://gilbertdevlyn.com/diagnostic?group=GROUP123&lang=en",
-      language: "en"
-    })
+    body: JSON.stringify({ padding: "x".repeat(70 * 1024) })
   });
-  assert.equal(inviteOk.response.status, 200);
-  assert.equal(inviteOk.body.email.sent, true);
-  assert.equal(inviteOk.body.email.provider, "test-invite-sender");
+  assert.equal(oversizedResponse.status, 413);
+  assert.deepEqual(await oversizedResponse.json(), { error: "Request body is too large" });
 
-  const inviteWrongMethod = await requestJson(baseUrl, "/api/invitations", { method: "GET" });
-  assert.equal(inviteWrongMethod.response.status, 405);
-  assert.equal(inviteWrongMethod.response.headers.get("allow"), "POST");
-  assert.equal(inviteWrongMethod.body.error, "Method not allowed");
+  resetRateLimitsForTests();
 
-  const groupsRemoved = await requestText(baseUrl, "/api/groups?group=GROUP123");
-  assert.notEqual(groupsRemoved.response.headers.get("content-type")?.split(";")[0], "application/json");
-  assert.doesNotMatch(groupsRemoved.body, /"participants"/);
+  const serverFailure = await requestJson(baseUrl, "/api/results", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sampleBody("Persistence Error"))
+  });
+  assert.equal(serverFailure.response.status, 500);
+  assert.equal(serverFailure.body.error, "Unable to save assessment result");
 
   const comparisonReady = await requestJson(baseUrl, "/api/results", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ profile: { email: "kier@example.com" }, forceComparisonReady: true })
+    body: JSON.stringify(sampleBody("Comparison Ready"))
   });
   assert.equal(comparisonReady.response.status, 200);
-  const comparisonEmailCall = calls.find((call) => call.type === "comparison-email");
-  assert.equal(comparisonEmailCall.group.id, "GROUP123");
+  assert.equal(comparisonReady.body.group, undefined);
+  assert.ok(calls.some((call) => call.type === "advisor-group"));
+  assert.ok(calls.some((call) => call.type === "comparison-email"));
 
-  const comparisonToken = encodeActionToken({ groupId: "GROUP123", language: "en" });
-  const comparisonOk = await requestJson(baseUrl, `/api/comparison?data=${comparisonToken}`);
-  assert.equal(comparisonOk.response.status, 200);
-  assert.equal(comparisonOk.body.group.id, "GROUP123");
-  assert.equal(comparisonOk.body.language, "en");
-
-  const comparisonInvalid = await requestJson(baseUrl, "/api/comparison?data=not-valid-base64url");
-  assert.equal(comparisonInvalid.response.status, 400);
-
-  const comparisonWrongMethod = await requestJson(baseUrl, "/api/comparison", { method: "POST" });
-  assert.equal(comparisonWrongMethod.response.status, 405);
-  assert.equal(comparisonWrongMethod.response.headers.get("allow"), "GET");
-
-  const missingGroupStatus = await requestJson(baseUrl, "/api/group-status");
-  assert.equal(missingGroupStatus.response.status, 400);
-  assert.equal(missingGroupStatus.body.error, "Missing comparison group key");
-
-  const groupStatusOpen = await requestJson(baseUrl, "/api/group-status?group=OPENGROUP");
-  assert.equal(groupStatusOpen.response.status, 200);
-  assert.equal(groupStatusOpen.body.participantCount, 1);
-  assert.equal(groupStatusOpen.body.maxParticipants, 3);
-  assert.equal(groupStatusOpen.body.group, undefined);
-  assert.equal(groupStatusOpen.body.participants, undefined);
-
-  const groupStatusFull = await requestJson(baseUrl, "/api/group-status?group=FULLGROUP");
-  assert.equal(groupStatusFull.response.status, 200);
-  assert.equal(groupStatusFull.body.participantCount, 3);
-
-  const groupStatusFailure = await requestJson(baseUrl, "/api/group-status?group=FAIL");
-  assert.equal(groupStatusFailure.response.status, 500);
-
-  const groupStatusWrongMethod = await requestJson(baseUrl, "/api/group-status", { method: "POST" });
-  assert.equal(groupStatusWrongMethod.response.status, 405);
-  assert.equal(groupStatusWrongMethod.response.headers.get("allow"), "GET");
-
-  const scheduleToken = encodeActionToken({
-    name: "Kier",
-    email: "kier@example.com",
-    language: "en",
-    participant: {
-      phone: "+52 55 1234 5678",
-      country: "Mexico",
-      relationship: "Founder",
-      generation: "First generation"
-    },
-    result: {
-      overall: 70,
-      level: "Level 3 - Established",
-      focusAreas: ["Family Governance Bodies: 63/100"]
-    },
-    context: {
-      groupId: "GROUP123",
-      requestedAt: "Jun 20, 2026, 5:25 PM"
-    }
+  const duplicate = await requestJson(baseUrl, "/api/results", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(sampleBody("Duplicate Submission"))
   });
-  const scheduleOk = await requestText(baseUrl, `/api/schedule-call?data=${scheduleToken}`);
-  assert.equal(scheduleOk.response.status, 200);
-  assert.match(scheduleOk.body, /Gilbert has been notified/);
-  const callRequest = calls.find((call) => call.type === "call-request");
-  assert.equal(callRequest.body.result.overall, 70);
-  assert.equal(callRequest.body.participant.country, "Mexico");
-  assert.equal(callRequest.body.context.groupId, "GROUP123");
+  assert.equal(duplicate.response.status, 200);
+  assert.equal(duplicate.body.email.reason, "duplicate-submission");
 
-  const scheduleEsToken = encodeActionToken({
-    name: "Kier",
-    email: "kier@example.com",
-    language: "es"
+  for (const name of ["Rate Limit Four", "Rate Limit Five"]) {
+    const allowed = await requestJson(baseUrl, "/api/results", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sampleBody(name))
+    });
+    assert.equal(allowed.response.status, 200);
+  }
+
+  const spoofedRateLimit = await requestJson(baseUrl, "/api/results", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Forwarded-For": "203.0.113.50" },
+    body: JSON.stringify(sampleBody("Rate Limit Bypass"))
   });
-  const scheduleEsOk = await requestText(baseUrl, `/api/schedule-call?data=${scheduleEsToken}`);
-  assert.equal(scheduleEsOk.response.status, 200);
-  assert.match(scheduleEsOk.body, /Gilbert fue notificado/);
+  assert.equal(spoofedRateLimit.response.status, 429, "untrusted forwarding headers must not bypass rate limits");
 
-  const scheduleInvalid = await requestText(baseUrl, "/api/schedule-call?data=not-valid-base64url");
-  assert.equal(scheduleInvalid.response.status, 400);
-  assert.match(scheduleInvalid.body, /no longer valid/);
+  const crossOrigin = await requestJson(baseUrl, "/api/group-status?group=" + GROUP_ID, {
+    headers: { Origin: "https://attacker.invalid" }
+  });
+  assert.equal(crossOrigin.response.status, 403);
+  assert.equal(crossOrigin.body.error, "Cross-origin request denied");
 
-  const scheduleWrongMethod = await requestJson(baseUrl, "/api/schedule-call", { method: "POST" });
-  assert.equal(scheduleWrongMethod.response.status, 405);
-  assert.equal(scheduleWrongMethod.response.headers.get("allow"), "GET");
-  assert.equal(scheduleWrongMethod.body.error, "Method not allowed");
+  const groupOpen = await requestJson(baseUrl, "/api/group-status?group=" + GROUP_ID);
+  assert.equal(groupOpen.response.status, 200);
+  assert.deepEqual(groupOpen.body, { ok: true, participantCount: 1, maxParticipants: 3 });
+  assert.match(groupOpen.response.headers.get("cache-control"), /no-store/);
 
-  assert.deepEqual(
-    calls.map((call) => call.type),
-    [
-      "persist",
-      "email",
-      "persist",
-      "persist",
-      "invite-email",
-      "persist",
-      "email",
-      "comparison-email",
-      "group",
-      "group-count",
-      "group-count",
-      "group-count",
-      "call-request",
-      "call-request"
-    ]
-  );
+  const groupFull = await requestJson(baseUrl, "/api/group-status?group=" + FULL_GROUP_ID);
+  assert.equal(groupFull.response.status, 200);
+  assert.equal(groupFull.body.participantCount, 3);
+
+  const invalidGroup = await requestJson(baseUrl, "/api/group-status?group=GROUP123");
+  assert.equal(invalidGroup.response.status, 400);
+
+  for (const [path, expectedStatus] of [
+    ["/api/invitations", 410],
+    ["/api/summary-pdf?data=forged", 410],
+    ["/api/schedule-call?data=forged", 410],
+    ["/api/advisor-report-pdf?data=forged", 404],
+    ["/api/comparison?data=forged", 404]
+  ]) {
+    const disabled = await requestJson(baseUrl, path);
+    assert.equal(disabled.response.status, expectedStatus, `${path} must remain unavailable`);
+  }
+
+  const unknownApiRoute = await requestJson(baseUrl, "/api/unknown");
+  assert.equal(unknownApiRoute.response.status, 404);
+  assert.deepEqual(unknownApiRoute.body, { error: "Not found" });
+
+  const wrongMethod = await requestJson(baseUrl, "/api/results");
+  assert.equal(wrongMethod.response.status, 405);
+  assert.equal(wrongMethod.response.headers.get("allow"), "POST");
+
+  assert.equal(calls.some((call) => call.type === "invite-email"), false);
+  assert.equal(calls.some((call) => call.type === "call-request"), false);
 
   console.log("API route verification passed.");
 } finally {

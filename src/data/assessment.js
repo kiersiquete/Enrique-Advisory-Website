@@ -1372,8 +1372,8 @@ export const COPY = {
     preAssessmentPrivacy: {
       title: "Before you begin",
       body:
-        "When you save and request your report, your profile, answers and results are automatically shared with Gilbert to prepare for a useful conversation. Requesting contact is optional and separate from sharing your results. Your answers are not published or shared with other family members. If you invite others, each person receives their own results, and Gilbert receives the combined view. You can pause at any time; your progress is saved in this browser.",
-      primaryCta: "I understand - begin",
+        "When you save and request your report, your profile, answers and results are automatically shared with Gilbert to prepare for a useful conversation. Requesting contact is optional and separate from sharing your results. Your answers are not published or shared with other family members. If you invite others, each person receives their own results, and Gilbert receives the combined view. You can pause at any time; your progress is kept in this browser for up to 24 hours.",
+      primaryCta: "I understand and agree - begin",
       secondaryCta: "Read the privacy policy"
     },
     chooseMode: "Choose a mode",
@@ -1524,13 +1524,13 @@ export const COPY = {
         "Only pillar-level differences are compared. Individual answers are not shared question by question.",
       inviteEmail: "Family member email",
       inviteEmailPlaceholder: "family@example.com",
-      generateInvite: "Send invitation email",
-      sendingInvite: "Sending invitation...",
+      generateInvite: "Open invitation email",
+      sendingInvite: "Opening email...",
       copyInvite: "Copy email invitation",
       copied: "Link copied",
       inviteReady: "Invitation email ready",
-      inviteSent: "Invitation sent",
-      inviteSentBody: "We sent the private group link to {email}.",
+      inviteSent: "Invitation email ready",
+      inviteSentBody: "Your email app opened a private group invitation for {email}. Send it when you are ready.",
       inviteSentModalTitle: "Invitation email sent",
       inviteSentModalBody:
         "We sent the private group link to {email}. They can open the email and complete the self-assessment from the same comparison group.",
@@ -2268,8 +2268,8 @@ export const COPY = {
     preAssessmentPrivacy: {
       title: "Antes de empezar",
       body:
-        "Al guardar y solicitar tu reporte, tu perfil, respuestas y resultados se comparten automáticamente con Gilbert para preparar una conversación útil. Solicitar contacto es opcional e independiente de compartir tus resultados. Tus respuestas no se publican ni se comparten con otros familiares. Si invitas a otras personas, cada quien recibe sus propios resultados y Gilbert recibe la vista combinada. Puedes pausar en cualquier momento; tu avance se guarda en este navegador.",
-      primaryCta: "Entendido, empezar",
+        "Al guardar y solicitar tu reporte, tu perfil, respuestas y resultados se comparten automáticamente con Gilbert para preparar una conversación útil. Solicitar contacto es opcional e independiente de compartir tus resultados. Tus respuestas no se publican ni se comparten con otros familiares. Si invitas a otras personas, cada quien recibe sus propios resultados y Gilbert recibe la vista combinada. Puedes pausar en cualquier momento; tu avance se conserva en este navegador hasta por 24 horas.",
+      primaryCta: "Entiendo y acepto, empezar",
       secondaryCta: "Leer la política de privacidad"
     },
     chooseMode: "Elige una modalidad",
@@ -2420,13 +2420,13 @@ export const COPY = {
         "Solo se comparan diferencias por pilar. Las respuestas individuales no se comparten pregunta por pregunta.",
       inviteEmail: "Email del familiar",
       inviteEmailPlaceholder: "familiar@correo.com",
-      generateInvite: "Enviar invitación por email",
-      sendingInvite: "Enviando invitación...",
+      generateInvite: "Abrir invitación por email",
+      sendingInvite: "Abriendo email...",
       copyInvite: "Copiar invitación",
       copied: "Liga copiada",
       inviteReady: "Email de invitación listo",
-      inviteSent: "Invitación enviada",
-      inviteSentBody: "Enviamos la liga privada de grupo a {email}.",
+      inviteSent: "Email de invitación listo",
+      inviteSentBody: "Tu aplicación de email abrió una invitación privada para {email}. Envíala cuando estés listo.",
       inviteSentModalTitle: "Invitación enviada por email",
       inviteSentModalBody:
         "Enviamos la liga privada de grupo a {email}. Esa persona puede abrir el email y completar la autoevaluación dentro del mismo grupo de comparación.",

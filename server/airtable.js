@@ -1,4 +1,12 @@
-import { answerValidationMessage, normalizeAssessmentSubmission } from "./scoring.js";
+import {
+  normalizeAssessmentSubmission,
+  validateAssessmentSubmission
+} from "./scoring.js";
+import {
+  isValidOpaqueId,
+  normalizeEmailAddress,
+  validationError
+} from "./validation.js";
 
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 export const MAX_GROUP_PARTICIPANTS = 3;
@@ -110,8 +118,8 @@ async function airtableRequest(path, options = {}) {
   return data;
 }
 
-function escapeFormulaValue(value = "") {
-  return String(value).replace(/'/g, "\\'");
+export function escapeFormulaValue(value = "") {
+  return String(value).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 async function findRecordsByFormula(tableKey, formula, maxRecords = 100) {
@@ -151,28 +159,9 @@ async function upsertByFormula(tableKey, formula, fields) {
   const existingRecords = await findRecordsByFormula(tableKey, formula);
   const existing = existingRecords[0] ?? null;
   if (existing) {
-    const updated = await updateRecord(tableKey, existing.id, fields);
-    await deleteRecords(tableKey, existingRecords.slice(1));
-    return updated;
+    return updateRecord(tableKey, existing.id, fields);
   }
   return createRecord(tableKey, fields);
-}
-
-async function deleteRecords(tableKey, records) {
-  if (records.length === 0) return [];
-
-  const table = encodeTableName(getTable(tableKey));
-  const deleted = [];
-
-  for (let index = 0; index < records.length; index += 10) {
-    const batch = records.slice(index, index + 10);
-    const params = new URLSearchParams();
-    batch.forEach((record) => params.append("records[]", record.id));
-    const data = await airtableRequest(`${table}?${params.toString()}`, { method: "DELETE" });
-    deleted.push(...(data.records ?? []));
-  }
-
-  return deleted;
 }
 
 function selectLanguage(language) {
@@ -195,13 +184,11 @@ function formatDateTimeForAirtable(value) {
 }
 
 function sessionKeyFor(body) {
-  const email = body.profile?.email || "unknown-email";
-  const createdAt = body.createdAt || new Date().toISOString();
-  return `${email}|${createdAt}`;
+  return `assessment-${body.participantId}`;
 }
 
 function normalizedEmail(body) {
-  return body.profile?.email?.trim().toLowerCase() || "";
+  return normalizeEmailAddress(body.profile?.email);
 }
 
 function getPriorityDimensions(pillarScores = []) {
@@ -233,47 +220,9 @@ function parseJson(value, fallback = null) {
   }
 }
 
-function validationError(message) {
-  const error = new Error(message);
-  error.code = "VALIDATION_ERROR";
-  return error;
-}
-
-function validateAssessmentBody(body = {}) {
-  if (!normalizedEmail(body)) {
-    throw validationError("Respondent email is required");
-  }
-
-  if (!body.profile?.name?.trim()) {
-    throw validationError("Respondent name is required");
-  }
-
-  if (!body.answers || typeof body.answers !== "object" || Array.isArray(body.answers)) {
-    throw validationError("Assessment answers are required");
-  }
-
-  if (Object.keys(body.answers).length === 0) {
-    throw validationError("Assessment answers are required");
-  }
-
-  const answerError = answerValidationMessage(body);
-  if (answerError) {
-    throw validationError(answerError);
-  }
-
-  const result = body.result ?? {};
-  if (!Number.isFinite(Number(result.overall ?? body.overall))) {
-    throw validationError("Assessment result score is required");
-  }
-
-  const pillarScores = result.pillarScores ?? body.pillarScores;
-  if (!Array.isArray(pillarScores) || pillarScores.length === 0) {
-    throw validationError("Assessment pillar scores are required");
-  }
-}
-
 function respondentFields(body, now, assessmentKey = "") {
   const profile = body.profile ?? {};
+  const notes = assessmentKey ? `Assessment key: ${assessmentKey}` : "";
 
   return {
     "Respondent Name": profile.name || "",
@@ -290,7 +239,7 @@ function respondentFields(body, now, assessmentKey = "") {
     Source: "Website Self-Assessment",
     "Created At": formatDateTimeForAirtable(body.createdAt || now),
     "Last Assessment At": formatDateTimeForAirtable(now),
-    Notes: assessmentKey ? `Assessment key: ${assessmentKey}` : ""
+    Notes: notes
   };
 }
 
@@ -299,10 +248,11 @@ async function upsertRespondent(body, now, sessionKey) {
   if (!email) return null;
 
   const assessmentKey = sessionKey || sessionKeyFor(body);
+  const fields = respondentFields(body, now, assessmentKey);
   return upsertByFormula(
     "respondents",
-    `{Notes} = '${escapeFormulaValue(`Assessment key: ${assessmentKey}`)}'`,
-    respondentFields(body, now, assessmentKey)
+    `{Notes} = '${escapeFormulaValue(fields.Notes)}'`,
+    fields
   );
 }
 
@@ -338,7 +288,9 @@ function sessionFields(body, sessionKey, now) {
 }
 
 export async function getGroupParticipantCount(groupId) {
-  if (!groupId) return 0;
+  if (!isValidOpaqueId(groupId)) {
+    throw validationError("Comparison group key is invalid");
+  }
   const records = await findRecordsByFormula(
     "sessions",
     `{Group Key} = '${escapeFormulaValue(groupId)}'`
@@ -349,28 +301,11 @@ export async function getGroupParticipantCount(groupId) {
   return emails.size;
 }
 
-async function groupFields(body, now, existingRecord) {
-  const participantCount = await getGroupParticipantCount(body.groupId);
+function groupFields(body, now, existingRecord, participantCount) {
   const existing = existingRecord?.fields ?? {};
-  const createdByEmail = existing["Created By Email"] || body.profile?.email || body.inviteEmail || "";
+  const createdByEmail = existing["Created By Email"] || body.profile?.email || "";
   const createdByName = existing["Created By Name"] || body.profile?.name || "";
-  const inviteLink = body.inviteLink || existing["Invite Link"] || "";
-  const providedParticipantCount = Number(body.groupParticipantCount);
-  const effectiveParticipantCount = Math.min(
-    MAX_GROUP_PARTICIPANTS,
-    Math.max(
-      participantCount,
-      Number.isFinite(providedParticipantCount) ? providedParticipantCount : 1
-    )
-  );
-  const notes = [
-    `Creator: ${createdByName || "Unknown"} <${createdByEmail || "no email"}>`,
-    `Latest participant: ${body.profile?.name || "Unknown"} <${body.profile?.email || "no email"}>`,
-    inviteLink ? `Invite link: ${inviteLink}` : "",
-    body.inviteEmail ? `Invited email: ${body.inviteEmail}` : ""
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const effectiveParticipantCount = Math.min(MAX_GROUP_PARTICIPANTS, participantCount);
 
   return {
     "Group Key": body.groupId,
@@ -378,9 +313,9 @@ async function groupFields(body, now, existingRecord) {
     "Created By Name": createdByName,
     "Participant Count": effectiveParticipantCount,
     Status: effectiveParticipantCount >= 2 ? "Ready for Comparison" : "Waiting for Participants",
-    "Invite Link": inviteLink,
+    "Invite Link": "",
     "Created At": existing["Created At"] || formatDateTimeForAirtable(body.createdAt || now),
-    Notes: notes
+    Notes: "Participant details are retained in assessment sessions and are not exposed publicly."
   };
 }
 
@@ -414,18 +349,63 @@ function getQuestionOrder(questionId) {
 
 export async function persistAssessmentToAirtable(body) {
   const normalizedSubmission = normalizeAssessmentSubmission(body);
-  validateAssessmentBody(normalizedSubmission);
+  validateAssessmentSubmission(normalizedSubmission);
 
   if (!getConfig()) {
     throw new Error("Missing Airtable configuration");
   }
 
-  const normalizedBody = {
-    ...normalizedSubmission,
-    groupId: String(normalizedSubmission.groupId ?? "").trim()
-  };
+  const normalizedBody = normalizedSubmission;
   const now = new Date().toISOString();
   const sessionKey = sessionKeyFor(normalizedBody);
+
+  const existingSession = await findRecordByFormula(
+    "sessions",
+    `{Session Key} = '${escapeFormulaValue(sessionKey)}'`
+  );
+  const existingSessionFields = existingSession?.fields ?? {};
+  if (
+    existingSession &&
+    (String(existingSessionFields["Group Key"] || "") !== normalizedBody.groupId ||
+      normalizeEmailAddress(existingSessionFields["Respondent Email"]) !== normalizedEmail(normalizedBody))
+  ) {
+    throw validationError("Assessment participant identifier is already in use");
+  }
+
+  const groupSessionRecords = await findRecordsByFormula(
+    "sessions",
+    `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`
+  );
+  const participantConflict = groupSessionRecords.some((record) => {
+    const fields = record.fields ?? {};
+    return (
+      fields["Participant ID"] === normalizedBody.participantId &&
+      normalizeEmailAddress(fields["Respondent Email"]) !== normalizedEmail(normalizedBody)
+    );
+  });
+  if (participantConflict) {
+    throw validationError("Assessment participant identifier is already in use");
+  }
+
+  const duplicateEmail = groupSessionRecords.some((record) => {
+    const fields = record.fields ?? {};
+    return (
+      normalizeEmailAddress(fields["Respondent Email"]) === normalizedEmail(normalizedBody) &&
+      fields["Participant ID"] !== normalizedBody.participantId
+    );
+  });
+  if (duplicateEmail) {
+    throw validationError("This email has already submitted to the comparison group");
+  }
+
+  const participantEmails = new Set(
+    groupSessionRecords
+      .map((record) => normalizeEmailAddress(record.fields?.["Respondent Email"]))
+      .filter(Boolean)
+  );
+  if (!existingSession && participantEmails.size >= MAX_GROUP_PARTICIPANTS) {
+    throw validationError("This comparison group is already full");
+  }
 
   await upsertRespondent(normalizedBody, now, sessionKey);
 
@@ -435,17 +415,19 @@ export async function persistAssessmentToAirtable(body) {
     sessionFields(normalizedBody, sessionKey, now)
   );
 
-  if (normalizedBody.groupId) {
-    const existingGroup = await findRecordByFormula(
-      "groups",
-      `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`
-    );
-    await upsertByFormula(
-      "groups",
-      `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`,
-      await groupFields(normalizedBody, now, existingGroup)
-    );
-  }
+  const existingGroup = await findRecordByFormula(
+    "groups",
+    `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`
+  );
+  const participantCount = Math.min(
+    MAX_GROUP_PARTICIPANTS,
+    participantEmails.size + (existingSession || participantEmails.has(normalizedEmail(normalizedBody)) ? 0 : 1)
+  );
+  await upsertByFormula(
+    "groups",
+    `{Group Key} = '${escapeFormulaValue(normalizedBody.groupId)}'`,
+    groupFields(normalizedBody, now, existingGroup, participantCount)
+  );
 
   await upsertByFormula(
     "answers",
@@ -453,11 +435,17 @@ export async function persistAssessmentToAirtable(body) {
     answerFields(normalizedBody, sessionKey, now)
   );
 
-  const group = normalizedBody.groupId
-    ? await getComparisonGroupFromAirtable(normalizedBody.groupId)
-    : null;
-
-  return { ok: true, persistence: "airtable", sessionKey, group, result: normalizedBody.result };
+  return {
+    ok: true,
+    persistence: "airtable",
+    result: normalizedBody.result,
+    groupStatus: {
+      participantCount,
+      maxParticipants: MAX_GROUP_PARTICIPANTS,
+      isComplete: participantCount >= MAX_GROUP_PARTICIPANTS
+    },
+    isNewSubmission: !existingSession
+  };
 }
 
 export async function getComparisonGroupFromAirtable(groupId) {
@@ -466,8 +454,8 @@ export async function getComparisonGroupFromAirtable(groupId) {
   }
 
   const groupKey = String(groupId ?? "").trim();
-  if (!groupKey) {
-    throw new Error("Missing group key");
+  if (!isValidOpaqueId(groupKey)) {
+    throw validationError("Comparison group key is invalid");
   }
 
   const groupRecord = await findRecordByFormula(

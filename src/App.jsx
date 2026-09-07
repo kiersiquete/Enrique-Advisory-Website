@@ -44,6 +44,11 @@ const STORAGE_KEY = "family-business-maturity-latest";
 const GROUP_STORAGE_KEY = "family-business-maturity-groups";
 const ASSESSMENT_DRAFT_STORAGE_KEY = "family-business-maturity-draft";
 const COOKIE_CONSENT_KEY = "gilbert_devlyn_cookie_consent";
+const PRIVACY_POLICY_VERSION = "2026-09-07";
+const DRAFT_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const RESULT_STORAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const GROUP_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
+const ENABLE_MOCK_ROUTES = import.meta.env.DEV;
 const MAX_GROUP_PARTICIPANTS = 3;
 const MIN_COMPARISON_PARTICIPANTS = 2;
 const PHONE_COUNTRY_LOOKUP = new Map(PHONE_COUNTRY_OPTIONS.map((option) => [option.id, option]));
@@ -628,14 +633,17 @@ function formatPhoneNumber(countryId, value, countryOption = PHONE_COUNTRY_LOOKU
 
 function loadLatestResult() {
   try {
-    const result = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const result = readExpiringStorage(STORAGE_KEY);
     if (!result) return null;
 
     const params =
       typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
     const routeGroupId = params?.get("group")?.trim();
 
-    if (routeGroupId || params?.has("mock-results") || params?.has("mock-comparison")) {
+    if (
+      routeGroupId ||
+      (ENABLE_MOCK_ROUTES && (params?.has("mock-results") || params?.has("mock-comparison")))
+    ) {
       return result;
     }
 
@@ -656,7 +664,7 @@ function loadLatestResult() {
 
 function loadAssessmentDraft() {
   try {
-    const draft = JSON.parse(localStorage.getItem(ASSESSMENT_DRAFT_STORAGE_KEY));
+    const draft = readExpiringStorage(ASSESSMENT_DRAFT_STORAGE_KEY);
     if (!draft?.mode || !draft?.language) return null;
 
     const params =
@@ -674,7 +682,7 @@ function loadAssessmentDraft() {
 }
 
 function saveAssessmentDraft(draft) {
-  localStorage.setItem(ASSESSMENT_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  writeExpiringStorage(ASSESSMENT_DRAFT_STORAGE_KEY, draft, DRAFT_STORAGE_TTL_MS);
 }
 
 function clearAssessmentDraft() {
@@ -682,27 +690,78 @@ function clearAssessmentDraft() {
 }
 
 function loadGroups() {
+  if (!ENABLE_MOCK_ROUTES) return {};
   try {
-    return JSON.parse(localStorage.getItem(GROUP_STORAGE_KEY)) ?? {};
+    return readExpiringStorage(GROUP_STORAGE_KEY) ?? {};
   } catch {
     return {};
   }
 }
 
 function saveGroups(groups) {
-  localStorage.setItem(GROUP_STORAGE_KEY, JSON.stringify(groups));
+  if (!ENABLE_MOCK_ROUTES) return;
+  writeExpiringStorage(GROUP_STORAGE_KEY, groups, GROUP_STORAGE_TTL_MS);
+}
+
+function readExpiringStorage(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  const envelope = JSON.parse(raw);
+  if (!envelope || !Number.isFinite(envelope.expiresAt) || envelope.expiresAt <= Date.now()) {
+    localStorage.removeItem(key);
+    return null;
+  }
+  return envelope.value ?? null;
+}
+
+function writeExpiringStorage(key, value, ttlMs) {
+  localStorage.setItem(
+    key,
+    JSON.stringify({ version: 2, expiresAt: Date.now() + ttlMs, value })
+  );
+}
+
+function createOpaqueId() {
+  if (!globalThis.crypto?.getRandomValues) {
+    throw new Error("Secure random identifiers are unavailable in this browser");
+  }
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function isValidOpaqueId(value) {
+  return /^[a-f0-9]{32}$/.test(String(value ?? ""));
 }
 
 function createGroupId() {
-  const random =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID().slice(0, 8)
-      : Math.random().toString(36).slice(2, 10);
-  return random.toUpperCase();
+  return createOpaqueId();
 }
 
 function createParticipantId() {
-  return `participant-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  return createOpaqueId();
+}
+
+function browserStoredResult(resultPackage) {
+  const finalized = Boolean(
+    resultPackage?.finalizedAt || resultPackage?.reportRequest?.status === "requested"
+  );
+
+  return {
+    mode: resultPackage.mode,
+    language: resultPackage.language,
+    result: resultPackage.result,
+    createdAt: resultPackage.createdAt,
+    ...(finalized
+      ? {
+          finalizedAt: resultPackage.finalizedAt,
+          reportRequest: {
+            status: "requested",
+            contactRequested: resultPackage.reportRequest?.contactRequested === true
+          }
+        }
+      : {})
+  };
 }
 
 function getInviteUrl(groupId, language) {
@@ -788,6 +847,7 @@ function createMockResultPackage(language = "en") {
     ])
   );
   const result = calculateResults(questions, answers);
+  const createdAt = new Date().toISOString();
 
   return {
     mode: "full",
@@ -811,14 +871,21 @@ function createMockResultPackage(language = "en") {
     },
     answers,
     result,
-    createdAt: new Date().toISOString(),
+    createdAt,
+    groupId: "d".repeat(32),
+    participantId: "1".repeat(32),
+    privacyConsent: {
+      accepted: true,
+      policyVersion: PRIVACY_POLICY_VERSION,
+      acceptedAt: createdAt
+    },
     isMock: true
   };
 }
 
 function createMockComparisonGroup(language = "en", participantCount = 2, scenario = "default") {
   const questions = FULL_QUESTIONS[language] ?? FULL_QUESTIONS.en;
-  const groupId = scenario === "empty-states" ? "DEMO-EMPTY" : "DEMO-COMPARE";
+  const groupId = scenario === "empty-states" ? "e".repeat(32) : "d".repeat(32);
   const firstAnswers = Object.fromEntries(
     questions.map((question, index) => [
       question.id,
@@ -863,7 +930,7 @@ function createMockComparisonGroup(language = "en", participantCount = 2, scenar
   const firstPackage = {
     ...base,
     groupId,
-    participantId: "demo-founder",
+    participantId: "1".repeat(32),
     profile: {
       ...base.profile,
       name: language === "es" ? "Fundador demo" : "Demo Founder",
@@ -877,7 +944,7 @@ function createMockComparisonGroup(language = "en", participantCount = 2, scenar
   const secondPackage = {
     ...base,
     groupId,
-    participantId: "demo-nextgen",
+    participantId: "2".repeat(32),
     profile: {
       ...base.profile,
       name: language === "es" ? "NextGen demo" : "Demo NextGen",
@@ -891,7 +958,7 @@ function createMockComparisonGroup(language = "en", participantCount = 2, scenar
   const thirdPackage = {
     ...base,
     groupId,
-    participantId: "demo-owner",
+    participantId: "3".repeat(32),
     profile: {
       ...base.profile,
       name: language === "es" ? "Propietario demo" : "Demo Owner",
@@ -951,9 +1018,11 @@ export default function App() {
 
   const copy = COPY[language];
   const isMockDemoRoute =
+    ENABLE_MOCK_ROUTES &&
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("mock-comparison");
   const isMockResultRoute =
+    ENABLE_MOCK_ROUTES &&
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).has("mock-results");
 
@@ -975,6 +1044,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!ENABLE_MOCK_ROUTES) return;
     const params = new URLSearchParams(window.location.search);
     if (params.has("mock-comparison")) {
       const mockLanguage = params.get("lang") === "es" ? "es" : "en";
@@ -1010,10 +1080,14 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.has("mock-results") || params.has("mock-comparison")) return;
+    if (ENABLE_MOCK_ROUTES && (params.has("mock-results") || params.has("mock-comparison"))) return;
 
-    const groupId = params.get("group")?.trim();
+    const groupId = params.get("group")?.trim().toLowerCase();
     if (!groupId) return;
+    if (!isValidOpaqueId(groupId)) {
+      window.history.replaceState({}, "", SCREEN_ROUTES["assessment-home"]);
+      return;
+    }
 
     if (window.location.pathname !== SCREEN_ROUTES["assessment-home"]) {
       window.history.replaceState({}, "", `${SCREEN_ROUTES["assessment-home"]}${window.location.search}`);
@@ -1040,29 +1114,10 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("view") !== "admin-comparison") return;
-
-    const token = params.get("data");
-    if (!token) return;
-
-    setScreen("loading");
-    fetch(`/api/comparison?data=${encodeURIComponent(token)}`)
-      .then((response) => response.json().catch(() => ({})))
-      .then((data) => {
-        if (data?.group) {
-          setLanguage(data.language === "es" ? "es" : "en");
-          setActiveComparisonGroup(data.group);
-          setScreen("comparison");
-        } else {
-          setScreen("home");
-        }
-      })
-      .catch(() => setScreen("home"));
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has("mock-results") || params.has("mock-comparison") || params.has("group")) return;
+    if (
+      (ENABLE_MOCK_ROUTES && (params.has("mock-results") || params.has("mock-comparison"))) ||
+      params.has("group")
+    ) return;
 
     const draft = loadAssessmentDraft();
     if (!draft) return;
@@ -1078,7 +1133,11 @@ export default function App() {
 
   useEffect(() => {
     if (latestResult) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(latestResult));
+      writeExpiringStorage(
+        STORAGE_KEY,
+        browserStoredResult(latestResult),
+        RESULT_STORAGE_TTL_MS
+      );
     }
   }, [latestResult]);
 
@@ -1109,7 +1168,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleComplete(answers, profile) {
+  function handleComplete(answers, profile, privacyConsent) {
     const mode = activeMode;
     const questions = FULL_QUESTIONS[language];
     const validQuestionIds = new Set(questions.map((question) => question.id));
@@ -1132,7 +1191,8 @@ export default function App() {
         result,
         createdAt: new Date().toISOString(),
         groupId: pendingGroupId ?? createGroupId(),
-        participantId: createParticipantId()
+        participantId: createParticipantId(),
+        privacyConsent
       };
 
       setLatestResult(resultPackage);
@@ -1188,7 +1248,7 @@ export default function App() {
 
   async function submitFinalResult(resultPackage) {
     const response = await persistResult(resultPackage);
-    setLatestResult(resultPackage);
+    setLatestResult(browserStoredResult(resultPackage));
     return response;
   }
 
@@ -1602,15 +1662,6 @@ function PrivacyPolicyModal({ copy, onClose }) {
 }
 
 function PreAssessmentPrivacyModal({ copy, onDismiss, onReadPolicy }) {
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === "Escape") onDismiss();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onDismiss]);
-
   if (!copy || typeof document === "undefined") return null;
 
   return createPortal(
@@ -3308,10 +3359,18 @@ function AssessmentFlow({
     ...(usableDraft?.profile ?? {})
   }));
   const draftStartedAtRef = useRef(usableDraft?.startedAt ?? new Date().toISOString());
-  const [showPrivacyNotice, setShowPrivacyNotice] = useState(() => !usableDraft);
+  const [privacyConsent, setPrivacyConsent] = useState(() => usableDraft?.privacyConsent ?? null);
+  const [showPrivacyNotice, setShowPrivacyNotice] = useState(
+    () => usableDraft?.privacyConsent?.accepted !== true
+  );
   const awaitingPolicyReturnRef = useRef(false);
 
   function dismissPrivacyNotice() {
+    setPrivacyConsent({
+      accepted: true,
+      policyVersion: PRIVACY_POLICY_VERSION,
+      acceptedAt: new Date().toISOString()
+    });
     setShowPrivacyNotice(false);
   }
 
@@ -3370,6 +3429,7 @@ function AssessmentFlow({
       profileStepComplete,
       answers,
       index,
+      privacyConsent,
       updatedAt: new Date().toISOString()
     };
 
@@ -3384,6 +3444,7 @@ function AssessmentFlow({
     profile,
     profileStepComplete,
     profileTouched,
+    privacyConsent,
     question
   ]);
 
@@ -3432,7 +3493,10 @@ function AssessmentFlow({
   function submitProfile(event) {
     event.preventDefault();
     setProfileTouched(true);
-    if (!profileIsComplete) return;
+    if (!profileIsComplete || privacyConsent?.accepted !== true) {
+      setShowPrivacyNotice(privacyConsent?.accepted !== true);
+      return;
+    }
     setProfileStepComplete(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -3470,7 +3534,7 @@ function AssessmentFlow({
   function goNext() {
     if (!isAssessmentAnswered(currentAnswer)) return;
     if (isLast) {
-      onComplete(answers, profileForResult());
+      onComplete(answers, profileForResult(), privacyConsent);
       return;
     }
     const nextQuestion = questions[index + 1];
@@ -3749,20 +3813,6 @@ function ResultsScreen({
     submitInFlightRef.current = true;
     try {
       const submittedAt = new Date().toISOString();
-      const advisorPillarNotes = buildPillarBreakdowns(
-        resultPackageForSave.result,
-        resultPackageForSave.language
-      ).map((breakdown) => ({
-        id: breakdown.id,
-        label: breakdown.label,
-        score: breakdown.score,
-        rating: breakdown.band.label,
-        priority: breakdown.score !== null && breakdown.score < 80,
-        meaning: breakdown.whatItMeans,
-        familyCanDo: breakdown.familyActions,
-        whereFamiliesGetStuck: breakdown.executionRisk,
-        gilbertCanHelp: breakdown.gilbertHelp
-      }));
       await onSubmitFinal({
         ...resultPackageForSave,
         finalizedAt: submittedAt,
@@ -3772,18 +3822,6 @@ function ResultsScreen({
           recipientEmail: resultPackageForSave.profile?.email || "",
           language: resultPackageForSave.language,
           contactRequested,
-          detailedAnalysisRetained: true,
-          advisorDetail: {
-            visibility: "internal",
-            note:
-              "User-facing report should stay concise; use this retained detail for Gilbert/admin follow-up.",
-            delivery: {
-              destination: "Airtable Raw Result JSON",
-              nextStep:
-                "Use this internal detail to prepare Gilbert's follow-up notes or the requested summary report."
-            },
-            pillarNotes: advisorPillarNotes
-          },
           requestedAt: submittedAt
         }
       });
@@ -4089,31 +4127,27 @@ function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHom
     };
   }, [groupId]);
 
-  async function createInvite() {
+  function createInvite() {
     const nextInviteEmail = inviteEmail.trim();
-    if (!nextInviteEmail) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextInviteEmail) || /[\r\n]/.test(nextInviteEmail)) {
       setInviteError(comparisonCopy.inviteEmailRequired);
       return;
     }
 
     setInvitePending(true);
     setInviteError("");
-    try {
-      const inviteLink = getInviteUrl(groupId, language);
-      await sendInvitationEmail({
-        invitedEmail: nextInviteEmail,
-        inviteLink,
-        groupId,
-        language,
-        inviterName
-      });
-      setInvitedEmail(nextInviteEmail);
-      setInviteEmail("");
-    } catch (error) {
-      setInviteError(comparisonCopy.inviteSendError);
-    } finally {
-      setInvitePending(false);
-    }
+    const inviteLink = getInviteUrl(groupId, language);
+    const safeInviterName = String(inviterName || "").replace(/[\r\n]+/g, " ").trim();
+    const subject = language === "es"
+      ? "Invitación a la Autoevaluación de Empresa Familiar"
+      : "Invitation to the Family Enterprise Self-Assessment";
+    const body = language === "es"
+      ? `${safeInviterName ? `${safeInviterName} te invita` : "Te invito"} a completar la autoevaluación privada de Gilbert Devlyn:\n\n${inviteLink}`
+      : `${safeInviterName ? `${safeInviterName} invites you` : "You are invited"} to complete Gilbert Devlyn's private self-assessment:\n\n${inviteLink}`;
+    window.location.href = `mailto:${nextInviteEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setInvitedEmail(nextInviteEmail);
+    setInviteEmail("");
+    setInvitePending(false);
   }
 
   return (
@@ -4876,7 +4910,7 @@ function getCompareInviteCopy(language) {
         },
         {
           title: "Descubre en qué coinciden y en qué difieren",
-          body: "Una vista de comparación simple muestra acuerdos y brechas por tema, no pregunta por pregunta."
+          body: "Gilbert recibe una comparación por tema para preparar una conversación útil; los familiares no ven respuestas ajenas."
         }
       ],
       diagramTitle: "Qué revela la comparación",
@@ -4886,7 +4920,7 @@ function getCompareInviteCopy(language) {
       divergenceExampleLabel: "Ej.: Preparación para la sucesión",
       formTitle: "Invita a alguien ahora",
       formBody:
-        "Ingresa su email y le enviaremos una invitación privada para completar la autoevaluación.",
+        "Ingresa su email para abrir una invitación privada en tu propia aplicación de email.",
       checkingGroup: "Revisando el estado del grupo...",
       fullTitle: "Este grupo ya está completo",
       fullBody:
@@ -4911,7 +4945,7 @@ function getCompareInviteCopy(language) {
       },
       {
         title: "See where perspectives align, and where they differ",
-        body: "A simple comparison view shows agreement and gaps by topic, not question by question."
+        body: "Gilbert receives a topic-level comparison to prepare a useful conversation; family members never see one another's answers."
       }
     ],
     diagramTitle: "What the comparison reveals",
@@ -4920,7 +4954,7 @@ function getCompareInviteCopy(language) {
     divergenceLabel: "Where perspectives differ",
     divergenceExampleLabel: "e.g. Succession readiness",
     formTitle: "Invite someone now",
-    formBody: "Enter their email and we will send a private invitation to complete the self-assessment.",
+    formBody: "Enter their email to open a private invitation in your own email app.",
     checkingGroup: "Checking group status...",
     fullTitle: "This group is already complete",
     fullBody:
@@ -5148,7 +5182,6 @@ function ScoreRing({ score }) {
 }
 
 async function persistResult(resultPackage) {
-  const result = resultPackage.result ?? {};
   const response = await fetch("/api/results", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -5158,42 +5191,24 @@ async function persistResult(resultPackage) {
       language: resultPackage.language,
       profile: resultPackage.profile,
       answers: resultPackage.answers,
-      result: resultPackage.result,
       groupId: resultPackage.groupId,
       participantId: resultPackage.participantId,
-      inviteEmail: resultPackage.inviteEmail,
-      inviteLink: resultPackage.inviteLink,
-      groupParticipantCount: resultPackage.groupParticipantCount,
+      privacyConsent: resultPackage.privacyConsent,
       finalizedAt: resultPackage.finalizedAt,
-      reportRequest: resultPackage.reportRequest,
-      overall: result.overall,
-      stageId: result.stage?.id,
-      pillarScores: result.pillarScores,
-      transparency: result.transparency
+      reportRequest: resultPackage.reportRequest
     })
   });
 
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Unable to save assessment result");
+  }
+
   const data = await response.json().catch(() => ({}));
 
-  if (!response.ok || data.persistence !== "airtable") {
+  if (data.persistence !== "airtable") {
     throw new Error(data.error || "Unable to save assessment result");
   }
 
   return data;
-}
-
-async function sendInvitationEmail(payload) {
-  const response = await fetch("/api/invitations", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok || data.ok !== true) {
-    throw new Error(data.error || "Unable to send invitation email");
-  }
-
-  return data.email;
 }

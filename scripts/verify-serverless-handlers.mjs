@@ -1,11 +1,25 @@
 import assert from "node:assert/strict";
 
+import { FULL_QUESTIONS } from "../src/data/assessment.js";
+import { resetRateLimitsForTests } from "../server/http-security.js";
+import { PRIVACY_POLICY_VERSION } from "../server/validation.js";
+
 process.env.AIRTABLE_API_TOKEN = "test-token";
 process.env.AIRTABLE_BASE_ID = "appTestBase";
+process.env.PUBLIC_SITE_URL = "https://gilbertdevlyn.com";
 delete process.env.SMTP_HOST;
 delete process.env.SMTP_PORT;
 delete process.env.SMTP_USER;
 delete process.env.SMTP_PASS;
+resetRateLimitsForTests();
+
+const TABLES = {
+  Respondents: [],
+  "Assessment Sessions": [],
+  "Comparison Groups": [],
+  "Assessment Answers": []
+};
+let recordCounter = 0;
 
 function createResponse() {
   return {
@@ -26,8 +40,26 @@ function createResponse() {
     send(payload) {
       this.body = payload;
       return this;
+    },
+    end() {
+      return this;
     }
   };
+}
+
+function unescapeFormulaString(value) {
+  let result = "";
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === "\\" && index + 1 < value.length) index += 1;
+    result += value[index];
+  }
+  return result;
+}
+
+function formulaMatches(record, formula) {
+  const match = formula?.match(/^\{(.+)\} = '(.*)'$/s);
+  if (!match) return true;
+  return String(record.fields[match[1]] ?? "") === unescapeFormulaString(match[2]);
 }
 
 function airtableJson(data, ok = true) {
@@ -40,248 +72,159 @@ function airtableJson(data, ok = true) {
 }
 
 globalThis.fetch = async (url, options = {}) => {
+  const parsed = new URL(url);
+  const tableName = decodeURIComponent(parsed.pathname.split("/")[3] ?? "");
+  const recordId = parsed.pathname.split("/")[4] ?? "";
+  const records = TABLES[tableName];
   const method = options.method ?? "GET";
-  const pathname = new URL(url).pathname;
-  const tableName = decodeURIComponent(pathname.split("/")[3] ?? "");
+  assert.ok(records, `Unexpected Airtable table: ${tableName}`);
 
-  if (tableName === "Respondents" && method === "GET") return airtableJson({ records: [] });
-  if (tableName === "Respondents" && method === "POST") {
-    return airtableJson({ id: "rec-respondent", fields: JSON.parse(options.body).fields });
+  if (method === "GET") {
+    const formula = parsed.searchParams.get("filterByFormula");
+    const maxRecords = Number(parsed.searchParams.get("maxRecords") || 100);
+    return airtableJson({ records: records.filter((record) => formulaMatches(record, formula)).slice(0, maxRecords) });
   }
-  if (tableName === "Assessment Sessions" && method === "GET") {
-    if (url.includes("SERVERLESSGROUP")) {
-      return airtableJson({
-        records: [
-          {
-            id: "rec-session-group",
-            fields: {
-              "Participant ID": "participant-serverless",
-              "Respondent Email": "serverless@example.com",
-              "Completed At": "Jun 20, 2026, 5:05 PM",
-              "Overall Score": 72,
-              "Raw Result JSON": JSON.stringify({
-                language: "en",
-                profile: {
-                  relationship: "founder",
-                  generation: "first",
-                  country: "mx"
-                },
-                answers: { "en-full-vision-1": 4 },
-                result: {
-                  overall: 72,
-                  stage: { id: "established" },
-                  transparency: { unknownCount: 0 },
-                  pillarScores: [{ id: "vision", score: 72, scored: 1, unknown: 0, total: 1 }]
-                }
-              })
-            }
-          }
-        ]
-      });
-    }
-    return airtableJson({ records: [] });
+  if (method === "POST") {
+    recordCounter += 1;
+    const record = { id: `rec-${recordCounter}`, fields: JSON.parse(options.body).fields };
+    records.push(record);
+    return airtableJson(record);
   }
-  if (tableName === "Assessment Sessions" && method === "POST") {
-    return airtableJson({ id: "rec-session", fields: JSON.parse(options.body).fields });
+  if (method === "PATCH") {
+    const record = records.find((item) => item.id === recordId);
+    assert.ok(record);
+    record.fields = { ...record.fields, ...JSON.parse(options.body).fields };
+    return airtableJson(record);
   }
-  if (tableName === "Assessment Answers" && method === "GET") return airtableJson({ records: [] });
-  if (tableName === "Assessment Answers" && method === "POST") {
-    return airtableJson({ id: "rec-answer", fields: JSON.parse(options.body).fields });
-  }
-  if (tableName === "Comparison Groups" && method === "GET") {
-    if (url.includes("SERVERLESSGROUP")) {
-      return airtableJson({
-        records: [
-          {
-            id: "rec-group",
-            fields: {
-              "Group Key": "SERVERLESSGROUP",
-              "Participant Count": 1,
-              Status: "Waiting for Participants"
-            }
-          }
-        ]
-      });
-    }
-    return airtableJson({ records: [] });
-  }
-  if (tableName === "Comparison Groups" && method === "POST") {
-    return airtableJson({ id: "rec-group", fields: JSON.parse(options.body).fields });
-  }
-
-  return airtableJson({ error: { message: `Unexpected Airtable request: ${method} ${tableName}` } }, false);
+  return airtableJson({ error: { message: "Unexpected Airtable method" } }, false);
 };
 
 const resultsHandler = (await import("../api/results.js")).default;
 const invitationsHandler = (await import("../api/invitations.js")).default;
+const summaryPdfHandler = (await import("../api/summary-pdf.js")).default;
+const advisorPdfHandler = (await import("../api/advisor-report-pdf.js")).default;
 const scheduleCallHandler = (await import("../api/schedule-call.js")).default;
 const comparisonHandler = (await import("../api/comparison.js")).default;
 const groupStatusHandler = (await import("../api/group-status.js")).default;
-const { encodeActionToken } = await import("../server/summary-report.js");
 
-const invalidResultResponse = createResponse();
-await resultsHandler({ method: "POST", body: {} }, invalidResultResponse);
-assert.equal(invalidResultResponse.statusCode, 400);
-assert.equal(invalidResultResponse.body.error, "Respondent email is required");
+const GROUP_ID = "a".repeat(32);
+const COMPLETE_ANSWERS = Object.fromEntries(FULL_QUESTIONS.en.map((question) => [question.id, 4]));
 
-const methodResultResponse = createResponse();
-await resultsHandler({ method: "GET", body: {} }, methodResultResponse);
-assert.equal(methodResultResponse.statusCode, 405);
-assert.equal(methodResultResponse.headers.Allow, "POST");
+function sampleBody({ participant = "1", name = "Serverless Test", email = "serverless@example.com" } = {}) {
+  return {
+    createdAt: "2026-09-07T01:00:00.000Z",
+    finalizedAt: "2026-09-07T01:05:00.000Z",
+    language: "en",
+    mode: "full",
+    profile: {
+      name,
+      email,
+      phoneCountry: "mx",
+      phoneCountryLabel: "MX",
+      phoneDialCode: "+52",
+      phoneNumber: "55 1234 5678",
+      phoneDigits: "5512345678",
+      phoneInternational: "+52 55 1234 5678",
+      relationship: participant === "1" ? "founder" : "family-working",
+      relationshipLabel: participant === "1" ? "Founder" : "Family member working in business",
+      relationshipOther: "",
+      generation: participant === "1" ? "first" : "second",
+      generationLabel: participant === "1" ? "First generation" : "Second generation",
+      country: "mx",
+      countryLabel: "Mexico"
+    },
+    answers: COMPLETE_ANSWERS,
+    groupId: GROUP_ID,
+    participantId: participant.repeat(32),
+    privacyConsent: {
+      accepted: true,
+      policyVersion: PRIVACY_POLICY_VERSION,
+      acceptedAt: "2026-09-07T01:00:30.000Z"
+    },
+    reportRequest: {
+      type: "summary",
+      status: "requested",
+      recipientEmail: email,
+      language: "en",
+      contactRequested: false,
+      requestedAt: "2026-09-07T01:05:00.000Z"
+    },
+    result: { overall: 100 },
+    groupParticipantCount: 99
+  };
+}
 
-const validResultResponse = createResponse();
+const validResponse = createResponse();
+await resultsHandler({ method: "POST", headers: {}, body: sampleBody(), socket: { remoteAddress: "test-1" } }, validResponse);
+assert.equal(validResponse.statusCode, 200);
+assert.equal(validResponse.body.persistence, "airtable");
+assert.equal(validResponse.body.result.overall, 80, "serverless scoring must ignore client result values");
+assert.equal(validResponse.body.email.reason, "missing-smtp-config");
+assert.equal(validResponse.body.group, undefined);
+assert.equal(validResponse.body.sessionKey, undefined);
+assert.doesNotMatch(JSON.stringify(validResponse.body), /serverless@example\.com|"answers"/);
+assert.match(validResponse.headers["Cache-Control"], /no-store/);
+assert.equal(validResponse.headers["X-Content-Type-Options"], "nosniff");
+
+const duplicateResponse = createResponse();
+await resultsHandler({ method: "POST", headers: {}, body: sampleBody(), socket: { remoteAddress: "test-1" } }, duplicateResponse);
+assert.equal(duplicateResponse.statusCode, 200);
+assert.equal(duplicateResponse.body.email.reason, "duplicate-submission");
+
+const secondResponse = createResponse();
 await resultsHandler(
   {
     method: "POST",
-    body: {
-      createdAt: "2026-06-20T09:00:00.000Z",
-      finalizedAt: "2026-06-20T09:05:00.000Z",
-      language: "en",
-      mode: "full",
-      profile: { name: "Kier", email: "kier@example.com" },
-      answers: { "en-full-vision-1": 4 },
-      result: {
-        overall: 70,
-        stage: { id: "established" },
-        transparency: { unknownCount: 0 },
-        pillarScores: [{ id: "vision", score: 70, scored: 1, unknown: 0, total: 1 }]
-      }
-    }
+    headers: {},
+    body: sampleBody({ participant: "2", name: "Second Person", email: "second@example.com" }),
+    socket: { remoteAddress: "test-1" }
   },
-  validResultResponse
+  secondResponse
 );
-assert.equal(validResultResponse.statusCode, 200);
-assert.equal(validResultResponse.body.persistence, "airtable");
-assert.equal(validResultResponse.body.email.sent, false);
-assert.equal(validResultResponse.body.email.skipped, true);
+assert.equal(secondResponse.statusCode, 200);
+assert.equal(secondResponse.body.groupStatus.participantCount, 2);
+assert.equal(secondResponse.body.group, undefined, "advisor comparison data must remain inside the server");
+assert.doesNotMatch(JSON.stringify(secondResponse.body), /second@example\.com|"answers"/);
 
-const stringBodyResultResponse = createResponse();
-await resultsHandler(
-  {
-    method: "POST",
-    body: JSON.stringify({
-      createdAt: "2026-06-20T09:10:00.000Z",
-      finalizedAt: "2026-06-20T09:15:00.000Z",
-      language: "en",
-      mode: "full",
-      profile: { name: "String Body", email: "string@example.com" },
-      answers: { "en-full-vision-1": 5 },
-      result: {
-        overall: 80,
-        stage: { id: "strength" },
-        transparency: { unknownCount: 0 },
-        pillarScores: [{ id: "vision", score: 80, scored: 1, unknown: 0, total: 1 }]
-      }
-    })
-  },
-  stringBodyResultResponse
+const malformedResponse = createResponse();
+await resultsHandler({ method: "POST", headers: {}, body: "{bad-json", socket: { remoteAddress: "test-2" } }, malformedResponse);
+assert.equal(malformedResponse.statusCode, 400);
+assert.equal(malformedResponse.body.error, "Request body must be valid JSON");
+
+const crossOriginResponse = createResponse();
+await groupStatusHandler(
+  { method: "GET", headers: { origin: "https://attacker.invalid" }, query: { group: GROUP_ID } },
+  crossOriginResponse
 );
-assert.equal(stringBodyResultResponse.statusCode, 200);
-assert.equal(stringBodyResultResponse.body.persistence, "airtable");
+assert.equal(crossOriginResponse.statusCode, 403);
 
-const summaryRequestResponse = createResponse();
-await resultsHandler(
-  {
-    method: "POST",
-    body: {
-      createdAt: "2026-06-20T09:20:00.000Z",
-      finalizedAt: "2026-06-20T09:25:00.000Z",
-      language: "en",
-      mode: "full",
-      profile: { name: "Summary Request", email: "summary@example.com" },
-      answers: { "en-full-vision-1": 5 },
-      result: {
-        overall: 80,
-        stage: { id: "strength" },
-        transparency: { unknownCount: 0 },
-        pillarScores: [{ id: "vision", score: 80, scored: 1, unknown: 0, total: 1 }]
-      },
-      reportRequest: {
-        type: "summary",
-        status: "requested",
-        recipientEmail: "summary@example.com",
-        requestedAt: "2026-06-20T09:25:00.000Z"
-      }
-    }
-  },
-  summaryRequestResponse
+const trustedOriginResponse = createResponse();
+await groupStatusHandler(
+  { method: "GET", headers: { origin: "https://gilbertdevlyn.com" }, query: { group: GROUP_ID }, socket: { remoteAddress: "test-3" } },
+  trustedOriginResponse
 );
-assert.equal(summaryRequestResponse.statusCode, 200);
-assert.equal(summaryRequestResponse.body.persistence, "airtable");
-assert.equal(summaryRequestResponse.body.email.reason, "missing-smtp-config");
+assert.equal(trustedOriginResponse.statusCode, 200);
+assert.deepEqual(trustedOriginResponse.body, { ok: true, participantCount: 2, maxParticipants: 3 });
+assert.match(trustedOriginResponse.headers["Cache-Control"], /no-store/);
 
-const inviteMethodResponse = createResponse();
-await invitationsHandler({ method: "GET", body: {} }, inviteMethodResponse);
-assert.equal(inviteMethodResponse.statusCode, 405);
-assert.equal(inviteMethodResponse.headers.Allow, "POST");
-
-const invitationResponse = createResponse();
-await invitationsHandler(
-  {
-    method: "POST",
-    body: {
-      invitedEmail: "family@example.com",
-      inviteLink: "https://gilbertdevlyn.com/diagnostic?group=SERVERLESSGROUP&lang=en",
-      language: "en",
-      inviterName: "Kier"
-    }
-  },
-  invitationResponse
+const invalidGroupResponse = createResponse();
+await groupStatusHandler(
+  { method: "GET", headers: {}, query: { group: "SERVERLESSGROUP" }, socket: { remoteAddress: "test-4" } },
+  invalidGroupResponse
 );
-assert.equal(invitationResponse.statusCode, 200);
-assert.equal(invitationResponse.body.email.reason, "missing-smtp-config");
+assert.equal(invalidGroupResponse.statusCode, 400);
 
-
-const scheduleMethodResponse = createResponse();
-await scheduleCallHandler({ method: "POST", query: {} }, scheduleMethodResponse);
-assert.equal(scheduleMethodResponse.statusCode, 405);
-assert.equal(scheduleMethodResponse.headers.Allow, "GET");
-
-const scheduleToken = encodeActionToken({ name: "Kier", email: "kier@example.com", language: "en" });
-const scheduleOkResponse = createResponse();
-await scheduleCallHandler({ method: "GET", query: { data: scheduleToken } }, scheduleOkResponse);
-assert.equal(scheduleOkResponse.statusCode, 200);
-assert.match(scheduleOkResponse.body, /Gilbert has been notified/);
-
-const scheduleInvalidResponse = createResponse();
-await scheduleCallHandler({ method: "GET", query: { data: "not-valid-base64url" } }, scheduleInvalidResponse);
-assert.equal(scheduleInvalidResponse.statusCode, 400);
-assert.match(scheduleInvalidResponse.body, /no longer valid/);
-
-const comparisonMethodResponse = createResponse();
-await comparisonHandler({ method: "POST", query: {} }, comparisonMethodResponse);
-assert.equal(comparisonMethodResponse.statusCode, 405);
-assert.equal(comparisonMethodResponse.headers.Allow, "GET");
-
-const comparisonToken = encodeActionToken({ groupId: "SERVERLESSGROUP", language: "en" });
-const comparisonOkResponse = createResponse();
-await comparisonHandler({ method: "GET", query: { data: comparisonToken } }, comparisonOkResponse);
-assert.equal(comparisonOkResponse.statusCode, 200);
-assert.equal(comparisonOkResponse.body.group.id, "SERVERLESSGROUP");
-assert.equal(comparisonOkResponse.body.language, "en");
-assert.equal(comparisonOkResponse.body.group.participants.length, 1);
-assert.equal(comparisonOkResponse.body.group.participants[0].id, "participant-serverless");
-assert.equal(comparisonOkResponse.body.group.participants[0].result.overall, 72);
-
-const comparisonInvalidResponse = createResponse();
-await comparisonHandler({ method: "GET", query: { data: "not-valid-base64url" } }, comparisonInvalidResponse);
-assert.equal(comparisonInvalidResponse.statusCode, 400);
-
-const groupStatusMissingResponse = createResponse();
-await groupStatusHandler({ method: "GET", query: {} }, groupStatusMissingResponse);
-assert.equal(groupStatusMissingResponse.statusCode, 400);
-
-const groupStatusMethodResponse = createResponse();
-await groupStatusHandler({ method: "POST", query: {} }, groupStatusMethodResponse);
-assert.equal(groupStatusMethodResponse.statusCode, 405);
-assert.equal(groupStatusMethodResponse.headers.Allow, "GET");
-
-const groupStatusOkResponse = createResponse();
-await groupStatusHandler({ method: "GET", query: { group: "SERVERLESSGROUP" } }, groupStatusOkResponse);
-assert.equal(groupStatusOkResponse.statusCode, 200);
-assert.equal(groupStatusOkResponse.body.participantCount, 1);
-assert.equal(groupStatusOkResponse.body.maxParticipants, 3);
-assert.equal(groupStatusOkResponse.body.group, undefined);
-assert.equal(groupStatusOkResponse.body.participants, undefined);
+for (const [handler, expectedStatus] of [
+  [invitationsHandler, 410],
+  [summaryPdfHandler, 410],
+  [scheduleCallHandler, 410],
+  [advisorPdfHandler, 404],
+  [comparisonHandler, 404]
+]) {
+  const response = createResponse();
+  await handler({ method: "GET", headers: {}, query: { data: "forged" } }, response);
+  assert.equal(response.statusCode, expectedStatus);
+  assert.match(response.headers["Cache-Control"], /no-store/);
+}
 
 console.log("Serverless handler verification passed.");

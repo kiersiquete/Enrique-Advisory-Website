@@ -177,22 +177,6 @@ export function buildSummaryReportPayload(body = {}, savedResult = {}) {
   };
 }
 
-export function encodeSummaryReportPayload(payload) {
-  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-}
-
-export function decodeSummaryReportPayload(value = "") {
-  return JSON.parse(Buffer.from(String(value), "base64url").toString("utf8"));
-}
-
-export function encodeActionToken(payload) {
-  return encodeSummaryReportPayload(payload);
-}
-
-export function decodeActionToken(value = "") {
-  return decodeSummaryReportPayload(value);
-}
-
 export function buildAdminReportPayload(body = {}, savedResult = {}) {
   const summary = buildSummaryReportPayload(body, savedResult);
   const profile = body.profile ?? {};

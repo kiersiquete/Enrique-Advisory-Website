@@ -1,7 +1,15 @@
-import { persistAssessmentToAirtable } from "../server/airtable.js";
+import {
+  getComparisonGroupFromAirtable,
+  persistAssessmentToAirtable
+} from "../server/airtable.js";
 import { sendComparisonReadyEmail, sendSummaryReportEmails } from "../server/email.js";
-import { normalizeAssessmentSubmission } from "../server/scoring.js";
+import { enforceRateLimit, prepareApiRequest } from "../server/http-security.js";
+import {
+  normalizeAssessmentSubmission,
+  validateAssessmentSubmission
+} from "../server/scoring.js";
 import { publicBaseUrl } from "../server/url.js";
+import { validationError } from "../server/validation.js";
 
 function readBody(req) {
   if (!req.body) return {};
@@ -9,24 +17,28 @@ function readBody(req) {
     try {
       return JSON.parse(req.body);
     } catch {
-      return {};
+      throw validationError("Request body must be valid JSON");
     }
   }
   return req.body;
 }
 
 export default async function handler(req, res) {
+  if (!prepareApiRequest(req, res)) return;
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
-
-  const body = normalizeAssessmentSubmission(readBody(req));
+  if (!enforceRateLimit(req, res, "assessment-results", { limit: 5, windowMs: 15 * 60 * 1000 })) {
+    return;
+  }
 
   try {
+    const body = normalizeAssessmentSubmission(readBody(req));
+    validateAssessmentSubmission(body);
     const result = await persistAssessmentToAirtable(body);
     let email;
-    if (body.reportRequest?.status === "requested") {
+    if (result.isNewSubmission) {
       try {
         email = await sendSummaryReportEmails(body, result, { baseUrl: requestBaseUrl(req) });
       } catch (emailError) {
@@ -34,12 +46,13 @@ export default async function handler(req, res) {
         email = { sent: false, error: "summary-email-delivery-failed" };
       }
     } else {
-      email = { sent: false, skipped: true };
+      email = { sent: false, skipped: true, reason: "duplicate-submission" };
     }
 
-    if ((result.group?.participants?.length ?? 0) >= 2) {
+    if (result.isNewSubmission && (result.groupStatus?.participantCount ?? 0) >= 2) {
       try {
-        await sendComparisonReadyEmail(result.group, {
+        const advisorGroup = await getComparisonGroupFromAirtable(body.groupId);
+        await sendComparisonReadyEmail(advisorGroup, {
           baseUrl: requestBaseUrl(req),
           language: body.language
         });
@@ -48,7 +61,13 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ ...result, email });
+    return res.status(200).json({
+      ok: true,
+      persistence: result.persistence,
+      result: result.result,
+      groupStatus: result.groupStatus,
+      email: publicEmailStatus(email)
+    });
   } catch (error) {
     if (error.code === "VALIDATION_ERROR") {
       return res.status(400).json({ error: error.message });
@@ -57,6 +76,15 @@ export default async function handler(req, res) {
     console.error("Airtable persistence failed", error);
     return res.status(500).json({ error: "Unable to save assessment result" });
   }
+}
+
+function publicEmailStatus(email = {}) {
+  return {
+    sent: email.sent === true,
+    skipped: email.skipped === true,
+    ...(email.reason ? { reason: email.reason } : {}),
+    ...(email.error ? { error: email.error } : {})
+  };
 }
 
 function requestBaseUrl(req) {

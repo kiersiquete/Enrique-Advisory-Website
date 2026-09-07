@@ -1,4 +1,3 @@
-import cors from "cors";
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,20 +8,20 @@ import {
   persistAssessmentToAirtable
 } from "./airtable.js";
 import {
-  renderScheduleCallConfirmationPage,
-  sendCallRequestNotification,
   sendComparisonReadyEmail,
-  sendInvitationEmail,
   sendSummaryReportEmails
 } from "./email.js";
-import { normalizeAssessmentSubmission } from "./scoring.js";
 import {
-  createAdminPdfBuffer,
-  createSummaryPdfBuffer,
-  decodeActionToken,
-  decodeSummaryReportPayload
-} from "./summary-report.js";
+  enforceRateLimit,
+  isTrustedApiRequest,
+  setSecurityHeaders
+} from "./http-security.js";
+import {
+  normalizeAssessmentSubmission,
+  validateAssessmentSubmission
+} from "./scoring.js";
 import { publicBaseUrl, requestOrigin } from "./url.js";
+import { isValidOpaqueId } from "./validation.js";
 
 const port = process.env.PORT || 5174;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -51,31 +50,71 @@ export function createApp({
   persistAssessment = persistAssessmentToAirtable,
   getComparisonGroup = getComparisonGroupFromAirtable,
   getGroupCount = getGroupParticipantCount,
-  sendInviteEmail = sendInvitationEmail,
   sendSummaryEmails = sendSummaryReportEmails,
-  sendCallRequest = sendCallRequestNotification,
   sendComparisonEmail = sendComparisonReadyEmail
 } = {}) {
   const app = express();
 
-  app.use(cors({ origin: true }));
-  app.use(express.json({ limit: "1mb" }));
+  app.disable("x-powered-by");
+  app.use((_req, res, next) => {
+    setSecurityHeaders(res);
+    next();
+  });
+  app.use("/api", (req, res, next) => {
+    setSecurityHeaders(res, { api: true });
+    if (!isTrustedApiRequest(req)) {
+      res.status(403).json({ error: "Cross-origin request denied" });
+      return;
+    }
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  });
+  app.use("/api/results", (req, res, next) => {
+    if (
+      req.method === "POST" &&
+      !enforceRateLimit(req, res, "assessment-results", { limit: 5, windowMs: 15 * 60 * 1000 })
+    ) {
+      return;
+    }
+    next();
+  });
+  app.use(express.json({ limit: "64kb" }));
+  app.use((error, _req, res, next) => {
+    if (error?.status === 413 || error?.type === "entity.too.large") {
+      res.status(413).json({ error: "Request body is too large" });
+      return;
+    }
+    if (error instanceof SyntaxError && error.status === 400 && "body" in error) {
+      res.status(400).json({ error: "Request body must be valid JSON" });
+      return;
+    }
+    next(error);
+  });
 
   app.post("/api/results", async (req, res) => {
     try {
       const body = normalizeAssessmentSubmission(req.body ?? {});
+      validateAssessmentSubmission(body);
       const result = await persistAssessment(body);
       let email;
-      try {
-        email = await sendSummaryEmails(body, result, { baseUrl: requestBaseUrl(req) });
-      } catch (emailError) {
-        console.error("Summary email delivery failed", emailError);
-        email = { sent: false, error: "summary-email-delivery-failed" };
+      if (result.isNewSubmission) {
+        try {
+          email = await sendSummaryEmails(body, result, { baseUrl: requestBaseUrl(req) });
+        } catch (emailError) {
+          console.error("Summary email delivery failed", emailError);
+          email = { sent: false, error: "summary-email-delivery-failed" };
+        }
+      } else {
+        email = { sent: false, skipped: true, reason: "duplicate-submission" };
       }
 
-      if ((result.group?.participants?.length ?? 0) >= 2) {
+      if (result.isNewSubmission && (result.groupStatus?.participantCount ?? 0) >= 2) {
         try {
-          await sendComparisonEmail(result.group, {
+          const advisorGroup = await getComparisonGroup(body.groupId);
+          await sendComparisonEmail(advisorGroup, {
             baseUrl: requestBaseUrl(req),
             language: body.language
           });
@@ -84,7 +123,13 @@ export function createApp({
         }
       }
 
-      res.json({ ...result, email });
+      res.json({
+        ok: true,
+        persistence: result.persistence,
+        result: result.result,
+        groupStatus: result.groupStatus,
+        email: publicEmailStatus(email)
+      });
     } catch (error) {
       if (error.code === "VALIDATION_ERROR") {
         res.status(400).json({ error: error.message });
@@ -101,116 +146,29 @@ export function createApp({
     res.status(405).json({ error: "Method not allowed" });
   });
 
-  app.post("/api/invitations", async (req, res) => {
-    try {
-      const email = await sendInviteEmail(req.body ?? {});
-      res.json({ ok: true, email });
-    } catch (error) {
-      console.error("Invitation email delivery failed", error);
-      res.status(500).json({ error: "Unable to send invitation email" });
-    }
+  app.use("/api/invitations", (_req, res) => {
+    res.status(410).json({ error: "Email invitations are created in your own email app" });
   });
-
-  app.all("/api/invitations", (_req, res) => {
-    res.setHeader("Allow", "POST");
-    res.status(405).json({ error: "Method not allowed" });
+  app.use("/api/summary-pdf", (_req, res) => {
+    res.status(410).json({ error: "Summary reports are delivered as email attachments" });
   });
-
-  app.get("/api/summary-pdf", (req, res) => {
-    try {
-      const payload = decodeSummaryReportPayload(req.query.data);
-      const pdf = createSummaryPdfBuffer(payload);
-      const safeName = String(payload.name || "summary").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `inline; filename="gilbert-devlyn-summary-${safeName || "report"}.pdf"`);
-      res.setHeader("Cache-Control", "private, max-age=0, no-store");
-      res.send(pdf);
-    } catch {
-      res.status(400).json({ error: "Unable to create summary PDF" });
-    }
+  app.use("/api/schedule-call", (_req, res) => {
+    res.status(410).json({ error: "Conversation requests must be explicitly confirmed by email" });
   });
-
-  app.all("/api/summary-pdf", (_req, res) => {
-    res.setHeader("Allow", "GET");
-    res.status(405).json({ error: "Method not allowed" });
+  app.use("/api/advisor-report-pdf", (_req, res) => {
+    res.status(404).json({ error: "Not found" });
   });
-
-  app.get("/api/advisor-report-pdf", (req, res) => {
-    try {
-      const payload = decodeSummaryReportPayload(req.query.data);
-      const pdf = createAdminPdfBuffer(payload);
-      const safeName = String(payload.name || payload.participant?.name || "advisor-report")
-        .replace(/[^a-z0-9]+/gi, "-")
-        .replace(/^-|-$/g, "")
-        .toLowerCase();
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `inline; filename="gilbert-devlyn-advisor-report-${safeName || "report"}.pdf"`);
-      res.setHeader("Cache-Control", "private, max-age=0, no-store");
-      res.send(pdf);
-    } catch {
-      res.status(400).json({ error: "Unable to create advisor report PDF" });
-    }
-  });
-
-  app.all("/api/advisor-report-pdf", (_req, res) => {
-    res.setHeader("Allow", "GET");
-    res.status(405).json({ error: "Method not allowed" });
-  });
-
-  app.get("/api/schedule-call", async (req, res) => {
-    let language = "en";
-    try {
-      const payload = decodeActionToken(req.query.data);
-      language = payload.language === "es" ? "es" : "en";
-
-      try {
-        await sendCallRequest({
-          name: payload.name,
-          email: payload.email,
-          language,
-          participant: payload.participant,
-          result: payload.result,
-          context: payload.context
-        });
-      } catch (notifyError) {
-        console.error("Schedule-call notification failed", notifyError);
-      }
-
-      res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(renderScheduleCallConfirmationPage(language, true));
-    } catch (error) {
-      res.status(400).setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(renderScheduleCallConfirmationPage(language, false));
-    }
-  });
-
-  app.all("/api/schedule-call", (_req, res) => {
-    res.setHeader("Allow", "GET");
-    res.status(405).json({ error: "Method not allowed" });
-  });
-
-  app.get("/api/comparison", async (req, res) => {
-    try {
-      const payload = decodeActionToken(req.query.data);
-      const language = payload.language === "es" ? "es" : "en";
-      const group = await getComparisonGroup(payload.groupId);
-      res.json({ ok: true, group, language });
-    } catch (error) {
-      res.status(400).json({ error: "Unable to load this comparison link" });
-    }
-  });
-
-  app.all("/api/comparison", (_req, res) => {
-    res.setHeader("Allow", "GET");
-    res.status(405).json({ error: "Method not allowed" });
+  app.use("/api/comparison", (_req, res) => {
+    res.status(404).json({ error: "Not found" });
   });
 
   app.get("/api/group-status", async (req, res) => {
-    const groupId = String(req.query.group ?? "").trim();
-    if (!groupId) {
-      res.status(400).json({ error: "Missing comparison group key" });
+    if (!enforceRateLimit(req, res, "group-status", { limit: 60, windowMs: 15 * 60 * 1000 })) {
+      return;
+    }
+    const groupId = String(req.query.group ?? "").trim().toLowerCase();
+    if (!isValidOpaqueId(groupId)) {
+      res.status(400).json({ error: "Invalid comparison group key" });
       return;
     }
 
@@ -228,6 +186,10 @@ export function createApp({
     res.status(405).json({ error: "Method not allowed" });
   });
 
+  app.use("/api", (_req, res) => {
+    res.status(404).json({ error: "Not found" });
+  });
+
   app.use((req, res, next) => {
     if (shouldRedirectToPublicWeb(req)) {
       res.redirect(302, `${requestBaseUrl(req)}${req.originalUrl || req.url || "/"}`);
@@ -238,7 +200,7 @@ export function createApp({
 
   app.use(express.static(path.join(rootDir, "dist")));
 
-  app.get("*", (req, res) => {
+  app.use((req, res) => {
     res.sendFile(path.join(rootDir, "dist", "index.html"), (error) => {
       if (!error || res.headersSent) return;
 
@@ -250,7 +212,25 @@ export function createApp({
     });
   });
 
+  app.use((error, req, res, _next) => {
+    console.error("Unhandled server error", error);
+    if (req.path === "/api" || req.path.startsWith("/api/")) {
+      res.status(500).json({ error: "Unexpected server error" });
+      return;
+    }
+    res.status(500).type("text").send("Unexpected server error");
+  });
+
   return app;
+}
+
+function publicEmailStatus(email = {}) {
+  return {
+    sent: email.sent === true,
+    skipped: email.skipped === true,
+    ...(email.reason ? { reason: email.reason } : {}),
+    ...(email.error ? { error: email.error } : {})
+  };
 }
 
 function requestBaseUrl(req) {
@@ -289,7 +269,7 @@ function renderMissingStaticAppPage(baseUrl) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   loadLocalEnv().then(() => {
     const app = createApp();
-    app.listen(port, () => {
+    app.listen(port, "127.0.0.1", () => {
       console.log(`Family Business Maturity API listening on ${port}`);
     });
   });

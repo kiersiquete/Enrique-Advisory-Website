@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 
+import { FULL_QUESTIONS } from "../src/data/assessment.js";
+import { PRIVACY_POLICY_VERSION } from "../server/validation.js";
+
 const TABLES = {
   Respondents: [],
   "Assessment Sessions": [],
@@ -8,6 +11,7 @@ const TABLES = {
 };
 
 let recordCounter = 0;
+let deleteRequests = 0;
 
 process.env.AIRTABLE_API_TOKEN = "test-token";
 process.env.AIRTABLE_BASE_ID = "appTestBase";
@@ -18,22 +22,27 @@ function nextRecordId() {
 }
 
 function tableNameFromUrl(url) {
-  const pathname = new URL(url).pathname;
-  const [, , , encodedTable] = pathname.split("/");
-  return decodeURIComponent(encodedTable);
+  return decodeURIComponent(new URL(url).pathname.split("/")[3]);
 }
 
 function recordIdFromUrl(url) {
-  const pathname = new URL(url).pathname;
-  const parts = pathname.split("/");
-  return parts.length > 4 ? parts[4] : "";
+  return new URL(url).pathname.split("/")[4] || "";
+}
+
+function unescapeFormulaString(value) {
+  let result = "";
+  for (let index = 0; index < value.length; index += 1) {
+    if (value[index] === "\\" && index + 1 < value.length) index += 1;
+    result += value[index];
+  }
+  return result;
 }
 
 function matchFormula(record, formula) {
-  const match = formula?.match(/^\{(.+)\} = '(.+)'$/);
+  const match = formula?.match(/^\{(.+)\} = '(.*)'$/s);
   if (!match) return true;
-  const [, field, value] = match;
-  return String(record.fields[field] ?? "") === value.replace(/\\'/g, "'");
+  const [, field, escapedValue] = match;
+  return String(record.fields[field] ?? "") === unescapeFormulaString(escapedValue);
 }
 
 function jsonResponse(data, ok = true, status = 200) {
@@ -60,219 +69,183 @@ globalThis.fetch = async (url, options = {}) => {
   }
 
   if (method === "POST") {
-    const body = JSON.parse(options.body);
-    const record = { id: nextRecordId(), fields: body.fields };
+    const record = { id: nextRecordId(), fields: JSON.parse(options.body).fields };
     records.push(record);
     return jsonResponse(record);
   }
 
   if (method === "PATCH") {
-    const recordId = recordIdFromUrl(url);
-    const body = JSON.parse(options.body);
-    const record = records.find((item) => item.id === recordId);
-    assert.ok(record, `Record not found for PATCH: ${recordId}`);
-    record.fields = { ...record.fields, ...body.fields };
+    const record = records.find((item) => item.id === recordIdFromUrl(url));
+    assert.ok(record, `Record not found for PATCH: ${recordIdFromUrl(url)}`);
+    record.fields = { ...record.fields, ...JSON.parse(options.body).fields };
     return jsonResponse(record);
   }
 
   if (method === "DELETE") {
-    const params = new URL(url).searchParams;
-    const ids = params.getAll("records[]");
-    ids.forEach((id) => {
-      const index = records.findIndex((record) => record.id === id);
-      if (index >= 0) records.splice(index, 1);
-    });
-    return jsonResponse({ records: ids.map((id) => ({ id, deleted: true })) });
+    deleteRequests += 1;
+    return jsonResponse({ records: [] });
   }
 
   return jsonResponse({ error: "Unsupported method" }, false, 405);
 };
 
-const { persistAssessmentToAirtable, getComparisonGroupFromAirtable } = await import(
-  "../server/airtable.js"
-);
+const {
+  escapeFormulaValue,
+  getComparisonGroupFromAirtable,
+  persistAssessmentToAirtable
+} = await import("../server/airtable.js");
+
+const GROUP_ID = "a".repeat(32);
+const SECOND_GROUP_ID = "b".repeat(32);
+const COMPLETE_ANSWERS = Object.fromEntries(FULL_QUESTIONS.en.map((question) => [question.id, 3]));
 
 function sampleBody(overrides = {}) {
+  const profile = {
+    name: "Kier Test",
+    email: "kier@example.com",
+    phoneCountry: "mx",
+    phoneCountryLabel: "MX",
+    phoneDialCode: "+52",
+    phoneNumber: "55 1234 5678",
+    phoneDigits: "5512345678",
+    phoneInternational: "+52 55 1234 5678",
+    relationship: "founder",
+    relationshipLabel: "Founder",
+    relationshipOther: "",
+    generation: "first",
+    generationLabel: "First generation",
+    country: "mx",
+    countryLabel: "Mexico",
+    ...(overrides.profile ?? {})
+  };
+  const topLevelOverrides = Object.fromEntries(
+    Object.entries(overrides).filter(([key]) => !["profile", "answers", "privacyConsent", "reportRequest"].includes(key))
+  );
+
   return {
-    createdAt: "2026-06-20T09:00:00.000Z",
-    finalizedAt: "2026-06-20T09:05:00.000Z",
+    createdAt: "2026-09-07T01:00:00.000Z",
+    finalizedAt: "2026-09-07T01:05:00.000Z",
     language: "en",
     mode: "full",
-    profile: {
-      name: "Kier Test",
-      email: "kier@example.com",
-      phoneInternational: "+52 55 1234 5678",
-      phoneCountryLabel: "Mexico",
-      countryLabel: "Mexico",
-      relationship: "founder",
-      generation: "first"
-    },
-    answers: {
-      "en-full-vision-1": 4,
-      "en-full-constitution-1": 3
-    },
-    result: {
-      overall: 70,
-      stage: { id: "established", level: { en: "Level 3" }, labels: { en: "Established" } },
-      transparency: { unknownCount: 0 },
-      pillarScores: [
-        { id: "vision", score: 70, scored: 2, unknown: 0, total: 2 },
-        { id: "constitution", score: 60, scored: 2, unknown: 0, total: 2 }
-      ]
+    profile,
+    answers: overrides.answers ?? COMPLETE_ANSWERS,
+    groupId: overrides.groupId ?? GROUP_ID,
+    participantId: overrides.participantId ?? "1".repeat(32),
+    privacyConsent: {
+      accepted: true,
+      policyVersion: PRIVACY_POLICY_VERSION,
+      acceptedAt: "2026-09-07T01:00:30.000Z",
+      ...(overrides.privacyConsent ?? {})
     },
     reportRequest: {
       type: "summary",
       status: "requested",
-      recipientEmail: "kier@example.com",
+      recipientEmail: profile.email,
       language: "en",
-      detailedAnalysisRetained: true,
-      advisorDetail: {
-        visibility: "internal",
-        note: "Retained for Gilbert/admin follow-up.",
-        delivery: {
-          destination: "Airtable Raw Result JSON",
-          nextStep: "Use this internal detail for Gilbert's follow-up."
-        },
-        pillarNotes: [{ id: "vision", label: "Vision", score: 70 }]
-      },
-      requestedAt: "2026-06-20T09:05:00.000Z"
+      contactRequested: false,
+      requestedAt: "2026-09-07T01:05:00.000Z",
+      ...(overrides.reportRequest ?? {})
     },
-    ...overrides
+    result: { overall: 100 },
+    groupParticipantCount: 99,
+    inviteLink: "https://attacker.invalid",
+    ...topLevelOverrides
   };
 }
 
 function tableCounts() {
-  return Object.fromEntries(
-    Object.entries(TABLES).map(([tableName, records]) => [tableName, records.length])
-  );
+  return Object.fromEntries(Object.entries(TABLES).map(([name, records]) => [name, records.length]));
 }
+
+assert.equal(escapeFormulaValue("a\\b'c"), "a\\\\b\\'c", "formula strings must escape backslashes before quotes");
 
 const firstSave = await persistAssessmentToAirtable(sampleBody());
 assert.equal(firstSave.ok, true);
-assert.equal(TABLES.Respondents.length, 1, "respondent should be created");
-assert.equal(TABLES["Assessment Sessions"].length, 1, "session should be created");
-assert.equal(TABLES["Assessment Answers"].length, 1, "answers should be created");
-assert.equal(TABLES["Comparison Groups"].length, 0, "group should not be created without a group id");
-const firstRawResult = JSON.parse(TABLES["Assessment Sessions"][0].fields["Raw Result JSON"]);
-assert.equal(firstRawResult.reportRequest.status, "requested", "summary report request should be retained");
-assert.equal(
-  firstRawResult.reportRequest.advisorDetail.visibility,
-  "internal",
-  "advisor detail should be retained for Gilbert/admin follow-up"
-);
-assert.equal(
-  firstRawResult.reportRequest.advisorDetail.delivery.destination,
-  "Airtable Raw Result JSON",
-  "advisor detail delivery location should be documented"
-);
-const countsAfterFirstSave = tableCounts();
-await persistAssessmentToAirtable(sampleBody());
-assert.deepEqual(
-  tableCounts(),
-  countsAfterFirstSave,
-  "saving the same standalone assessment again should update existing Airtable records without creating a duplicate respondent row"
-);
-assert.equal(
-  TABLES.Respondents[0].fields.Notes,
-  "Assessment key: kier@example.com|2026-06-20T09:00:00.000Z",
-  "respondent records should keep an idempotency key for repeated saves"
-);
-assert.match(
-  TABLES.Respondents[0].fields["Created At"],
-  /^[A-Z][a-z]{2} \d{1,2}, 2026, \d{1,2}:\d{2} (AM|PM)$/,
-  "respondent date should be readable"
-);
-assert.doesNotMatch(TABLES["Assessment Sessions"][0].fields["Finalized At"], /T/, "session date should not be ISO");
+assert.equal(firstSave.isNewSubmission, true);
+assert.equal(firstSave.group, undefined, "persistence results must not expose advisor comparison data");
+assert.equal(firstSave.sessionKey, undefined, "opaque Airtable keys must remain server-side");
+assert.equal(firstSave.groupStatus.participantCount, 1);
+assert.equal(TABLES.Respondents.length, 1);
+assert.equal(TABLES["Assessment Sessions"].length, 1);
+assert.equal(TABLES["Assessment Answers"].length, 1);
+assert.equal(TABLES["Comparison Groups"].length, 1);
 
-await persistAssessmentToAirtable(
-  sampleBody({
-    createdAt: "2026-06-20T10:00:00.000Z",
-    finalizedAt: "2026-06-20T10:06:00.000Z",
-    groupId: "GROUP123",
-    participantId: "participant-1",
-    groupParticipantCount: 1,
-    inviteLink: "https://example.com/?group=GROUP123&lang=en"
-  })
-);
+const rawResult = JSON.parse(TABLES["Assessment Sessions"][0].fields["Raw Result JSON"]);
+assert.equal(rawResult.result.overall, 60, "Airtable must retain the server-calculated result");
+assert.equal(rawResult.groupParticipantCount, undefined, "client counts must not be retained");
+assert.equal(rawResult.inviteLink, undefined, "client-provided links must not be retained");
+assert.equal(rawResult.reportRequest.advisorDetail, undefined, "unbounded client advisor data must be discarded");
+assert.equal(rawResult.privacyConsent.policyVersion, PRIVACY_POLICY_VERSION);
+assert.equal(rawResult.privacyConsent.acceptedAt, "2026-09-07T01:00:30.000Z");
+assert.equal(TABLES.Respondents[0].fields.Notes, `Assessment key: assessment-${"1".repeat(32)}`);
+assert.equal(TABLES["Comparison Groups"][0].fields["Invite Link"], "");
 
-assert.equal(TABLES.Respondents.length, 2, "a new assessment session should create a new respondent row");
-assert.equal(TABLES["Comparison Groups"].length, 1, "group should be created when group id is present");
-assert.equal(TABLES["Comparison Groups"][0].fields["Participant Count"], 1);
-assert.equal(TABLES["Comparison Groups"][0].fields["Invite Link"], "https://example.com/?group=GROUP123&lang=en");
-const countsAfterFirstGroupSave = tableCounts();
-await persistAssessmentToAirtable(
-  sampleBody({
-    createdAt: "2026-06-20T10:00:00.000Z",
-    finalizedAt: "2026-06-20T10:06:00.000Z",
-    groupId: "GROUP123",
-    participantId: "participant-1",
-    groupParticipantCount: 1,
-    inviteLink: "https://example.com/?group=GROUP123&lang=en"
-  })
-);
-assert.deepEqual(
-  tableCounts(),
-  countsAfterFirstGroupSave,
-  "saving the same grouped assessment again should update existing records without creating a duplicate respondent row"
-);
+TABLES.Respondents.push({ id: "rec-duplicate", fields: { ...TABLES.Respondents[0].fields } });
+const countsWithDuplicate = tableCounts();
+const retry = await persistAssessmentToAirtable(sampleBody({
+  privacyConsent: { acceptedAt: "2026-09-07T01:00:45.000Z" }
+}));
+assert.equal(retry.isNewSubmission, false);
+assert.deepEqual(tableCounts(), countsWithDuplicate, "consent timestamp changes must not create duplicate records");
+assert.equal(deleteRequests, 0, "duplicate formula matches must never trigger destructive deletes");
 
-await persistAssessmentToAirtable(
-  sampleBody({
-    createdAt: "2026-06-20T10:20:00.000Z",
-    finalizedAt: "2026-06-20T10:26:00.000Z",
-    groupId: "GROUP123",
-    participantId: "participant-2",
-    groupParticipantCount: 2,
-    profile: {
-      ...sampleBody().profile,
-      name: "Second Participant",
-      email: "second@example.com",
-      relationship: "family-working",
-      generation: "second"
-    }
-  })
-);
-
-assert.equal(TABLES.Respondents.length, 3, "each distinct saved assessment should create one respondent row");
+await persistAssessmentToAirtable(sampleBody({
+  participantId: "2".repeat(32),
+  createdAt: "2026-09-07T02:00:00.000Z",
+  finalizedAt: "2026-09-07T02:05:00.000Z",
+  profile: { name: "Second Participant", email: "second@example.com", relationship: "family-working", generation: "second" },
+  privacyConsent: { acceptedAt: "2026-09-07T02:00:30.000Z" },
+  reportRequest: { recipientEmail: "second@example.com", requestedAt: "2026-09-07T02:05:00.000Z" }
+}));
 assert.equal(TABLES["Comparison Groups"][0].fields["Participant Count"], 2);
-assert.equal(TABLES["Comparison Groups"][0].fields.Status, "Ready for Comparison");
 
-const comparison = await getComparisonGroupFromAirtable("GROUP123");
-assert.equal(comparison.participants.length, 2, "comparison endpoint should return saved participants");
-assert.equal(comparison.participants[0].result.overall, 70);
-assert.equal(comparison.participants[1].role, "family-working");
+const advisorComparison = await getComparisonGroupFromAirtable(GROUP_ID);
+assert.equal(advisorComparison.participants.length, 2);
+assert.equal(advisorComparison.participants[0].answers["en-full-vision-1"], 3);
+assert.equal(advisorComparison.participants[1].role, "family-working");
 
-await persistAssessmentToAirtable(
-  sampleBody({
-    createdAt: "2026-06-20T11:00:00.000Z",
-    finalizedAt: "2026-06-20T11:02:00.000Z",
-    groupId: "ZERO123",
-    participantId: "participant-zero",
-    profile: {
-      ...sampleBody().profile,
-      name: "Zero Score",
-      email: "zero@example.com"
-    },
-    answers: {
-      "en-full-vision-1": 0,
-      "en-full-vision-2": 0
-    },
-    result: {
-      ...sampleBody().result,
-      overall: 0,
-      pillarScores: [{ id: "vision", score: 0, scored: 2, unknown: 0, total: 2 }]
-    }
-  })
+await persistAssessmentToAirtable(sampleBody({
+  participantId: "3".repeat(32),
+  createdAt: "2026-09-07T03:00:00.000Z",
+  finalizedAt: "2026-09-07T03:05:00.000Z",
+  profile: { name: "Third Participant", email: "third@example.com", generation: "third-plus" },
+  privacyConsent: { acceptedAt: "2026-09-07T03:00:30.000Z" },
+  reportRequest: { recipientEmail: "third@example.com", requestedAt: "2026-09-07T03:05:00.000Z" }
+}));
+assert.equal(TABLES["Comparison Groups"][0].fields["Participant Count"], 3);
+
+const countsAtCapacity = tableCounts();
+await assert.rejects(
+  () => persistAssessmentToAirtable(sampleBody({
+    participantId: "4".repeat(32),
+    createdAt: "2026-09-07T04:00:00.000Z",
+    finalizedAt: "2026-09-07T04:05:00.000Z",
+    profile: { name: "Fourth Participant", email: "fourth@example.com" },
+    privacyConsent: { acceptedAt: "2026-09-07T04:00:30.000Z" },
+    reportRequest: { recipientEmail: "fourth@example.com", requestedAt: "2026-09-07T04:05:00.000Z" }
+  })),
+  /already full/
 );
-
-const zeroComparison = await getComparisonGroupFromAirtable("ZERO123");
-assert.equal(zeroComparison.participants.length, 1, "zero-score participants should still appear");
-assert.equal(zeroComparison.participants[0].result.overall, 0);
+assert.deepEqual(tableCounts(), countsAtCapacity, "capacity rejection must happen before any Airtable write");
 
 await assert.rejects(
-  () => persistAssessmentToAirtable({}),
-  /Respondent email is required/,
-  "invalid payloads should fail before Airtable writes"
+  () => persistAssessmentToAirtable(sampleBody({
+    participantId: "5".repeat(32),
+    groupId: SECOND_GROUP_ID,
+    reportRequest: { recipientEmail: "victim@example.com" }
+  })),
+  /recipient must match/,
+  "report recipients must be bound to profile email"
+);
+await assert.rejects(
+  () => persistAssessmentToAirtable(sampleBody({ groupId: "GROUP123" })),
+  /identifiers are invalid/,
+  "short enumerable group IDs must be rejected"
+);
+await assert.rejects(
+  () => persistAssessmentToAirtable(sampleBody({ profile: { email: "bad'\\email@example.com" } })),
+  /email is invalid/,
+  "formula metacharacters must not enter email-derived lookups"
 );
 
 console.log("Airtable persistence verification passed.");

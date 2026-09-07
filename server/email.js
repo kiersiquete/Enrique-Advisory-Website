@@ -5,9 +5,15 @@ import {
   buildSummaryReportPayload,
   createAdminPdfBuffer,
   createComparisonPdfBuffer,
-  encodeActionToken,
-  encodeSummaryReportPayload
+  createSummaryPdfBuffer
 } from "./summary-report.js";
+import {
+  isValidEmailAddress,
+  isValidOpaqueId,
+  normalizeEmailAddress,
+  validationError
+} from "./validation.js";
+import { trustedPublicOrigin } from "./url.js";
 
 const DEFAULT_FROM = "Gilbert <info@gilbertdevlyn.com>";
 const DEFAULT_REPLY_TO = "info@gilbertdevlyn.com";
@@ -43,7 +49,8 @@ function getEmailConfig() {
     from: process.env.EMAIL_FROM || DEFAULT_FROM,
     replyTo: process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO,
     adminEmail: process.env.ADMIN_REPORT_EMAIL || process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO,
-    rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false"
+    rejectUnauthorized:
+      process.env.NODE_ENV === "production" || process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false"
   };
 }
 
@@ -76,73 +83,30 @@ function invitationStatus(body, language = "en") {
   return hasInvitation ? "Invitation created" : "No invitation created";
 }
 
-function createSummaryPdfUrl(body, savedResult, options = {}) {
-  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (!baseUrl) return "";
-
-  const payload = buildSummaryReportPayload(body, savedResult);
-  return `${baseUrl}/api/summary-pdf?data=${encodeSummaryReportPayload(payload)}`;
-}
-
-function createAdminPdfUrl(body, savedResult, options = {}) {
-  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (!baseUrl) return "";
-
-  const payload = buildAdminReportPayload(body, savedResult);
-  return `${baseUrl}/api/advisor-report-pdf?data=${encodeSummaryReportPayload(payload)}`;
-}
-
-function createScheduleCallUrl(body, savedResult, options = {}) {
-  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (!baseUrl) return "";
-
-  const recipientEmail = body.reportRequest?.recipientEmail || body.profile?.email || "";
-  if (!recipientEmail) return "";
-
-  const report = buildAdminReportPayload(body, savedResult);
-  const token = encodeActionToken({
-    name: report.participant?.name || body.profile?.name || "",
-    email: recipientEmail,
-    language: body.language === "es" ? "es" : "en",
-    sessionKey: savedResult.sessionKey || "",
-    participant: {
-      phone: report.participant?.phone || "",
-      country: report.participant?.country || "",
-      relationship: report.participant?.relationship || "",
-      generation: report.participant?.generation || ""
-    },
-    result: {
-      overall: report.overall,
-      level: report.level || "",
-      focusAreas: (report.focusAreas || []).slice(0, 3),
-      unknownCount: report.transparency?.unknownCount ?? 0
-    },
-    context: {
-      groupId: report.context?.groupId || "",
-      participantId: report.context?.participantId || "",
-      requestedAt: report.timing?.requestedAt || "",
-      contactRequested: Boolean(report.context?.contactRequested)
-    }
-  });
-
-  return `${baseUrl}/api/schedule-call?data=${token}`;
+function createContactMailto(language, contactEmail) {
+  if (!isValidEmailAddress(contactEmail)) return "";
+  const subject = language === "es"
+    ? "Solicitud de conversación sobre mi autoevaluación"
+    : "Conversation request about my self-assessment";
+  const body = language === "es"
+    ? "Me gustaría solicitar una conversación sobre mi autoevaluación."
+    : "I would like to request a conversation about my self-assessment.";
+  return `mailto:${normalizeEmailAddress(contactEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function isComparisonGroupFull(savedResult = {}) {
-  const participantCount = savedResult.group?.participants?.length ?? savedResult.groupParticipantCount ?? 0;
+  const participantCount = savedResult.groupStatus?.participantCount ?? 0;
   return participantCount >= MAX_GROUP_PARTICIPANTS;
 }
 
 function createInviteShareUrl(body, savedResult = {}, options = {}) {
-  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (!baseUrl || !body.groupId || isComparisonGroupFull(savedResult)) return "";
+  const baseUrl = (options.baseUrl || trustedPublicOrigin()).replace(/\/$/, "");
+  if (!baseUrl || !isValidOpaqueId(body.groupId) || isComparisonGroupFull(savedResult)) return "";
 
   const url = new URL(`${baseUrl}/diagnostic`);
   url.searchParams.set("view", "invite");
   url.searchParams.set("group", body.groupId);
   url.searchParams.set("lang", body.language === "es" ? "es" : "en");
-  if (body.profile?.name) url.searchParams.set("name", body.profile.name);
-
   return url.toString();
 }
 
@@ -150,8 +114,7 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
   const report = buildSummaryReportPayload(body, savedResult);
   const language = body.language === "es" ? "es" : "en";
   const name = report.name || (language === "es" ? "hola" : "there");
-  const pdfUrl = createSummaryPdfUrl(body, savedResult, options);
-  const scheduleCallUrl = createScheduleCallUrl(body, savedResult, options);
+  const scheduleCallUrl = createContactMailto(language, options.contactEmail);
   const inviteShareUrl = createInviteShareUrl(body, savedResult, options);
   const groupIsFull = isComparisonGroupFull(savedResult);
 
@@ -167,16 +130,15 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
       report.focusAreas?.length ? `Áreas de enfoque: ${report.focusAreas.join(", ")}` : "",
       "",
       "Qué puedes hacer ahora:",
-      "1. Descargar tu PDF para guardarlo o compartirlo en una conversación.",
-      "2. Pedir una conversación con Gilbert. Con un clic, Gilbert recibe una notificación.",
+      "1. Guardar el PDF adjunto o usarlo en una conversación.",
+      "2. Pedir una conversación con Gilbert desde tu propia aplicación de email.",
       inviteShareUrl
         ? "3. Invitar a alguien de la familia o empresa para comparar perspectivas dentro del mismo grupo."
         : groupIsFull
           ? "3. Este grupo de comparación ya está completo con 3 perspectivas."
           : "",
       "",
-      pdfUrl ? `Descargar resultados en PDF: ${pdfUrl}` : "",
-      scheduleCallUrl ? `Agendar una conversación con Gilbert: ${scheduleCallUrl}` : "",
+      scheduleCallUrl ? `Escribir a Gilbert: ${scheduleCallUrl}` : "",
       inviteShareUrl ? `Invitar a un familiar o colega: ${inviteShareUrl}` : "",
       "",
       "Este reporte es un punto de partida para la reflexión y la conversación. No es una calificación ni un veredicto.",
@@ -200,16 +162,15 @@ function plainSummaryEmail(body, savedResult = {}, options = {}) {
     report.focusAreas?.length ? `Focus areas: ${report.focusAreas.join(", ")}` : "",
     "",
     "What you can do next:",
-    "1. Download your PDF so you can keep it or use it in a conversation.",
-    "2. Ask for a conversation with Gilbert. One click sends Gilbert a notification.",
+    "1. Keep the attached PDF or use it in a conversation.",
+    "2. Ask for a conversation with Gilbert from your own email app.",
     inviteShareUrl
       ? "3. Invite someone from the family or company to compare perspectives in the same group."
       : groupIsFull
         ? "3. This comparison group is already complete with 3 perspectives."
         : "",
     "",
-    pdfUrl ? `Download results as a PDF: ${pdfUrl}` : "",
-    scheduleCallUrl ? `Schedule a conversation with Gilbert: ${scheduleCallUrl}` : "",
+    scheduleCallUrl ? `Email Gilbert: ${scheduleCallUrl}` : "",
     inviteShareUrl ? `Invite a family member or colleague: ${inviteShareUrl}` : "",
     "",
     "This report is a starting point for reflection and conversation. It is not a grade or verdict.",
@@ -380,8 +341,7 @@ function actionButtonRow(buttons) {
 function htmlSummaryEmail(body, savedResult = {}, options = {}) {
   const report = buildSummaryReportPayload(body, savedResult);
   const language = body.language === "es" ? "es" : "en";
-  const pdfUrl = createSummaryPdfUrl(body, savedResult, options);
-  const scheduleCallUrl = createScheduleCallUrl(body, savedResult, options);
+  const scheduleCallUrl = createContactMailto(language, options.contactEmail);
   const inviteShareUrl = createInviteShareUrl(body, savedResult, options);
   const groupIsFull = isComparisonGroupFull(savedResult);
   const name = escapeHtml(report.name || (language === "es" ? "hola" : "there"));
@@ -404,10 +364,10 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           nextStepsIntro: inviteShareUrl
             ? "Elige el siguiente paso que mejor se ajuste a tu situación. Puedes guardar tu PDF, pedir una conversación con Gilbert o invitar a otra persona para comparar perspectivas."
             : "Elige el siguiente paso que mejor se ajuste a tu situación. Puedes guardar tu PDF o pedir una conversación con Gilbert.",
-          downloadPdf: "Descargar resultados en PDF",
-          downloadPdfHelp: "Guarda una copia clara de tu resultado individual.",
+          downloadPdf: "Guardar el PDF adjunto",
+          downloadPdfHelp: "Tu resultado individual se incluye como un archivo adjunto privado.",
           scheduleCall: "Agendar una conversación con Gilbert",
-          scheduleCallHelp: "Un clic notifica a Gilbert que quieres hablar sobre tus resultados.",
+          scheduleCallHelp: "Abre tu aplicación de email para confirmar que quieres conversar.",
           inviteSomeone: "Invitar a un familiar o colega",
           inviteSomeoneHelp:
             "La persona invitada completa la misma autoevaluación de forma privada para crear una comparación por tema.",
@@ -417,7 +377,7 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           comparisonNote: groupIsFull
             ? "Este grupo ya alcanzó el límite de 3 perspectivas. La comparación ayuda a ver dónde coinciden las perspectivas y dónde conviene conversar primero."
             : "La comparación ayuda a ver dónde coinciden las perspectivas y dónde conviene conversar primero. No muestra respuestas individuales pregunta por pregunta.",
-          footerNote: "Si solicitas una conversación, Gilbert recibe una notificación automáticamente.",
+          footerNote: "El PDF adjunto contiene tu reporte individual y no depende de un enlace público.",
           footerName: "Gilbert Devlyn",
           footerLine: "Asesoría discreta y confidencial para empresas familiares."
         }
@@ -436,10 +396,10 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           nextStepsIntro: inviteShareUrl
             ? "Choose the next step that fits your situation. You can save your PDF, ask Gilbert for a conversation, or invite someone else to compare perspectives."
             : "Choose the next step that fits your situation. You can save your PDF or ask Gilbert for a conversation.",
-          downloadPdf: "Download results as a PDF",
-          downloadPdfHelp: "Keep a clear copy of your individual result.",
+          downloadPdf: "Save the attached PDF",
+          downloadPdfHelp: "Your individual result is included as a private attachment.",
           scheduleCall: "Schedule a conversation with Gilbert",
-          scheduleCallHelp: "One click notifies Gilbert that you would like to discuss your results.",
+          scheduleCallHelp: "Open your email app to confirm that you would like to talk.",
           inviteSomeone: "Invite a family member or colleague",
           inviteSomeoneHelp:
             "The invited person completes the same self-assessment privately so a topic-level comparison can be created.",
@@ -449,7 +409,7 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           comparisonNote: groupIsFull
             ? "This group has reached the 3-person comparison limit. The comparison can now show where perspectives align and where the first useful conversation may be."
             : "Comparison helps show where perspectives align and where the first useful conversation may be. It does not show individual question-by-question answers.",
-          footerNote: "If you request a conversation, Gilbert receives an automatic notification.",
+          footerNote: "The attached PDF contains your individual report and does not depend on a public link.",
           footerName: "Gilbert Devlyn",
           footerLine: "Discreet, confidentiality-first advisory for family enterprises."
         };
@@ -555,7 +515,6 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                 </div>
 
                 ${actionButtonRow([
-                  { url: pdfUrl, label: text.downloadPdf, accent: "#0F463C" },
                   { url: scheduleCallUrl, label: text.scheduleCall, accent: "#F1C84C", textColor: "#17352E" },
                   { url: inviteShareUrl, label: text.inviteSomeone, accent: "#C9B2DE", textColor: "#0F463C" }
                 ])}
@@ -662,7 +621,6 @@ function adminEmailText(body, savedResult = {}, options = {}) {
   const name = participantName(body, "Participant");
   const score = Math.round(Number(body.result?.overall ?? body.overall ?? 0));
   const priorities = buildAdminReportPayload(body, savedResult).focusAreas || [];
-  const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return [
     `${adminNotificationTitle(name, Boolean(body.reportRequest?.contactRequested), language)}.`,
@@ -681,8 +639,6 @@ function adminEmailText(body, savedResult = {}, options = {}) {
     body.inviteEmail ? `${text.invitedEmail}: ${body.inviteEmail}` : `${text.invitedEmail}: ${text.notProvided}`,
     body.groupId ? `${text.groupKey}: ${body.groupId}` : "",
     body.inviteLink ? `${text.inviteLink}: ${body.inviteLink}` : "",
-    adminPdfUrl ? `${text.advisorPdf}: ${adminPdfUrl}` : "",
-    savedResult.sessionKey ? `${text.sessionKey}: ${savedResult.sessionKey}` : "",
     "",
     text.retainedNote
   ]
@@ -705,7 +661,6 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
   const participant = report.participant ?? {};
   const name = participant.name || report.name || "Participant";
   const completionTitle = adminNotificationTitle(name, Boolean(report.context?.contactRequested), language);
-  const adminPdfUrl = createAdminPdfUrl(body, savedResult, options);
 
   return `<!doctype html>
 <html>
@@ -774,18 +729,6 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
                     : ""
                 }
 
-                ${
-                  adminPdfUrl
-                    ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 18px;">
-                        <tr>
-                          <td style="background:#0F463C; border-radius:7px;">
-                            <a href="${escapeHtml(adminPdfUrl)}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">${escapeHtml(text.viewPdf)}</a>
-                          </td>
-                        </tr>
-                      </table>`
-                    : ""
-                }
-
                 <p style="margin:0; color:#5F6A60; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
               </td>
             </tr>
@@ -800,6 +743,23 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
 function extractEmailAddress(value = "") {
   const match = String(value).match(/<([^>]+)>/);
   return (match?.[1] || value).trim();
+}
+
+function assertHeaderValue(value, label, maxLength = 998) {
+  const text = String(value ?? "");
+  if (!text || text.length > maxLength || /[\r\n\0]/.test(text)) {
+    throw validationError(`${label} is invalid`);
+  }
+  return text;
+}
+
+export function validateMailboxForEmail(value, label = "Email address") {
+  const header = assertHeaderValue(value, label, 320);
+  const address = extractEmailAddress(header);
+  if (!isValidEmailAddress(address)) {
+    throw validationError(`${label} is invalid`);
+  }
+  return { header, address: normalizeEmailAddress(address) };
 }
 
 function encodeHeader(value = "") {
@@ -948,8 +908,26 @@ function createSmtpSession(config) {
 }
 
 async function sendSmtpEmail(config, payload) {
-  const fromAddress = extractEmailAddress(payload.from);
-  const toAddress = extractEmailAddress(payload.to);
+  const from = validateMailboxForEmail(payload.from, "Sender address");
+  const to = validateMailboxForEmail(payload.to, "Recipient address");
+  const replyTo = validateMailboxForEmail(payload.replyTo, "Reply-to address");
+  const subject = assertHeaderValue(payload.subject, "Email subject", 240);
+  const attachments = (payload.attachments ?? []).map((attachment) => {
+    const filename = String(attachment.filename || "report.pdf");
+    const contentType = String(attachment.contentType || "application/octet-stream");
+    if (!/^[a-zA-Z0-9._-]{1,120}$/.test(filename) || !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(contentType)) {
+      throw validationError("Email attachment metadata is invalid");
+    }
+    return { ...attachment, filename, contentType };
+  });
+  const safePayload = {
+    ...payload,
+    from: from.header,
+    to: to.header,
+    replyTo: replyTo.header,
+    subject,
+    attachments
+  };
   const session = createSmtpSession(config);
 
   try {
@@ -958,10 +936,10 @@ async function sendSmtpEmail(config, payload) {
     await session.command("AUTH LOGIN", [334]);
     await session.command(Buffer.from(config.user).toString("base64"), [334]);
     await session.command(Buffer.from(config.pass).toString("base64"), [235]);
-    await session.command(`MAIL FROM:<${fromAddress}>`, [250]);
-    await session.command(`RCPT TO:<${toAddress}>`, [250, 251]);
+    await session.command(`MAIL FROM:<${from.address}>`, [250]);
+    await session.command(`RCPT TO:<${to.address}>`, [250, 251]);
     await session.command("DATA", [354]);
-    session.socket.write(`${smtpMessage(payload)}\r\n.\r\n`);
+    session.socket.write(`${smtpMessage(safePayload)}\r\n.\r\n`);
     await session.readResponse([250]);
     await session.command("QUIT", [221]);
 
@@ -977,20 +955,28 @@ export async function sendInvitationEmail(invitation = {}) {
     return { skipped: true, reason: "missing-smtp-config" };
   }
 
-  const invitedEmail = String(invitation.invitedEmail || "").trim();
-  const inviteLink = String(invitation.inviteLink || "").trim();
+  const invitedEmail = normalizeEmailAddress(invitation.invitedEmail);
+  const groupId = String(invitation.groupId || "").trim().toLowerCase();
+  const baseUrl = trustedPublicOrigin();
   if (!invitedEmail) {
     return { skipped: true, reason: "missing-invited-email" };
   }
-  if (!inviteLink) {
-    return { skipped: true, reason: "missing-invite-link" };
+  if (!isValidEmailAddress(invitedEmail)) {
+    throw validationError("Invitation recipient is invalid");
+  }
+  if (!isValidOpaqueId(groupId) || !baseUrl) {
+    throw validationError("Invitation link configuration is invalid");
   }
 
   const language = invitation.language === "es" ? "es" : "en";
+  const inviteUrl = new URL("/diagnostic", baseUrl);
+  inviteUrl.searchParams.set("group", groupId);
+  inviteUrl.searchParams.set("lang", language);
+  const inviteLink = inviteUrl.toString();
   const message = await sendSmtpEmail(config, {
     from: config.from,
     to: invitedEmail,
-    replyTo: invitation.inviterEmail || config.replyTo,
+    replyTo: config.replyTo,
     subject: invitationSubject(invitation, language),
     text: plainInvitationEmail({ ...invitation, invitedEmail, inviteLink, language }),
     html: htmlInvitationEmail({ ...invitation, invitedEmail, inviteLink, language })
@@ -1013,12 +999,17 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
     return { skipped: true, reason: "missing-smtp-config" };
   }
 
-  const recipientEmail = body.reportRequest?.recipientEmail || body.profile?.email;
-  if (!recipientEmail) {
-    return { skipped: true, reason: "missing-recipient-email" };
+  const recipientEmail = normalizeEmailAddress(body.profile?.email);
+  if (
+    !isValidEmailAddress(recipientEmail) ||
+    normalizeEmailAddress(body.reportRequest?.recipientEmail) !== recipientEmail
+  ) {
+    throw validationError("Summary report recipient must match the respondent email");
   }
 
   const language = body.language === "es" ? "es" : "en";
+  const emailOptions = { ...options, contactEmail: config.replyTo };
+  const userPdf = createSummaryPdfBuffer(buildSummaryReportPayload(body, savedResult));
   const userEmail = await sendSmtpEmail(config, {
     from: config.from,
     to: recipientEmail,
@@ -1027,8 +1018,15 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
       language === "es"
         ? "Tu reporte resumen de autoevaluación está listo"
         : "Your self-assessment summary report is ready",
-    text: plainSummaryEmail(body, savedResult, options),
-    html: htmlSummaryEmail(body, savedResult, options)
+    text: plainSummaryEmail(body, savedResult, emailOptions),
+    html: htmlSummaryEmail(body, savedResult, emailOptions),
+    attachments: [
+      {
+        filename: "gilbert-self-assessment-summary.pdf",
+        contentType: "application/pdf",
+        content: userPdf
+      }
+    ]
   });
 
   const adminText = adminEmailText(body, savedResult, options);
@@ -1231,15 +1229,7 @@ export async function sendCallRequestNotification(request = {}) {
   };
 }
 
-function comparisonViewUrl(groupId, language, options = {}) {
-  const baseUrl = (options.baseUrl || process.env.PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (!baseUrl) return "";
-
-  const token = encodeActionToken({ groupId, language });
-  return `${baseUrl}/diagnostic?view=admin-comparison&data=${token}`;
-}
-
-function htmlComparisonReadyEmail(payload, viewUrl) {
+function htmlComparisonReadyEmail(payload) {
   const language = payload.language === "es" ? "es" : "en";
   const labels = adminEmailLabels(language);
   const participants = payload.participants || [];
@@ -1257,7 +1247,6 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
           participants: "Participantes",
           divergenceTitle: "Divergencia (brecha mayor a 20)",
           convergenceTitle: "Convergencia (brecha de 10 o menos)",
-          viewButton: "Ver la comparación completa en el navegador",
           attachedNote: "PDF adjunto: comparación grupal completa con brechas por dimensión."
         }
       : {
@@ -1269,7 +1258,6 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
           participants: "Participants",
           divergenceTitle: "Divergence (gap over 20)",
           convergenceTitle: "Convergence (gap 10 or less)",
-          viewButton: "View full comparison in browser",
           attachedNote: "Attached PDF: full group comparison with pillar-by-pillar gaps."
         };
 
@@ -1353,8 +1341,6 @@ function htmlComparisonReadyEmail(payload, viewUrl) {
                     : ""
                 }
 
-                ${actionButtonRow([{ url: viewUrl, label: text.viewButton, accent: "#0F463C" }])}
-
                 <p style="margin:0; color:#5F6A60; font-size:13px; line-height:1.55;">${escapeHtml(text.attachedNote)}</p>
               </td>
             </tr>
@@ -1378,7 +1364,6 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
     return { skipped: true, reason: "not-enough-participants" };
   }
 
-  const viewUrl = comparisonViewUrl(payload.groupId, language, options);
   const pdf = createComparisonPdfBuffer(payload);
 
   const subject =
@@ -1401,8 +1386,6 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
             ? `Áreas de divergencia: ${payload.divergence.map((row) => row.label).join(", ")}`
             : "",
           "",
-          viewUrl ? `Ver la comparación completa en el navegador: ${viewUrl}` : "",
-          "",
           "Esta comparación es solo para el asesor. Los participantes no ven esta vista."
         ]
           .filter(Boolean)
@@ -1420,8 +1403,6 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
             ? `Divergence areas: ${payload.divergence.map((row) => row.label).join(", ")}`
             : "",
           "",
-          viewUrl ? `View the full comparison in your browser: ${viewUrl}` : "",
-          "",
           "This comparison is for advisor use only. Respondents do not see this view."
         ]
           .filter(Boolean)
@@ -1433,7 +1414,7 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
     replyTo: config.replyTo,
     subject,
     text,
-    html: htmlComparisonReadyEmail(payload, viewUrl),
+    html: htmlComparisonReadyEmail(payload),
     attachments: [
       {
         filename: `gilbert-group-comparison-${payload.groupId || "group"}.pdf`,

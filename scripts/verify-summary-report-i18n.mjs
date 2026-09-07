@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   buildComparisonReportPayload,
   buildSummaryReportPayload,
   createComparisonPdfBuffer,
   createSummaryPdfBuffer
 } from "../server/summary-report.js";
-import { htmlAdminEmail } from "../server/email.js";
+import { htmlAdminEmail, validateMailboxForEmail } from "../server/email.js";
 
 function sampleBody(language, stageId) {
   const stages = {
@@ -94,5 +95,22 @@ assert.match(comparisonEs.participants[0].label, /Fundador/);
 assert.match(comparisonEs.pillarRows[0].label, /Visión/);
 const comparisonPdfEs = createComparisonPdfBuffer(comparisonEs);
 assert.ok(comparisonPdfEs.length > 1000, "Spanish comparison PDF should render content");
+
+assert.throws(
+  () => validateMailboxForEmail("victim@example.com\r\nBcc: attacker@example.com"),
+  /invalid/,
+  "SMTP mailbox values must reject header injection"
+);
+assert.throws(
+  () => validateMailboxForEmail("not-an-email"),
+  /invalid/,
+  "SMTP mailbox values must reject malformed addresses"
+);
+
+const emailSource = readFileSync("server/email.js", "utf8");
+assert.doesNotMatch(emailSource, /api\/(summary-pdf|advisor-report-pdf|schedule-call)\?data=/);
+assert.doesNotMatch(emailSource, /view=admin-comparison/);
+assert.match(emailSource, /gilbert-self-assessment-summary\.pdf/, "user reports must be attached");
+assert.match(emailSource, /gilbert-advisor-assessment-report\.pdf/, "advisor reports must be attached");
 
 console.log("Summary report i18n verification passed.");

@@ -1,14 +1,20 @@
 import { getGroupParticipantCount, MAX_GROUP_PARTICIPANTS } from "../server/airtable.js";
+import { enforceRateLimit, prepareApiRequest } from "../server/http-security.js";
+import { isValidOpaqueId } from "../server/validation.js";
 
 export default async function handler(req, res) {
+  if (!prepareApiRequest(req, res)) return;
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return res.status(405).json({ error: "Method not allowed" });
   }
+  if (!enforceRateLimit(req, res, "group-status", { limit: 60, windowMs: 15 * 60 * 1000 })) {
+    return;
+  }
 
-  const groupId = String(req.query?.group ?? "").trim();
-  if (!groupId) {
-    return res.status(400).json({ error: "Missing comparison group key" });
+  const groupId = String(req.query?.group ?? "").trim().toLowerCase();
+  if (!isValidOpaqueId(groupId)) {
+    return res.status(400).json({ error: "Invalid comparison group key" });
   }
 
   try {

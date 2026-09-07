@@ -4,8 +4,10 @@ import { FULL_QUESTIONS, UNKNOWN_ANSWER } from "../src/data/assessment.js";
 import { calculateResults, getStage, roundedScore } from "../src/utils/results.js";
 import {
   answerValidationMessage,
-  normalizeAssessmentSubmission
+  normalizeAssessmentSubmission,
+  validateAssessmentSubmission
 } from "../server/scoring.js";
+import { PRIVACY_POLICY_VERSION } from "../server/validation.js";
 
 function question(pillarId, number, language = "en") {
   const item = FULL_QUESTIONS[language].find(
@@ -181,6 +183,84 @@ assert.equal(
     answers: { "unknown-question": 3 }
   }),
   "Assessment answers contain unknown question IDs"
+);
+
+assert.equal(
+  answerValidationMessage({
+    language: "en",
+    answers: { [question("vision", 1)]: 3 }
+  }),
+  "Assessment answers must include every question",
+  "partial assessments must not be accepted by the API"
+);
+
+const completeAnswers = Object.fromEntries(FULL_QUESTIONS.en.map((item) => [item.id, 3]));
+const validSubmission = normalizeAssessmentSubmission({
+  createdAt: "2026-09-07T01:00:00.000Z",
+  finalizedAt: "2026-09-07T01:05:00.000Z",
+  mode: "full",
+  language: "en",
+  profile: {
+    name: "Security Test",
+    email: "SECURITY@example.com",
+    phoneCountry: "mx",
+    phoneCountryLabel: "MX",
+    phoneDialCode: "+52",
+    phoneNumber: "55 1234 5678",
+    phoneDigits: "5512345678",
+    phoneInternational: "+52 55 1234 5678",
+    relationship: "founder",
+    generation: "first",
+    country: "mx",
+    countryLabel: "Mexico"
+  },
+  answers: completeAnswers,
+  groupId: "a".repeat(32),
+  participantId: "b".repeat(32),
+  privacyConsent: {
+    accepted: true,
+    policyVersion: PRIVACY_POLICY_VERSION,
+    acceptedAt: "2026-09-07T01:00:30.000Z"
+  },
+  reportRequest: {
+    type: "summary",
+    status: "requested",
+    recipientEmail: "security@example.com",
+    language: "en",
+    contactRequested: false,
+    requestedAt: "2026-09-07T01:05:00.000Z"
+  },
+  result: { overall: 100 },
+  groupParticipantCount: 99,
+  inviteLink: "https://attacker.invalid"
+});
+
+assert.doesNotThrow(() => validateAssessmentSubmission(validSubmission));
+assert.equal(validSubmission.profile.email, "security@example.com");
+assert.equal(validSubmission.result.overall, 60, "the server must recalculate the client result");
+assert.equal(validSubmission.groupParticipantCount, undefined, "client participant counts must be discarded");
+assert.equal(validSubmission.inviteLink, undefined, "client invitation URLs must be discarded");
+
+assert.throws(
+  () => validateAssessmentSubmission({
+    ...validSubmission,
+    reportRequest: { ...validSubmission.reportRequest, recipientEmail: "victim@example.com" }
+  }),
+  /recipient must match/,
+  "reports must only be sent to the validated profile email"
+);
+assert.throws(
+  () => validateAssessmentSubmission({
+    ...validSubmission,
+    privacyConsent: { ...validSubmission.privacyConsent, accepted: false }
+  }),
+  /privacy consent/,
+  "a versioned explicit privacy acknowledgement is required"
+);
+assert.throws(
+  () => validateAssessmentSubmission({ ...validSubmission, groupId: "short-group" }),
+  /identifiers are invalid/,
+  "group identifiers must contain 128 bits of entropy"
 );
 
 console.log("Scoring verification passed.");
