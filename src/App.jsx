@@ -1620,8 +1620,8 @@ function PreAssessmentPrivacyModal({ copy, onDismiss, onReadPolicy }) {
       aria-modal="true"
       aria-labelledby="pre-assessment-privacy-title"
     >
-      <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-xl border border-forest/12 bg-white shadow-soft">
-        <div className="flex items-start gap-3 border-b border-forest/10 p-5 sm:p-6">
+      <div className="flex max-h-[calc(100dvh-3rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-forest/12 bg-white shadow-soft">
+        <div className="flex shrink-0 items-start gap-3 border-b border-forest/10 p-5 sm:p-6">
           <ShieldCheck aria-hidden="true" className="mt-1 shrink-0 text-forest" size={22} />
           <h2
             id="pre-assessment-privacy-title"
@@ -1631,11 +1631,11 @@ function PreAssessmentPrivacyModal({ copy, onDismiss, onReadPolicy }) {
           </h2>
         </div>
 
-        <div className="p-5 sm:p-6">
+        <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
           <p className="text-sm leading-7 text-ink/76 sm:text-base">{copy.body}</p>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-forest/10 p-4 sm:p-5">
+        <div className="flex shrink-0 flex-col gap-3 border-t border-forest/10 p-4 sm:p-5">
           <button
             type="button"
             className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest px-5 text-sm font-bold text-white transition hover:bg-forest-2"
@@ -1736,11 +1736,11 @@ function HomePage({ copy, language, onNavigate }) {
           : "family member • owner • executive • board participant"
     },
     {
-      value: "FFI + IMD",
+      value: language === "es" ? "Preparado en diversas disciplinas" : "Prepared Across Disciplines",
       label:
         language === "es"
-          ? "formación en empresa familiar, patrimonio y consejo"
-          : "family business, wealth advising, and board training"
+          ? "EMPRESA FAMILIAR · PATRIMONIO FAMILIAR · COACHING · GOBIERNO DEL CONSEJO"
+          : "FAMILY BUSINESS · FAMILY WEALTH · COACHING · BOARD GOVERNANCE"
     }
   ];
 
@@ -1800,7 +1800,7 @@ function HomePage({ copy, language, onNavigate }) {
               </button>
             </div>
             <div
-              className="fade-up mt-7 grid max-w-3xl grid-cols-1 gap-2 sm:mt-10 sm:grid-cols-3 sm:gap-3"
+              className="fade-up mt-7 grid max-w-3xl grid-cols-1 gap-2 sm:mt-10 md:grid-cols-3 sm:gap-3 lg:grid-cols-1 xl:grid-cols-3"
               style={{ "--index": 5 }}
             >
               {heroStats.map((item) => (
@@ -2002,7 +2002,7 @@ function HomeHowGilbertWorksSection({ copy, language }) {
         <div className="h-[300px] overflow-hidden rounded-xl shadow-soft sm:h-[360px] lg:col-start-1 lg:row-start-2 lg:h-full lg:min-h-[520px]">
           <img
             className="h-full w-full object-cover object-[78%_center]"
-            src="/gilbert-advisory-wall-session-gilbert-facing-family.png"
+            src="/gilbert-advisory-likeness-v2.png"
             alt={language === "es"
               ? "Familia empresaria conversando sobre una decisión importante con Gilbert"
               : "Business family discussing an important decision with Gilbert"}
@@ -2024,7 +2024,7 @@ function HomeHowGilbertWorksSection({ copy, language }) {
                 <h4 className="font-display text-2xl font-semibold leading-tight text-forest">
                   {service.title}
                 </h4>
-                <p className="mt-3 text-sm leading-6 text-ink/72">{service.summary}</p>
+                <p className="mt-3 text-sm leading-6 text-ink/72">{service.previewSummary ?? service.summary}</p>
               </article>
             );
           })}
@@ -2352,7 +2352,7 @@ function AboutPage({ copy, language, onNavigate }) {
             <h2 className="max-w-4xl font-display text-[2.65rem] font-semibold leading-[1.04] text-forest sm:text-[3.45rem] xl:text-[4rem]">
               {copy.about.title}
             </h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid gap-3 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {copy.about.quickFacts.map((fact) => (
                 <div key={fact.label} className="rounded-lg border border-forest/10 bg-white/72 p-4 shadow-line">
                   <p className="font-display text-3xl font-semibold leading-none tracking-tight text-forest">
@@ -2525,13 +2525,13 @@ function AssessmentLanding({ copy, language, onStart }) {
     language === "es"
       ? [
           { value: "50", label: "preguntas" },
-          { value: "8", label: "temas clave" },
+          { value: "8", label: "áreas prácticas" },
           { value: "~10", label: "minutos" },
           { value: "Sin", label: "preparación necesaria" }
         ]
       : [
           { value: "50", label: "questions" },
-          { value: "8", label: "key topics" },
+          { value: "8", label: "practical areas" },
           { value: "~10", label: "minutes" },
           { value: "No", label: "preparation needed" }
         ];
@@ -2605,11 +2605,18 @@ function AssessmentLanding({ copy, language, onStart }) {
                       </p>
                       <div className="mt-3 grid gap-2">
                         {copy.assessmentIntro.journey.map((item, index) => (
-                          <span key={item.title} className="flex items-center gap-2 text-sm font-semibold text-white/80">
+                          <span key={item.title} className="flex items-start gap-2 text-sm font-semibold text-white/80">
                             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/24 text-[0.68rem] text-[#F2A56E]">
                               {String(index + 1).padStart(2, "0")}
                             </span>
-                            {item.title}
+                            <span className="min-w-0">
+                              {item.title}
+                              {index === 0 && (
+                                <span className="mt-2 block text-sm font-normal leading-6 text-white/70">
+                                  {item.body}
+                                </span>
+                              )}
+                            </span>
                           </span>
                         ))}
                       </div>
@@ -4818,7 +4825,7 @@ function getHomeFinalCtaCopy(language) {
     return {
       title: "¿Listos para aclarar la siguiente decisión?",
       body:
-        "La mayoría de las empresas familiares no tienen dificultades porque el negocio sea débil. Los problemas suelen comenzar cuando los roles, las expectativas y las decisiones importantes permanecen sin aclarar durante demasiado tiempo.",
+        "Cuando los roles, las expectativas o las decisiones importantes siguen sin estar claros, la conversación adecuada puede abrir un camino práctico para avanzar.",
       note: "Comienza por la decisión, el rol o la transición que necesita atención ahora.",
       primary: "Iniciar una conversación",
       secondary: "Comenzar la autoevaluación"
@@ -4828,10 +4835,10 @@ function getHomeFinalCtaCopy(language) {
   return {
     title: "Ready to make the next decision clearer?",
     body:
-      "Most family businesses do not struggle because the business is weak. The challenges usually begin when roles, expectations and important decisions remain unclear for too long.",
+      "When roles, expectations or important decisions remain unclear, the right conversation can create a practical way forward.",
     note: "Start with the decision, role, or transition that needs attention now.",
     primary: "Start a conversation",
-    secondary: "Begin the self-assessment"
+    secondary: "Begin the Self-Assessment"
   };
 }
 
@@ -4895,7 +4902,7 @@ function getCompareInviteCopy(language) {
       "A single perspective shows where one person stands. Comparing perspectives shows where the family actually agrees, and where it does not.",
     steps: [
       {
-        title: "You already completed your self-assessment",
+        title: "You already completed your Self-Assessment",
         body: "Your results are saved and ready to compare."
       },
       {
@@ -4927,7 +4934,7 @@ function getFinalActionCopy(language) {
     return {
       title: "Guarda tus resultados",
       body:
-        "Guardaremos tus resultados y te enviaremos tu reporte por email de inmediato.",
+        "Al guardar y solicitar tu reporte, te lo enviamos por email y compartimos automáticamente tu perfil, respuestas y resultados con Gilbert. La casilla de abajo solicita una conversación de seguimiento; no controla si se comparten tus resultados.",
       continue: "Guardar y enviarme mi reporte",
       saving: "Guardando...",
       saved: "Reporte guardado y enviado",
@@ -4957,7 +4964,7 @@ function getFinalActionCopy(language) {
 
   return {
     title: "Save your results",
-    body: "We'll save your results and email you your report right away.",
+    body: "When you save and request your report, we email it to you and automatically share your profile, answers and results with Gilbert. The checkbox below requests a follow-up conversation; it does not control whether your results are shared.",
     continue: "Save and email me my report",
     saving: "Saving...",
     saved: "Report saved and sent",
@@ -5093,8 +5100,8 @@ function getFooterContent(language) {
         "Certified Professional Coach · iPEC",
         "Board Director Diploma · IMD"
       ],
-      linkedin: "linkedin.com/in/gilbert-devlyn-advisory",
-      linkedinUrl: "https://www.linkedin.com/in/gilbert-devlyn-advisory",
+      linkedin: "linkedin.com/in/gilbertdevlyn/",
+      linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
       socialLabel: "Canales sociales",
       emailLabel: "Email",
       trustLine: "Las conversaciones privadas y la información sensible se manejan con discreción."
@@ -5110,8 +5117,8 @@ function getFooterContent(language) {
       "Certified Professional Coach · iPEC",
       "Board Director Diploma · IMD"
     ],
-    linkedin: "linkedin.com/in/gilbert-devlyn-advisory",
-    linkedinUrl: "https://www.linkedin.com/in/gilbert-devlyn-advisory",
+    linkedin: "linkedin.com/in/gilbertdevlyn/",
+    linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
     socialLabel: "Social channels",
     emailLabel: "Email",
     trustLine: "Private conversations and sensitive information are handled discreetly."
