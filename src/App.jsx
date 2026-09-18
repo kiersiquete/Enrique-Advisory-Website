@@ -1776,22 +1776,21 @@ function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver
 function HomePage({ copy, language, onNavigate }) {
   const heroStats = [
     {
-      value: "12+",
-      label: language === "es" ? "años dentro de empresa familiar" : "years inside family enterprise"
-    },
-    {
-      value: language === "es" ? "Cuatro perspectivas" : "Four Perspectives",
+      value: language === "es" ? "Cinco perspectivas" : "Five Perspectives",
       label:
         language === "es"
-          ? "familiar • propietario • ejecutivo • consejero"
-          : "family member • owner • executive • board participant"
+          ? "empresa familiar de tercera generación • propietario • ejecutivo • consejero no ejecutivo • gobierno familiar"
+          : "third-generation family enterprise • owner • executive • non-executive board member • family governance"
     },
     {
-      value: language === "es" ? "Preparado en diversas disciplinas" : "Prepared Across Disciplines",
+      value:
+        language === "es"
+          ? "Asesoría, coaching y consejo"
+          : "Advisory, Coaching & Board Expertise",
       label:
         language === "es"
-          ? "EMPRESA FAMILIAR · PATRIMONIO FAMILIAR · COACHING · GOBIERNO DEL CONSEJO"
-          : "FAMILY BUSINESS · FAMILY WEALTH · COACHING · BOARD GOVERNANCE"
+          ? "ASESORÍA EN EMPRESA FAMILIAR • ASESORÍA PATRIMONIAL FAMILIAR • COACHING EJECUTIVO Y DE SIGUIENTE GENERACIÓN • CERTIFICACIÓN COMO CONSEJERO"
+          : "FAMILY ENTERPRISE ADVISORY • FAMILY WEALTH ADVISING • EXECUTIVE & NEXT-GENERATION COACHING • BOARD DIRECTOR CERTIFICATION"
     }
   ];
 
@@ -1851,7 +1850,7 @@ function HomePage({ copy, language, onNavigate }) {
               </button>
             </div>
             <div
-              className="fade-up mt-7 grid max-w-3xl grid-cols-1 gap-2 sm:mt-10 md:grid-cols-3 sm:gap-3 lg:grid-cols-1 xl:grid-cols-3"
+              className="fade-up mt-7 grid max-w-3xl grid-cols-1 gap-2 sm:mt-10 md:grid-cols-2 sm:gap-3 lg:grid-cols-1 xl:grid-cols-2"
               style={{ "--index": 5 }}
             >
               {heroStats.map((item) => (
@@ -1867,9 +1866,9 @@ function HomePage({ copy, language, onNavigate }) {
         </div>
       </section>
 
-      <HomeProblemSection copy={copy} language={language} />
+      <HomeCredibilitySection language={language} />
 
-      <HomeFamilyDimensionSection copy={copy} />
+      <HomeProblemSection copy={copy} language={language} />
 
       <HomeHowGilbertWorksSection copy={copy} language={language} />
 
@@ -1920,9 +1919,11 @@ function HomePage({ copy, language, onNavigate }) {
 
 function HomeProblemSection({ copy, language }) {
   const sectionLabel =
-    language === "es" ? "El problema que ayuda a ordenar" : "The problem Gilbert helps solve";
+    language === "es"
+      ? "Los problemas que Gilbert ayuda a atender"
+      : "The Problems Gilbert Helps Families Address";
   const mapLabel = language === "es" ? "Mapa de temas" : "Issue map";
-  const icons = [Landmark, CalendarDays, Scale, UsersRound, Compass, ShieldCheck];
+  const icons = [Handshake, CalendarDays, Landmark, Scale, Compass, UsersRound];
 
   return (
     <section className="border-b border-forest/10 bg-cream px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
@@ -1938,9 +1939,7 @@ function HomeProblemSection({ copy, language }) {
             {copy.home.helpingIntro ?? copy.home.challengeIntro}
           </p>
           <p className="mt-6 border-l-2 border-[#C9B2DE] pl-4 text-sm font-semibold leading-6 text-forest/76">
-            {language === "es"
-              ? "El punto no es agregar más procesos. Es separar los temas correctos para que la familia pueda decidir con mayor claridad y menos tensión."
-              : "The point is not to add more structure for its own sake. It is to separate the right issues so the family can decide with greater clarity and less tension."}
+            {copy.home.patternBody}
           </p>
         </div>
 
@@ -1976,56 +1975,37 @@ function HomeProblemSection({ copy, language }) {
   );
 }
 
-function HomeFamilyDimensionSection({ copy }) {
-  const evidence = copy.home.evidence;
+function HomeCredibilitySection({ language }) {
+  const credibility = getHomeCredibilityCopy(language);
 
   return (
-    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto max-w-[1400px]">
-        <div className="max-w-3xl">
+    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.45fr_0.55fr] lg:items-start">
+        <div className="max-w-2xl lg:sticky lg:top-28">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {evidence.label}
+            {credibility.label}
           </p>
           <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-            {evidence.title}
+            {credibility.title}
           </h2>
-          <p className="mt-5 text-base leading-8 text-ink/76 sm:text-lg">{evidence.intro}</p>
+          <p className="mt-5 text-base leading-8 text-ink/76 sm:text-lg sm:leading-9">
+            {credibility.body}
+          </p>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {evidence.stats.map((stat, index) => (
-            <div key={`${stat.title ?? stat.value}-${index}`} className="rounded-lg border border-forest/10 bg-parchment/32 p-6">
-              <p className="font-display text-2xl font-semibold leading-tight text-forest">
-                {stat.title ?? stat.value}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-ink/68">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-10 overflow-hidden rounded-lg border border-forest/10">
-          <div className="grid grid-cols-1 gap-2 bg-forest px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-white sm:grid-cols-[0.8fr_1fr_1fr] sm:gap-4 sm:px-5">
-            <span className="hidden sm:block" />
-            <span>{evidence.comparisonHeaders.informal}</span>
-            <span>{evidence.comparisonHeaders.advisory}</span>
-          </div>
-          {evidence.comparisons.map((row, index) => (
-            <div
-              key={row.theme}
-              className={`grid grid-cols-1 gap-2 p-4 sm:grid-cols-[0.8fr_1fr_1fr] sm:gap-4 sm:p-5 ${
-                index % 2 === 0 ? "bg-parchment/24" : "bg-white"
-              }`}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {credibility.proof.map((item) => (
+            <article
+              key={item.label}
+              className="rounded-lg border border-forest/10 bg-parchment/32 p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft"
             >
-              <p className="font-display text-lg font-semibold text-forest">{row.theme}</p>
-              <p className="text-sm leading-6 text-ink/64">{row.informalShort}</p>
-              <p className="text-sm leading-6 text-forest/82">{row.advisoryShort}</p>
-            </div>
+              <p className="font-display text-2xl font-semibold leading-none tracking-tight text-forest">
+                {item.value}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-ink/70">{item.label}</p>
+            </article>
           ))}
         </div>
-
-        {evidence.sourceNote ? (
-          <p className="mt-4 text-xs font-medium leading-5 text-muted">{evidence.sourceNote}</p>
-        ) : null}
       </div>
     </section>
   );
@@ -2108,13 +2088,16 @@ function HomeAssessmentEntrySection({ copy, language }) {
           <ol className="mt-4 grid gap-4 sm:grid-cols-3">
             {steps.map((step, index) => (
               <li key={step} className="border-l border-forest/18 pl-4">
-                <span className="font-display text-2xl font-semibold leading-none text-copper/70">
-                  {String(index + 1).padStart(2, "0")}
+                <span className="font-display text-lg font-semibold leading-none text-copper/70">
+                  {stepLabel(language, index + 1)}
                 </span>
                 <p className="mt-2 text-sm font-medium leading-6 text-forest/78">{step}</p>
               </li>
             ))}
           </ol>
+          {copy.home.reportNote ? (
+            <p className="mt-2 text-sm leading-6 text-ink/70">{copy.home.reportNote}</p>
+          ) : null}
         </div>
       </div>
     </section>
@@ -2431,7 +2414,18 @@ function AboutPage({ copy, language, onNavigate }) {
       <section className="border-y border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px]">
           <div className="grid gap-5 lg:grid-cols-2">
+            <CredentialList
+              title={copy.about.familyExperienceTitle}
+              items={copy.about.familyExperienceItems}
+            />
+            <CredentialList
+              title={copy.about.governanceTitle}
+              items={copy.about.governanceItems}
+            />
             <CredentialList title={copy.about.educationTitle} items={copy.about.educationItems} />
+            <CredentialList title={copy.about.industryTitle} items={copy.about.industryItems} />
+          </div>
+          <div className="mt-5">
             <CredentialList title={copy.about.focusTitle} items={copy.about.focusItems} />
           </div>
         </div>
@@ -2480,8 +2474,8 @@ function AboutPage({ copy, language, onNavigate }) {
             <div className="grid gap-4 sm:grid-cols-3">
               {copy.about.toolSteps.map((step, index) => (
                 <div key={step.title} className="rounded-lg border border-white/16 bg-white/8 p-4">
-                  <span className="font-display text-2xl font-semibold leading-none text-[#F1C84C]">
-                    {String(index + 1).padStart(2, "0")}
+                  <span className="font-display text-lg font-semibold leading-none text-[#F1C84C]">
+                    {stepLabel(language, index + 1)}
                   </span>
                   <p className="mt-3 text-sm font-bold text-white">{step.title}</p>
                   <p className="mt-2 text-sm leading-6 text-white/70">{step.body}</p>
@@ -2657,8 +2651,8 @@ function AssessmentLanding({ copy, language, onStart }) {
                       <div className="mt-3 grid gap-2">
                         {copy.assessmentIntro.journey.map((item, index) => (
                           <span key={item.title} className="flex items-start gap-2 text-sm font-semibold text-white/80">
-                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-white/24 text-[0.68rem] text-[#F2A56E]">
-                              {String(index + 1).padStart(2, "0")}
+                            <span className="grid shrink-0 place-items-center rounded-full border border-white/24 px-2 py-0.5 text-[0.68rem] text-[#F2A56E]">
+                              {stepLabel(language, index + 1)}
                             </span>
                             <span className="min-w-0">
                               {item.title}
@@ -4876,20 +4870,58 @@ function getHomeFinalCtaCopy(language) {
   };
 }
 
+function stepLabel(language, step) {
+  return language === "es" ? `Paso ${step}` : `Step ${step}`;
+}
+
 function getHomeAssessmentSteps(language) {
   if (language === "es") {
     return [
-      "Guarda tu reporte individual",
-      "Gilbert recibe el contexto necesario para dar seguimiento",
-      "Elige si quieres que Gilbert te contacte"
+      "Recibe y guarda tu reporte individual de la autoevaluación",
+      "Gilbert recibe la información necesaria para identificar temas compartidos y diferencias de perspectiva",
+      "Paso 3: Elige si quieres que Gilbert te contacte"
     ];
   }
 
   return [
-    "Save your individual report",
-    "Gilbert receives the context needed for follow-up",
-    "Choose whether you want him to contact you"
+    "Receive and save your individual Self-Assessment report",
+    "Gilbert receives the information necessary to identify shared themes and differences in perspective",
+    "Step 3: Choose whether you would like Gilbert to contact you"
   ];
+}
+
+function getHomeCredibilityCopy(language) {
+  if (language === "es") {
+    return {
+      label: "Experiencia y credibilidad",
+      title: "No es un asesor de empresas familiares cualquiera.",
+      body:
+        "Gilbert aporta la perspectiva de alguien que ha vivido la empresa familiar desde dentro, como propietario, ejecutivo, consejero no ejecutivo y líder de gobierno familiar.",
+      proof: [
+        { value: "15+ años", label: "Parte de una empresa familiar de tercera generación" },
+        { value: "12+ años", label: "Roles operativos y ejecutivos" },
+        { value: "Desde 2018", label: "Consejero No Ejecutivo" },
+        { value: "Desde 2020", label: "Presidente del Consejo de Familia" },
+        { value: "5+ años", label: "Participación en comités" },
+        { value: "Desde 2025", label: "Presidente del Comité de Prácticas Societarias" }
+      ]
+    };
+  }
+
+  return {
+    label: "Experience & credibility",
+    title: "Not your everyday family business advisor.",
+    body:
+      "Gilbert brings the perspective of someone who has experienced family enterprise from the inside, as an owner, executive, non-executive board member and family governance leader.",
+    proof: [
+      { value: "15+ Years", label: "Part of a third-generation family enterprise" },
+      { value: "12+ Years", label: "Operational and executive roles" },
+      { value: "Since 2018", label: "Non-Executive Board Member" },
+      { value: "Since 2020", label: "Chair of the Family Council" },
+      { value: "5+ Years", label: "Committee participation" },
+      { value: "Since 2025", label: "Chair of the Corporate Practices Committee" }
+    ]
+  };
 }
 
 function getCompareInviteCopy(language) {
@@ -5132,7 +5164,7 @@ function getFooterContent(language) {
         "IMBA · University of Denver",
         "FFI Family Business & Wealth Advising Certificate",
         "Certified Professional Coach · iPEC",
-        "Board Director Diploma · IMD"
+        "Board Director Certification · IMD"
       ],
       linkedin: "linkedin.com/in/gilbertdevlyn/",
       linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
@@ -5149,7 +5181,7 @@ function getFooterContent(language) {
       "IMBA · University of Denver",
       "FFI Family Business & Wealth Advising Certificate",
       "Certified Professional Coach · iPEC",
-      "Board Director Diploma · IMD"
+      "Board Director Certification · IMD"
     ],
     linkedin: "linkedin.com/in/gilbertdevlyn/",
     linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
