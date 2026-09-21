@@ -2052,11 +2052,11 @@ function HomeHowGilbertWorksSection({ copy, language }) {
 
         <div className="h-[300px] overflow-hidden rounded-xl shadow-soft sm:h-[360px] lg:col-start-1 lg:row-start-2 lg:h-full lg:min-h-[520px]">
           <img
-            className="h-full w-full object-cover object-[78%_center]"
-            src="/gilbert-advisory-likeness-v2.png"
+            className="h-full w-full object-cover object-[58%_center]"
+            src="/family-advisory-conversation.jpg"
             alt={language === "es"
-              ? "Familia empresaria conversando sobre una decisión importante con Gilbert"
-              : "Business family discussing an important decision with Gilbert"}
+              ? "Familia empresaria conversando sobre decisiones importantes"
+              : "Business family discussing important decisions"}
           />
         </div>
 
@@ -2319,7 +2319,7 @@ function AboutVideoSection({ video, language }) {
           </p>
         </div>
         <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="aspect-video bg-[linear-gradient(135deg,rgba(28,61,46,0.92),rgba(28,61,46,0.72)),url('/gilbert-home.jpg')] bg-cover bg-center">
+          <div className="aspect-video bg-[linear-gradient(135deg,rgba(28,61,46,0.92),rgba(28,61,46,0.72)),url('/gilbert-casual-window-headshot.jpg')] bg-cover bg-[center_18%]">
             {video.embedUrl ? (
               <iframe
                 className="h-full w-full"
@@ -2369,8 +2369,8 @@ function AdvisorPortrait({ language }) {
     >
       <div className="portrait-frame absolute inset-0 overflow-hidden rounded-lg border border-forest/12 bg-forest shadow-soft">
         <img
-          className="h-full w-full object-cover object-[50%_center] lg:object-[52%_center]"
-          src="/gilbert-home.jpg"
+          className="h-full w-full object-cover object-[50%_10%]"
+          src="/gilbert-casual-window-headshot.jpg"
           alt={language === "es" ? "Retrato de Gilbert Devlyn" : "Portrait of Gilbert Devlyn"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-forest/84 via-forest/12 to-transparent" />
@@ -2387,8 +2387,8 @@ function AboutPage({ copy, language, onNavigate }) {
           <div className="flex flex-col gap-4 lg:h-full">
             <div className="portrait-frame relative h-[420px] overflow-hidden rounded-lg bg-forest shadow-soft sm:h-[520px] lg:h-[640px] xl:h-[720px]">
               <img
-                className="absolute inset-0 h-full w-full object-cover object-[58%_center]"
-                src="/gilbert-about.jpg"
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                src="/gilbert-casual-window-portrait.jpg"
                 alt={
                   language === "es"
                     ? "Retrato profesional de Gilbert Devlyn"
