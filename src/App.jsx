@@ -1453,7 +1453,7 @@ function SiteHeader({
                 type="button"
                 className={`min-h-10 min-w-0 rounded-md px-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 sm:px-4 ${
                   active
-                    ? "bg-lavender text-white shadow-line"
+                    ? "bg-blue text-white shadow-line"
                     : item.secondary
                       ? "text-forest/68 hover:bg-white/70 hover:text-forest"
                       : "text-forest hover:bg-white/80 hover:text-forest"
@@ -1497,7 +1497,7 @@ function SiteHeader({
                   type="button"
                   className={`min-h-11 min-w-0 rounded-md px-3 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 ${
                     active
-                      ? "bg-lavender text-white shadow-line"
+                      ? "bg-blue text-white shadow-line"
                       : item.secondary
                         ? "text-forest/68 hover:bg-parchment hover:text-forest"
                         : "text-forest hover:bg-parchment hover:text-forest"
@@ -2797,7 +2797,7 @@ function LanguageToggle({ language, setLanguage, variant = "light", disabled = f
             disabled={disabled}
             className={`min-h-9 min-w-11 rounded-full px-2 text-xs font-semibold transition sm:min-h-10 sm:min-w-16 sm:px-4 sm:text-sm disabled:cursor-not-allowed ${
               active
-                ? "bg-lavender text-white"
+                ? "bg-blue text-white"
                 : dark
                   ? "text-white/70 hover:text-white"
                   : "text-forest/68 hover:text-forest"
