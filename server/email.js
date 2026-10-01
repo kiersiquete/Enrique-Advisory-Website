@@ -1,3 +1,4 @@
+import net from "node:net";
 import tls from "node:tls";
 import {
   buildAdminReportPayload,
@@ -36,19 +37,35 @@ function smtpCaCertificates() {
 }
 
 function getEmailConfig() {
+  const resendApiKey = process.env.RESEND_API_KEY;
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  if (!host || !user || !pass) return null;
+  if (!resendApiKey && (!host || !user || !pass)) return null;
 
-  return {
-    host,
-    port: Number(process.env.SMTP_PORT || 465),
-    user,
-    pass,
+  const port = Number(process.env.SMTP_PORT || 465);
+  const sharedConfig = {
     from: process.env.EMAIL_FROM || DEFAULT_FROM,
     replyTo: process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO,
-    adminEmail: process.env.ADMIN_REPORT_EMAIL || process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO,
+    adminEmail: process.env.ADMIN_REPORT_EMAIL || process.env.EMAIL_REPLY_TO || DEFAULT_REPLY_TO
+  };
+
+  if (resendApiKey) {
+    return {
+      provider: "resend",
+      apiKey: resendApiKey,
+      ...sharedConfig
+    };
+  }
+
+  return {
+    provider: "smtp",
+    host,
+    port,
+    secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE !== "false" : port === 465,
+    user,
+    pass,
+    ...sharedConfig,
     rejectUnauthorized:
       process.env.NODE_ENV === "production" || process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== "false"
   };
@@ -60,6 +77,25 @@ function escapeHtml(value = "") {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function applyBrandEmailPalette(markup) {
+  const replacements = [
+    ["#0F463C", "#32535D"],
+    ["#17352E", "#32535D"],
+    ["#5F6A60", "#32535D"],
+    ["#EF563D", "#32535D"],
+    ["#F1C84C", "#68659E"],
+    ["#C9B2DE", "#8AA7BD"],
+    ["#F4EEE2", "#EEF3EF"],
+    ["#EDE3D0", "#B7C9B9"],
+    ["#ffffff", "#FAFAF8"]
+  ];
+
+  return replacements.reduce(
+    (result, [legacyColor, brandColor]) => result.replaceAll(legacyColor, brandColor),
+    markup
+  );
 }
 
 function hasFiniteScore(value) {
@@ -266,7 +302,7 @@ function htmlInvitationEmail(invitation = {}) {
             "The comparison only shows pillar-level differences. It does not share individual answers or question-by-question details."
         };
 
-  return `<!doctype html>
+  return applyBrandEmailPalette(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -294,7 +330,7 @@ function htmlInvitationEmail(invitation = {}) {
 
                 <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
                   <tr>
-                    <td style="background:#0F463C; border-radius:7px;">
+                <td style="background:#68659E; border-radius:7px;">
                       <a href="${inviteLink}" style="display:inline-block; padding:15px 22px; color:#ffffff; font-size:16px; font-weight:700; text-decoration:none;">${escapeHtml(text.button)}</a>
                     </td>
                   </tr>
@@ -309,7 +345,7 @@ function htmlInvitationEmail(invitation = {}) {
       </tr>
     </table>
   </body>
-</html>`;
+</html>`);
 }
 
 function actionButtonRow(buttons) {
@@ -414,7 +450,7 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
           footerLine: "Discreet, confidentiality-first advisory for family enterprises."
         };
 
-  return `<!doctype html>
+  return applyBrandEmailPalette(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -484,7 +520,7 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                     </tr>
                     <tr>
                       <td style="width:34px; vertical-align:top; padding:0 0 14px;">
-                        <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#F1C84C; color:#17352E; font-size:12px; line-height:24px; text-align:center; font-weight:700;">2</span>
+                        <span style="display:inline-block; width:24px; height:24px; border-radius:999px; background:#F1C84C; color:#ffffff; font-size:12px; line-height:24px; text-align:center; font-weight:700;">2</span>
                       </td>
                       <td style="padding:0 0 14px; color:#17352E; font-size:14px; line-height:1.55;">
                         <strong style="color:#0F463C;">${escapeHtml(text.scheduleCall)}</strong><br>${escapeHtml(text.scheduleCallHelp)}
@@ -515,8 +551,8 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
                 </div>
 
                 ${actionButtonRow([
-                  { url: scheduleCallUrl, label: text.scheduleCall, accent: "#F1C84C", textColor: "#17352E" },
-                  { url: inviteShareUrl, label: text.inviteSomeone, accent: "#C9B2DE", textColor: "#0F463C" }
+                  { url: scheduleCallUrl, label: text.scheduleCall, accent: "#68659E", textColor: "#FAFAF8" },
+                  { url: inviteShareUrl, label: text.inviteSomeone, accent: "#B7C9B9", textColor: "#32535D" }
                 ])}
 
                 <p style="margin:0 0 18px; color:#17352E; font-size:14px; line-height:1.65;">${escapeHtml(text.comparisonNote)}</p>
@@ -534,7 +570,7 @@ function htmlSummaryEmail(body, savedResult = {}, options = {}) {
       </tr>
     </table>
   </body>
-</html>`;
+</html>`);
 }
 
 function adminNotificationTitle(name, contactRequested, language = "en") {
@@ -662,7 +698,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
   const name = participant.name || report.name || "Participant";
   const completionTitle = adminNotificationTitle(name, Boolean(report.context?.contactRequested), language);
 
-  return `<!doctype html>
+  return applyBrandEmailPalette(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -737,7 +773,7 @@ export function htmlAdminEmail(body, savedResult = {}, options = {}) {
       </tr>
     </table>
   </body>
-</html>`;
+</html>`);
 }
 
 function extractEmailAddress(value = "") {
@@ -846,18 +882,8 @@ function createSmtpSession(config) {
   let buffer = "";
   let pendingResolve;
   let pendingReject;
+  let socket;
   const ca = smtpCaCertificates();
-
-  const socket = tls.connect({
-    host: config.host,
-    port: config.port,
-    servername: config.host,
-    timeout: SMTP_TIMEOUT_MS,
-    rejectUnauthorized: config.rejectUnauthorized,
-    ...(ca ? { ca } : {})
-  });
-
-  socket.setEncoding("utf8");
 
   function resolvePendingResponse() {
     const lines = buffer.split(/\r?\n/).filter(Boolean);
@@ -871,18 +897,44 @@ function createSmtpSession(config) {
     }
   }
 
-  socket.on("data", (chunk) => {
-    buffer += chunk;
-    resolvePendingResponse();
-  });
+  function rejectPendingResponse(error) {
+    if (!pendingReject) return;
+    const reject = pendingReject;
+    pendingResolve = null;
+    pendingReject = null;
+    reject(error);
+  }
 
-  socket.on("error", (error) => {
-    if (pendingReject) pendingReject(error);
-  });
+  function attachSocket(nextSocket) {
+    socket = nextSocket;
+    socket.setEncoding("utf8");
+    socket.on("data", (chunk) => {
+      buffer += chunk;
+      resolvePendingResponse();
+    });
+    socket.on("error", rejectPendingResponse);
+    socket.on("timeout", () => {
+      socket.destroy(new Error("SMTP connection timed out"));
+    });
+    socket.on("close", () => {
+      rejectPendingResponse(new Error("SMTP connection closed before a complete response"));
+    });
+  }
 
-  socket.on("timeout", () => {
-    socket.destroy(new Error("SMTP connection timed out"));
-  });
+  const connectionOptions = {
+    host: config.host,
+    port: config.port,
+    timeout: SMTP_TIMEOUT_MS
+  };
+  const tlsOptions = {
+    servername: config.host,
+    rejectUnauthorized: config.rejectUnauthorized,
+    ...(ca ? { ca } : {})
+  };
+
+  attachSocket(config.secure
+    ? tls.connect({ ...connectionOptions, ...tlsOptions })
+    : net.connect(connectionOptions));
 
   function readResponse(expectedCodes) {
     return new Promise((resolve, reject) => {
@@ -904,10 +956,32 @@ function createSmtpSession(config) {
     return readResponse(expectedCodes);
   }
 
-  return { socket, readResponse, command };
+  function upgradeToTls() {
+    const plainSocket = socket;
+    plainSocket.removeAllListeners("data");
+    plainSocket.removeAllListeners("error");
+    plainSocket.removeAllListeners("timeout");
+    plainSocket.removeAllListeners("close");
+
+    return new Promise((resolve, reject) => {
+      const secureSocket = tls.connect({ socket: plainSocket, ...tlsOptions });
+      attachSocket(secureSocket);
+      secureSocket.once("secureConnect", resolve);
+      secureSocket.once("error", reject);
+    });
+  }
+
+  return {
+    get socket() {
+      return socket;
+    },
+    readResponse,
+    command,
+    upgradeToTls
+  };
 }
 
-async function sendSmtpEmail(config, payload) {
+function validateEmailPayload(payload) {
   const from = validateMailboxForEmail(payload.from, "Sender address");
   const to = validateMailboxForEmail(payload.to, "Recipient address");
   const replyTo = validateMailboxForEmail(payload.replyTo, "Reply-to address");
@@ -920,7 +994,7 @@ async function sendSmtpEmail(config, payload) {
     }
     return { ...attachment, filename, contentType };
   });
-  const safePayload = {
+  return {
     ...payload,
     from: from.header,
     to: to.header,
@@ -928,11 +1002,54 @@ async function sendSmtpEmail(config, payload) {
     subject,
     attachments
   };
+}
+
+async function sendResendEmail(config, payload) {
+  const safePayload = validateEmailPayload(payload);
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: safePayload.from,
+      to: safePayload.to,
+      reply_to: safePayload.replyTo,
+      subject: safePayload.subject,
+      text: safePayload.text,
+      html: safePayload.html,
+      attachments: safePayload.attachments.map((attachment) => ({
+        filename: attachment.filename,
+        content_type: attachment.contentType,
+        content: Buffer.from(attachment.content).toString("base64")
+      }))
+    }),
+    signal: AbortSignal.timeout(SMTP_TIMEOUT_MS)
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(`Resend email failed (${response.status}): ${result.message || "Unknown API error"}`);
+  }
+
+  return result;
+}
+
+async function sendSmtpEmail(config, payload) {
+  const safePayload = validateEmailPayload(payload);
+  const from = validateMailboxForEmail(safePayload.from, "Sender address");
+  const to = validateMailboxForEmail(safePayload.to, "Recipient address");
   const session = createSmtpSession(config);
 
   try {
     await session.readResponse([220]);
     await session.command("EHLO gilbertdevlyn.com", [250]);
+    if (!config.secure) {
+      await session.command("STARTTLS", [220]);
+      await session.upgradeToTls();
+      await session.command("EHLO gilbertdevlyn.com", [250]);
+    }
     await session.command("AUTH LOGIN", [334]);
     await session.command(Buffer.from(config.user).toString("base64"), [334]);
     await session.command(Buffer.from(config.pass).toString("base64"), [235]);
@@ -947,6 +1064,12 @@ async function sendSmtpEmail(config, payload) {
   } finally {
     session.socket.end();
   }
+}
+
+function sendEmail(config, payload) {
+  return config.provider === "resend"
+    ? sendResendEmail(config, payload)
+    : sendSmtpEmail(config, payload);
 }
 
 export async function sendInvitationEmail(invitation = {}) {
@@ -973,7 +1096,7 @@ export async function sendInvitationEmail(invitation = {}) {
   inviteUrl.searchParams.set("group", groupId);
   inviteUrl.searchParams.set("lang", language);
   const inviteLink = inviteUrl.toString();
-  const message = await sendSmtpEmail(config, {
+  const message = await sendEmail(config, {
     from: config.from,
     to: invitedEmail,
     replyTo: config.replyTo,
@@ -983,7 +1106,7 @@ export async function sendInvitationEmail(invitation = {}) {
   });
 
   return {
-    provider: "smtp",
+    provider: config.provider,
     sent: true,
     messageId: message?.id
   };
@@ -1010,7 +1133,7 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
   const language = body.language === "es" ? "es" : "en";
   const emailOptions = { ...options, contactEmail: config.replyTo };
   const userPdf = createSummaryPdfBuffer(buildSummaryReportPayload(body, savedResult));
-  const userEmail = await sendSmtpEmail(config, {
+  const userEmail = await sendEmail(config, {
     from: config.from,
     to: recipientEmail,
     replyTo: config.replyTo,
@@ -1031,7 +1154,7 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
 
   const adminText = adminEmailText(body, savedResult, options);
   const adminPdf = createAdminPdfBuffer(buildAdminReportPayload(body, savedResult));
-  const adminEmail = await sendSmtpEmail(config, {
+  const adminEmail = await sendEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: recipientEmail,
@@ -1052,7 +1175,7 @@ export async function sendSummaryReportEmails(body, savedResult = {}, options = 
   });
 
   return {
-    provider: "smtp",
+    provider: config.provider,
     sent: true,
     userMessageId: userEmail?.id,
     adminMessageId: adminEmail?.id
@@ -1090,7 +1213,7 @@ function htmlCallRequestEmail(request = {}) {
           resultLevel: "Result level"
         };
 
-  return `<!doctype html>
+  return applyBrandEmailPalette(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -1163,7 +1286,7 @@ function htmlCallRequestEmail(request = {}) {
       </tr>
     </table>
   </body>
-</html>`;
+</html>`);
 }
 
 export async function sendCallRequestNotification(request = {}) {
@@ -1191,7 +1314,7 @@ export async function sendCallRequestNotification(request = {}) {
       ? `${name} (${requesterEmail}) completó la Autoevaluación de Empresa Familiar y solicitó una conversación contigo con un clic.`
       : `${name} (${requesterEmail}) completed the Family Enterprise Self-Assessment and requested a one-click conversation with you.`;
 
-  const message = await sendSmtpEmail(config, {
+  const message = await sendEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: requesterEmail,
@@ -1223,7 +1346,7 @@ export async function sendCallRequestNotification(request = {}) {
   });
 
   return {
-    provider: "smtp",
+    provider: config.provider,
     sent: true,
     messageId: message?.id
   };
@@ -1261,7 +1384,7 @@ function htmlComparisonReadyEmail(payload) {
           attachedNote: "Attached PDF: full group comparison with pillar-by-pillar gaps."
         };
 
-  return `<!doctype html>
+  return applyBrandEmailPalette(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -1349,7 +1472,7 @@ function htmlComparisonReadyEmail(payload) {
       </tr>
     </table>
   </body>
-</html>`;
+</html>`);
 }
 
 export async function sendComparisonReadyEmail(group = {}, options = {}) {
@@ -1408,7 +1531,7 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
           .filter(Boolean)
           .join("\n");
 
-  const message = await sendSmtpEmail(config, {
+  const message = await sendEmail(config, {
     from: config.from,
     to: config.adminEmail,
     replyTo: config.replyTo,
@@ -1425,7 +1548,7 @@ export async function sendComparisonReadyEmail(group = {}, options = {}) {
   });
 
   return {
-    provider: "smtp",
+    provider: config.provider,
     sent: true,
     messageId: message?.id
   };
@@ -1461,7 +1584,7 @@ export function renderScheduleCallConfirmationPage(language = "en", ok = true) {
           back: "Back to the site"
         };
 
-  return `<!doctype html>
+  return applyBrandEmailPalette(`<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -1475,10 +1598,10 @@ export function renderScheduleCallConfirmationPage(language = "en", ok = true) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px; background:#ffffff; border:1px solid #EDE3D0; border-radius:12px; overflow:hidden; text-align:center;">
             <tr>
               <td style="padding:44px 36px;">
-                <div style="margin:0 auto 20px; width:56px; height:56px; border-radius:50%; background:#F1C84C; line-height:56px; font-size:26px; font-weight:700; color:#17352E;">&#10003;</div>
+                <div style="margin:0 auto 20px; width:56px; height:56px; border-radius:50%; background:#F1C84C; line-height:56px; font-size:26px; font-weight:700; color:#ffffff;">&#10003;</div>
                 <h1 style="margin:0 0 14px; color:#0F463C; font-size:26px; line-height:1.3; font-weight:700;">${escapeHtml(text.heading)}</h1>
                 <p style="margin:0 0 26px; color:#17352E; font-size:16px; line-height:1.6;">${escapeHtml(text.body)}</p>
-                <a href="/" style="display:inline-block; padding:13px 24px; background:#0F463C; color:#ffffff; border-radius:7px; font-size:14px; font-weight:700; text-decoration:none;">${escapeHtml(text.back)}</a>
+                <a href="/" style="display:inline-block; padding:13px 24px; background:#68659E; color:#ffffff; border-radius:7px; font-size:14px; font-weight:700; text-decoration:none;">${escapeHtml(text.back)}</a>
               </td>
             </tr>
           </table>
@@ -1486,5 +1609,5 @@ export function renderScheduleCallConfirmationPage(language = "en", ok = true) {
       </tr>
     </table>
   </body>
-</html>`;
+</html>`);
 }

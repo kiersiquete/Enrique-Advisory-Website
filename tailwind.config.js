@@ -4,31 +4,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ---- New brand palette ----
-        pine: "#0F463C",
-        "pine-2": "#1B5A4D",     // lighter pine: hovers, secondary surfaces
-        ink: "#17352E",          // body text on light
-        cream: "#F4EEE2",        // page background
-        "cream-2": "#EDE3D0",    // cards / dividers on cream
-        lavender: "#C9B2DE",     // section tints, diagram fills only
-        blue: "#B8CDE0",         // section tints, diagram fills only
-        gold: "#F1C84C",         // primary CTA on dark surfaces
-        coral: "#EF563D",        // eyebrow labels, small accents
-        muted: "#5F6A60",        // secondary text
+        // ---- Gilbert Devlyn palette 1: serene sophistication ----
+        pine: "#32535D",
+        "pine-2": "#68659E",
+        ink: "#32535D",
+        cream: "#FAFAF8",
+        "cream-2": "#B7C9B9",
+        lavender: "#68659E",
+        blue: "#8AA7BD",
+        gold: "#B7C9B9",
+        coral: "#32535D",
+        muted: "#32535D",
+        white: "#FAFAF8",
 
         // ---- Legacy aliases: old class names, new colors ----
-        // Keeps every existing className working. Migrate then delete.
-        forest: "#0F463C",
-        "forest-2": "#1B5A4D",
-        teal: "#3E6557",
-        copper: "#EF563D",       // kills the old mustard/khaki everywhere
-        parchment: "#F4EEE2",
-        mist: "#EDE3D0"
+        forest: "#32535D",
+        "forest-2": "#68659E",
+        teal: "#8AA7BD",
+        copper: "#32535D",
+        parchment: "#FAFAF8",
+        mist: "#B7C9B9"
       },
       boxShadow: {
-        soft: "0 24px 70px rgba(15, 70, 60, 0.14)",
-        line: "0 1px 0 rgba(23, 53, 46, 0.09)",
-        nav: "0 10px 30px rgba(15, 70, 60, 0.08)"
+        soft: "0 24px 70px rgba(50, 83, 93, 0.14)",
+        line: "0 1px 0 rgba(50, 83, 93, 0.09)",
+        nav: "0 10px 30px rgba(50, 83, 93, 0.08)"
       },
       fontFamily: {
         sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],

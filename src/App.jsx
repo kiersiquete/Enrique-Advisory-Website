@@ -53,14 +53,14 @@ const MAX_GROUP_PARTICIPANTS = 3;
 const MIN_COMPARISON_PARTICIPANTS = 2;
 const PHONE_COUNTRY_LOOKUP = new Map(PHONE_COUNTRY_OPTIONS.map((option) => [option.id, option]));
 const COMPARISON_COLORS = [
-  { line: "#0F463C", soft: "rgba(15, 70, 60, 0.1)" },
-  { line: "#EF563D", soft: "rgba(239, 86, 61, 0.12)" },
-  { line: "#3E6557", soft: "rgba(62, 101, 87, 0.12)" }
+  { line: "#32535D", soft: "rgba(50, 83, 93, 0.1)" },
+  { line: "#68659E", soft: "rgba(104, 101, 158, 0.12)" },
+  { line: "#8AA7BD", soft: "rgba(138, 167, 189, 0.16)" }
 ];
 const NEXT_STEP_BADGE_STYLES = [
   "border-coral bg-coral text-white",
   "border-gold bg-gold text-forest",
-  "border-lavender bg-lavender text-forest"
+  "border-lavender bg-lavender text-white"
 ];
 const SCREEN_ROUTES = {
   home: "/",
@@ -591,7 +591,7 @@ function CountrySearchSelect({
                     type="button"
                     className={`flex min-h-11 w-full items-center gap-3 px-4 text-left text-sm font-semibold transition ${
                       active
-                        ? "bg-forest text-white"
+                        ? "bg-lavender text-white"
                         : "text-forest hover:bg-parchment"
                     }`}
                     role="option"
@@ -1453,7 +1453,7 @@ function SiteHeader({
                 type="button"
                 className={`min-h-10 min-w-0 rounded-md px-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 sm:px-4 ${
                   active
-                    ? "bg-forest text-white shadow-line"
+                    ? "bg-lavender text-white shadow-line"
                     : item.secondary
                       ? "text-forest/68 hover:bg-white/70 hover:text-forest"
                       : "text-forest hover:bg-white/80 hover:text-forest"
@@ -1497,7 +1497,7 @@ function SiteHeader({
                   type="button"
                   className={`min-h-11 min-w-0 rounded-md px-3 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 ${
                     active
-                      ? "bg-forest text-white shadow-line"
+                      ? "bg-lavender text-white shadow-line"
                       : item.secondary
                         ? "text-forest/68 hover:bg-parchment hover:text-forest"
                         : "text-forest hover:bg-parchment hover:text-forest"
@@ -1549,7 +1549,7 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
         <div className="flex shrink-0">
           <button
             type="button"
-            className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-forest px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest-2 sm:w-auto"
+            className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-lavender px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest sm:w-auto"
             onClick={acceptCookies}
           >
             {copy.accept}
@@ -1649,7 +1649,7 @@ function PrivacyPolicyModal({ copy, onClose }) {
         <div className="border-t border-forest/10 p-4 sm:p-5">
           <button
             type="button"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest px-5 text-sm font-bold text-white transition hover:bg-forest-2 sm:w-auto"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-lavender px-5 text-sm font-bold text-white transition hover:bg-forest sm:w-auto"
             onClick={onClose}
           >
             {copy.close}
@@ -1689,7 +1689,7 @@ function PreAssessmentPrivacyModal({ copy, onDismiss, onReadPolicy }) {
         <div className="flex shrink-0 flex-col gap-3 border-t border-forest/10 p-4 sm:p-5">
           <button
             type="button"
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest px-5 text-sm font-bold text-white transition hover:bg-forest-2"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-lavender px-5 text-sm font-bold text-white transition hover:bg-forest"
             onClick={onDismiss}
           >
             {copy.primaryCta}
@@ -1752,7 +1752,7 @@ function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver
           <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
             <button
               type="button"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:bg-forest-2"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:bg-forest"
               onClick={onContinue}
             >
               {copy.continueCta}
@@ -1834,7 +1834,7 @@ function HomePage({ copy, language, onNavigate }) {
             >
               <button
                 type="button"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-px active:scale-[0.99]"
                 onClick={startConversation}
               >
                 {copy.home.heroCta}
@@ -1887,7 +1887,7 @@ function HomePage({ copy, language, onNavigate }) {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-4 text-xs font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-lavender px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
                 onClick={startConversation}
               >
                 {finalCta.primary}
@@ -1895,7 +1895,7 @@ function HomePage({ copy, language, onNavigate }) {
               </button>
               <button
                 type="button"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-white/24 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-white/24 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-mist hover:text-mist active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
                 onClick={() => onNavigate("assessment-home")}
               >
                 {finalCta.secondary}
@@ -1938,7 +1938,7 @@ function HomeProblemSection({ copy, language }) {
           <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg sm:leading-9">
             {copy.home.helpingIntro ?? copy.home.challengeIntro}
           </p>
-          <p className="mt-6 border-l-2 border-[#C9B2DE] pl-4 text-sm font-semibold leading-6 text-forest/76">
+          <p className="mt-6 border-l-2 border-lavender pl-4 text-sm font-semibold leading-6 text-forest/76">
             {copy.home.patternBody}
           </p>
         </div>
@@ -1954,9 +1954,9 @@ function HomeProblemSection({ copy, language }) {
               return (
                 <article
                   key={item.title}
-                  className="grid grid-cols-[40px_1fr] gap-4 rounded-lg bg-[#F4EEE2] p-4 shadow-line"
+                  className="grid grid-cols-[40px_1fr] gap-4 rounded-lg bg-parchment p-4 shadow-line"
                 >
-                  <span className="grid h-10 w-10 place-items-center rounded-md bg-lavender text-forest">
+                  <span className="grid h-10 w-10 place-items-center rounded-md bg-lavender text-white">
                     <Icon aria-hidden="true" size={18} />
                   </span>
                   <div>
@@ -2049,7 +2049,7 @@ function HomeHowGilbertWorksSection({ copy, language }) {
                 key={service.title}
                 className="flex min-h-[220px] flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
               >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-forest">
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-white">
                   <Icon aria-hidden="true" size={20} />
                 </div>
                 <h4 className="font-display text-2xl font-semibold leading-tight text-forest">
@@ -2070,7 +2070,7 @@ function HomeAssessmentEntrySection({ copy, language }) {
 
   return (
     <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-10 rounded-lg bg-[#F4EEE2] p-6 shadow-line sm:p-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
+      <div className="mx-auto grid max-w-[1400px] gap-10 rounded-lg bg-parchment p-6 shadow-line sm:p-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
         <div>
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
             {copy.nav.assessment}
@@ -2088,7 +2088,7 @@ function HomeAssessmentEntrySection({ copy, language }) {
           <ol className="mt-4 grid gap-4 sm:grid-cols-3">
             {steps.map((step, index) => (
               <li key={step} className="border-l border-forest/18 pl-4">
-                <span className="font-display text-lg font-semibold leading-none text-copper/70">
+                <span className="font-display text-lg font-semibold leading-none text-copper">
                   {stepLabel(language, index + 1)}
                 </span>
                 <p className="mt-2 text-sm font-medium leading-6 text-forest/78">{step}</p>
@@ -2116,7 +2116,7 @@ function ServicesPage({ copy, language, onNavigate }) {
 
   return (
     <section className="w-full">
-      <section className="border-b border-forest/10 bg-[linear-gradient(135deg,#f8f3ea_0%,#F4EEE2_48%,#E9DFCC_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 xl:px-8">
+      <section className="border-b border-forest/10 bg-[linear-gradient(135deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 xl:px-8">
         <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-end">
           <div className="max-w-4xl">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
@@ -2171,7 +2171,7 @@ function ServicesPage({ copy, language, onNavigate }) {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <button
               type="button"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-[#F1C84C] px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99]"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99]"
               onClick={startConversation}
             >
               {copy.services.diagnosticCta}
@@ -2179,7 +2179,7 @@ function ServicesPage({ copy, language, onNavigate }) {
             </button>
             <button
               type="button"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/24 px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:text-copper active:translate-y-px active:scale-[0.99]"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/24 px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-mist hover:text-mist active:translate-y-px active:scale-[0.99]"
               onClick={() => onNavigate("assessment-home")}
             >
               {copy.services.aboutCta}
@@ -2199,7 +2199,7 @@ function ServiceDetailCard({ service, icon: Icon, labels, index }) {
       style={{ "--index": index }}
     >
       <div className="flex items-start justify-between gap-5">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-lavender text-forest">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-lavender text-white">
           <Icon aria-hidden="true" size={22} />
         </div>
         <span className="font-display text-5xl font-semibold leading-none text-copper/30">
@@ -2246,7 +2246,7 @@ function VideoPlaceholderSection({ video, language }) {
         </div>
 
         <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="relative aspect-video overflow-hidden bg-[#103F36]">
+          <div className="relative aspect-video overflow-hidden bg-forest">
             {video.embedUrl ? (
               <iframe
                 className="h-full w-full"
@@ -2257,13 +2257,13 @@ function VideoPlaceholderSection({ video, language }) {
               />
             ) : (
               <div className="relative flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
-                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(244,238,226,0.08)_0%,rgba(244,238,226,0)_42%),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(0deg,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]" />
-                <div className="absolute left-6 top-6 text-left font-display text-3xl font-semibold leading-none text-[#F4EEE2]/18 sm:text-5xl">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(250,250,248,0.08)_0%,rgba(250,250,248,0)_42%),linear-gradient(90deg,rgba(250,250,248,0.1)_1px,transparent_1px),linear-gradient(0deg,rgba(250,250,248,0.07)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]" />
+                <div className="absolute left-6 top-6 text-left font-display text-3xl font-semibold leading-none text-white/18 sm:text-5xl">
                   Gilbert
                   <br />
                   Devlyn
                 </div>
-                <div className="absolute bottom-6 right-6 h-16 w-28 border-b border-r border-[#F1C84C]/55" />
+                <div className="absolute bottom-6 right-6 h-16 w-28 border-b border-r border-mist/55" />
                 <span className="grid h-16 w-16 place-items-center rounded-full border border-white/24 bg-white/14 text-white shadow-line backdrop-blur">
                   <Play aria-hidden="true" size={28} fill="currentColor" />
                 </span>
@@ -2302,7 +2302,7 @@ function AboutVideoSection({ video, language }) {
           </p>
         </div>
         <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="aspect-video bg-[linear-gradient(135deg,rgba(28,61,46,0.92),rgba(28,61,46,0.72)),url('/gilbert-casual-window-headshot.jpg')] bg-cover bg-[center_18%]">
+          <div className="aspect-video bg-[linear-gradient(135deg,rgba(50,83,93,0.92),rgba(50,83,93,0.72)),url('/gilbert-casual-window-headshot.jpg')] bg-cover bg-[center_18%]">
             {video.embedUrl ? (
               <iframe
                 className="h-full w-full"
@@ -2462,7 +2462,7 @@ function AboutPage({ copy, language, onNavigate }) {
       <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
         <div className="mx-auto max-w-[1400px] rounded-lg bg-forest p-6 text-white shadow-soft sm:p-10 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-mist">
               {copy.nav.assessment}
             </p>
             <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
@@ -2474,7 +2474,7 @@ function AboutPage({ copy, language, onNavigate }) {
             <div className="grid gap-4 sm:grid-cols-3">
               {copy.about.toolSteps.map((step, index) => (
                 <div key={step.title} className="rounded-lg border border-white/16 bg-white/8 p-4">
-                  <span className="font-display text-lg font-semibold leading-none text-[#F1C84C]">
+                  <span className="font-display text-lg font-semibold leading-none text-mist">
                     {stepLabel(language, index + 1)}
                   </span>
                   <p className="mt-3 text-sm font-bold text-white">{step.title}</p>
@@ -2487,7 +2487,7 @@ function AboutPage({ copy, language, onNavigate }) {
 
             <button
               type="button"
-              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-[#F1C84C] px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-px active:scale-[0.99]"
+              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99]"
               onClick={() => onNavigate("assessment-home")}
             >
               {copy.about.toolCta}
@@ -2528,7 +2528,7 @@ function AboutContextSection({ copy }) {
                 key={item.title}
                 className="rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
               >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-forest">
+                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-white">
                   <Icon aria-hidden="true" size={20} />
                 </div>
                 <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
@@ -2593,7 +2593,7 @@ function AssessmentLanding({ copy, language, onStart }) {
             <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:38px_38px]" />
             <div className="relative">
               <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#F2A56E] sm:text-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-mist sm:text-sm">
                   {copy.nav.assessment}
                 </p>
                 <span className="rounded-full border border-white/16 bg-white/8 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/72 sm:text-xs">
@@ -2612,7 +2612,7 @@ function AssessmentLanding({ copy, language, onStart }) {
 
               <button
                 type="button"
-                className="mt-7 inline-flex min-h-[3.15rem] w-full items-center justify-center gap-3 rounded-md bg-[#F1C84C] px-5 text-base font-semibold text-forest shadow-line transition duration-200 hover:bg-[#E6B93E] active:translate-y-px lg:hidden"
+                className="mt-7 inline-flex min-h-[3.15rem] w-full items-center justify-center gap-3 rounded-md bg-lavender px-5 text-base font-semibold text-white shadow-line transition duration-200 hover:bg-white hover:text-forest active:translate-y-px lg:hidden"
                 onClick={() => onStart("full")}
               >
                 {copy.assessmentIntro.conversationCta}
@@ -2645,13 +2645,13 @@ function AssessmentLanding({ copy, language, onStart }) {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#F2A56E]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mist">
                         {copy.assessmentIntro.journeyLabel}
                       </p>
                       <div className="mt-3 grid gap-2">
                         {copy.assessmentIntro.journey.map((item, index) => (
                           <span key={item.title} className="flex items-start gap-2 text-sm font-semibold text-white/80">
-                            <span className="grid shrink-0 place-items-center rounded-full border border-white/24 px-2 py-0.5 text-[0.68rem] text-[#F2A56E]">
+                            <span className="grid shrink-0 place-items-center rounded-full border border-white/24 px-2 py-0.5 text-[0.68rem] text-mist">
                               {stepLabel(language, index + 1)}
                             </span>
                             <span className="min-w-0">
@@ -2668,7 +2668,7 @@ function AssessmentLanding({ copy, language, onStart }) {
                     </div>
 
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#F2A56E]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mist">
                         {copy.assessmentIntro.resultSignalsLabel}
                       </p>
                       <div className="mt-3 grid gap-2">
@@ -2677,7 +2677,7 @@ function AssessmentLanding({ copy, language, onStart }) {
                             key={item}
                             className="flex items-center gap-2 text-sm font-semibold text-white/80"
                           >
-                            <Check aria-hidden="true" size={15} className="shrink-0 text-[#F2A56E]" />
+                            <Check aria-hidden="true" size={15} className="shrink-0 text-mist" />
                             {item}
                           </span>
                         ))}
@@ -2688,7 +2688,7 @@ function AssessmentLanding({ copy, language, onStart }) {
               </div>
 
               <div className="mt-4 flex gap-3 rounded-lg border border-white/18 bg-white/8 p-4 sm:items-start sm:p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/12 text-[#F2A56E]">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/12 text-mist">
                   <Handshake aria-hidden="true" size={19} />
                 </span>
                 <span>
@@ -2703,10 +2703,10 @@ function AssessmentLanding({ copy, language, onStart }) {
             </div>
           </section>
 
-          <aside className="flex flex-col justify-between gap-8 bg-[#fbf8f2] p-6 sm:p-8 lg:p-10">
+          <aside className="flex flex-col justify-between gap-8 bg-white p-6 sm:p-8 lg:p-10">
             <div>
               <div className="flex items-start gap-4">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-lavender text-forest shadow-line">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-lavender text-white shadow-line">
                   <ClipboardCheck aria-hidden="true" size={24} />
                 </span>
                 <span>
@@ -2756,7 +2756,7 @@ function AssessmentLanding({ copy, language, onStart }) {
             <div className="space-y-3">
               <button
                 type="button"
-                className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-3 rounded-md bg-[#F1C84C] px-5 py-4 text-base font-semibold text-forest shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-[#E6B93E] active:translate-y-0"
+                className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-3 rounded-md bg-lavender px-5 py-4 text-base font-semibold text-white shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-0"
                 onClick={() => onStart("full")}
               >
                 {copy.assessmentIntro.conversationCta}
@@ -2797,9 +2797,7 @@ function LanguageToggle({ language, setLanguage, variant = "light", disabled = f
             disabled={disabled}
             className={`min-h-9 min-w-11 rounded-full px-2 text-xs font-semibold transition sm:min-h-10 sm:min-w-16 sm:px-4 sm:text-sm disabled:cursor-not-allowed ${
               active
-                ? dark
-                  ? "bg-white text-forest"
-                  : "bg-forest text-white"
+                ? "bg-lavender text-white"
                 : dark
                   ? "text-white/70 hover:text-white"
                   : "text-forest/68 hover:text-forest"
@@ -2860,7 +2858,7 @@ function SiteFooter({ copy, language, onNavigate }) {
 
         <div className="mx-auto mt-8 grid max-w-sm justify-items-center gap-10 border-t border-white/12 pt-8 text-center">
           <div className="w-full max-w-xs">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-mist">
               {footer.credentialsLabel}
             </p>
             <ul className="mt-4 space-y-2.5 text-sm leading-7 text-white/68">
@@ -2885,7 +2883,7 @@ function SiteFooter({ copy, language, onNavigate }) {
 function FooterSocialLink({ icon: Icon, label, href }) {
   return (
     <a
-      className="grid h-11 w-11 place-items-center rounded-full border border-white/70 bg-transparent text-white transition duration-200 hover:-translate-y-0.5 hover:border-copper hover:bg-white hover:text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-copper/60"
+      className="grid h-11 w-11 place-items-center rounded-full border border-white/70 bg-transparent text-white transition duration-200 hover:-translate-y-0.5 hover:border-mist hover:bg-white hover:text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist/60"
       href={href}
       target={href.startsWith("http") ? "_blank" : undefined}
       rel={href.startsWith("http") ? "noreferrer" : undefined}
@@ -2976,7 +2974,7 @@ function AssessmentProfileIntake({
             {copy.back}
           </button>
 
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-copper">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-mist">
             {intake.eyebrow}
           </p>
           <h1 className="mt-4 font-display text-4xl font-semibold leading-tight sm:text-5xl">
@@ -3155,7 +3153,7 @@ function AssessmentProfileIntake({
                             type="button"
                             className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition ${
                               active
-                                ? "bg-forest text-white"
+                                ? "bg-lavender text-white"
                                 : "text-forest hover:bg-parchment"
                             }`}
                             aria-pressed={active}
@@ -3301,7 +3299,7 @@ function AssessmentProfileIntake({
             )}
             <button
               type="submit"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-forest px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest-2 active:translate-y-px active:scale-[0.99]"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-px active:scale-[0.99]"
             >
               {intake.continue}
               <ArrowRight aria-hidden="true" size={18} />
@@ -3671,7 +3669,7 @@ function AssessmentFlow({
                     type="button"
                     className={`flex min-h-[94px] flex-col items-center justify-center rounded-xl border p-3 text-center transition duration-200 focus-visible:ring-2 focus-visible:ring-copper sm:min-h-[118px] ${
                       selected
-                        ? "border-forest bg-forest text-white shadow-soft"
+                        ? "border-lavender bg-lavender text-white shadow-soft"
                         : "border-forest/14 bg-parchment/55 text-forest hover:-translate-y-0.5 hover:border-copper hover:bg-white"
                     }`}
                     aria-pressed={selected}
@@ -3696,7 +3694,7 @@ function AssessmentFlow({
                 className={`flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border px-4 text-center transition duration-200 focus-visible:ring-2 focus-visible:ring-copper ${
                   currentAnswer === UNKNOWN_ANSWER
                     ? "border-forest/30 bg-forest/[0.06] text-forest shadow-line"
-                    : "border-forest/12 bg-[#F7F7F4] text-ink/68 hover:-translate-y-0.5 hover:border-forest/24 hover:bg-white"
+                    : "border-forest/12 bg-parchment text-ink/68 hover:-translate-y-0.5 hover:border-forest/24 hover:bg-white"
                 }`}
                 aria-pressed={currentAnswer === UNKNOWN_ANSWER}
                 onClick={() => selectScore(UNKNOWN_ANSWER)}
@@ -3723,7 +3721,7 @@ function AssessmentFlow({
                 </button>
                 <button
                   type="button"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-forest px-3 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:bg-forest/35"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-lavender px-3 text-sm font-semibold text-white transition hover:bg-forest disabled:cursor-not-allowed disabled:bg-lavender/35"
                   onClick={goNext}
                   disabled={!isAssessmentAnswered(currentAnswer)}
                 >
@@ -3851,7 +3849,7 @@ function ResultsScreen({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(280px,0.72fr)_minmax(560px,1.28fr)]">
         <section className="rounded-xl bg-forest p-6 text-white shadow-soft sm:p-8 lg:p-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-copper">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-mist">
             {copy.overallScore}
           </p>
           <div className="mt-5 flex flex-col gap-8 sm:flex-row sm:items-center">
@@ -4000,7 +3998,7 @@ function ResultsScreen({
 
             <button
               type="button"
-              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-lavender px-4 text-left text-sm font-bold text-[#3D1F52] transition hover:bg-[#B79FCE] disabled:cursor-not-allowed disabled:bg-lavender/60"
+              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-lavender px-4 text-left text-sm font-bold text-white transition hover:bg-forest disabled:cursor-not-allowed disabled:bg-lavender/60"
               onClick={submitResult}
               disabled={submitPending || submitted}
             >
@@ -4215,7 +4213,7 @@ function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHom
               <p className="mt-2 text-sm leading-6 text-ink/70">{comparisonCopy.inviteLimit}</p>
               <button
                 type="button"
-                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
+                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-lavender px-4 text-sm font-semibold text-white transition hover:bg-forest"
                 onClick={onNavigateHome}
               >
                 <ArrowLeft aria-hidden="true" size={16} />
@@ -4256,7 +4254,7 @@ function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHom
               )}
               <button
                 type="button"
-                className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2 disabled:cursor-not-allowed disabled:opacity-70"
+                className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-lavender px-4 text-sm font-semibold text-white transition hover:bg-forest disabled:cursor-not-allowed disabled:opacity-70"
                 onClick={createInvite}
                 disabled={invitePending}
               >
@@ -4328,7 +4326,7 @@ function ComparisonScreen({ copy, language, group, onBackToResult }) {
             </p>
             <button
               type="button"
-              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-forest px-4 text-sm font-semibold text-white transition hover:bg-forest-2"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-md bg-lavender px-4 text-sm font-semibold text-white transition hover:bg-forest"
               onClick={onBackToResult}
             >
               <ArrowLeft aria-hidden="true" size={17} />
@@ -4500,7 +4498,7 @@ function ComparisonMetricCard({ icon: Icon, label, value, suffix, featured = fal
     <div className={`rounded-md bg-white/8 ${featured ? "p-4" : "p-3.5"}`}>
       <div className="mb-1.5 flex items-center justify-between gap-3">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.11em] text-white/62">{label}</p>
-        {Icon && <Icon aria-hidden="true" size={16} className="text-copper" />}
+        {Icon && <Icon aria-hidden="true" size={16} className="text-mist" />}
       </div>
       <p className={`font-display font-semibold leading-none ${featured ? "text-3xl" : "text-2xl"}`}>
         {value}
@@ -4513,7 +4511,7 @@ function ComparisonMetricCard({ icon: Icon, label, value, suffix, featured = fal
 function QuickReadRail({ stats, rows, visualCopy }) {
   return (
     <aside className="rounded-xl bg-forest p-4 text-white shadow-soft lg:p-5">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-mist">
         {visualCopy.snapshotLabel}
       </p>
       <h2 className="mt-2.5 font-display text-xl font-semibold leading-tight">
@@ -4652,7 +4650,7 @@ function ComparisonMapRow({ row, language, copy, visualCopy, comparisonCopy }) {
                     style={{
                       width: score.score === null ? "100%" : `${width}%`,
                       backgroundColor:
-                        score.score === null ? "rgba(15, 70, 60, 0.18)" : color.line
+                        score.score === null ? "rgba(50, 83, 93, 0.18)" : color.line
                     }}
                   />
                 </div>
@@ -5202,7 +5200,7 @@ function ScoreRing({ score }) {
     <div
       className="grid h-28 w-28 shrink-0 place-items-center rounded-full p-2 sm:h-36 sm:w-36"
       style={{
-        background: `conic-gradient(#EF563D ${Math.max(0, Math.min(100, score)) * 3.6}deg, rgba(255,255,255,0.16) 0deg)`
+        background: `conic-gradient(#68659E ${Math.max(0, Math.min(100, score)) * 3.6}deg, rgba(250,250,248,0.16) 0deg)`
       }}
       aria-label={`Score ${roundedScore(score)}`}
     >

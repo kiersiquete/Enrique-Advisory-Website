@@ -49,8 +49,8 @@ body,
 body {
   min-height: 100dvh;
   margin: 0;
-  background: #F4EEE2;
-  color: #17352E;
+  background: #FAFAF8;
+  color: #32535D;
   font-size: 16px;
 }
 
@@ -83,7 +83,7 @@ button:disabled {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(182, 106, 51, 0.7);
+  outline: 3px solid rgba(104, 101, 158, 0.7);
   outline-offset: 3px;
 }
 
@@ -102,8 +102,8 @@ button:disabled {
   pointer-events: none;
   content: "";
   background-image:
-    linear-gradient(rgba(30, 58, 47, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(30, 58, 47, 0.022) 1px, transparent 1px);
+    linear-gradient(rgba(50, 83, 93, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(50, 83, 93, 0.022) 1px, transparent 1px);
   background-size: 44px 44px;
   mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 72%);
 }
@@ -152,7 +152,7 @@ button:disabled {
 }
 
 .rail-line {
-  background-image: linear-gradient(180deg, rgba(184, 106, 61, 0), rgba(184, 106, 61, 0.74), rgba(184, 106, 61, 0));
+  background-image: linear-gradient(180deg, rgba(104, 101, 158, 0), rgba(104, 101, 158, 0.74), rgba(104, 101, 158, 0));
 }
 
 @keyframes fadeUp {

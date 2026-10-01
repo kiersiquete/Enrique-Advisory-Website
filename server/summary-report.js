@@ -3,6 +3,15 @@ import { FULL_QUESTIONS, PILLARS } from "../src/data/assessment.js";
 
 const PILLARS_BY_ID = new Map(PILLARS.map((pillar) => [pillar.id, pillar]));
 
+const PDF_PALETTE = {
+  pine: "#32535D",
+  lavender: "#68659E",
+  blue: "#8AA7BD",
+  sage: "#B7C9B9",
+  cream: "#FAFAF8",
+  surface: "#EEF3EF"
+};
+
 const STAGE_LABELS = {
   emerging: "Level 1 - Emerging",
   developing: "Level 2 - Developing",
@@ -403,13 +412,13 @@ export function createSummaryPdfBuffer(payload) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 46;
-  const forest = "#0F463C";
-  const copper = "#EF563D";
-  const parchment = "#F4EEE2";
-  const mist = "#EDE3D0";
-  const muted = "#5F6A60";
-  const ink = "#17352E";
-  const softForest = "#EDE3D0";
+  const forest = PDF_PALETTE.pine;
+  const copper = PDF_PALETTE.pine;
+  const parchment = PDF_PALETTE.surface;
+  const mist = PDF_PALETTE.sage;
+  const muted = PDF_PALETTE.pine;
+  const ink = PDF_PALETTE.pine;
+  const softForest = PDF_PALETTE.surface;
 
   function pageBackground() {
     doc.setFillColor(parchment);
@@ -417,7 +426,7 @@ export function createSummaryPdfBuffer(payload) {
   }
 
   function footer(pageLabel) {
-    doc.setDrawColor("#EDE3D0");
+    doc.setDrawColor(PDF_PALETTE.sage);
     doc.line(margin, pageHeight - 46, pageWidth - margin, pageHeight - 46);
     doc.setTextColor(muted);
     doc.setFont("helvetica", "normal");
@@ -499,9 +508,9 @@ export function createSummaryPdfBuffer(payload) {
   pageBackground();
   doc.setFillColor(forest);
   doc.rect(0, 0, pageWidth, 246, "F");
-  doc.setFillColor("#1B5A4D");
+  doc.setFillColor(PDF_PALETTE.lavender);
   doc.rect(0, 215, pageWidth, 31, "F");
-  doc.setTextColor(copper);
+  doc.setTextColor(PDF_PALETTE.sage);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text(text.eyebrow, margin, 52);
@@ -512,7 +521,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setFontSize(18);
   doc.text(text.forName(report.name || text.participantFallback), margin, 126);
 
-  doc.setTextColor("#EDE3D0");
+  doc.setTextColor(PDF_PALETTE.sage);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   wrapText(doc, text.intro, margin, 160, 390, 15);
@@ -522,7 +531,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setFontSize(13);
   doc.text(text.brandName, margin, 234);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor("#EDE3D0");
+  doc.setTextColor(PDF_PALETTE.sage);
   doc.setFontSize(9);
   doc.text(text.brandLine, margin + 100, 234);
   doc.text(text.generated(formatDate(report.generatedAt, language)), pageWidth - margin, 234, {
@@ -565,7 +574,7 @@ export function createSummaryPdfBuffer(payload) {
   doc.setFontSize(18);
   doc.text(text.suggestedNextConversation, margin + 20, y + 30);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor("#EDE3D0");
+  doc.setTextColor(PDF_PALETTE.sage);
   doc.setFontSize(10);
   wrapText(doc, text.nextConversationBody, margin + 20, y + 53, pageWidth - margin * 2 - 40, 13);
   footer(text.pageOneOfTwo);
@@ -609,13 +618,13 @@ export function createAdminPdfBuffer(payload) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 46;
-  const forest = "#0F463C";
-  const copper = "#EF563D";
-  const parchment = "#F4EEE2";
-  const mist = "#EDE3D0";
-  const softForest = "#EDE3D0";
-  const muted = "#5F6A60";
-  const ink = "#17352E";
+  const forest = PDF_PALETTE.pine;
+  const copper = PDF_PALETTE.pine;
+  const parchment = PDF_PALETTE.surface;
+  const mist = PDF_PALETTE.sage;
+  const softForest = PDF_PALETTE.surface;
+  const muted = PDF_PALETTE.pine;
+  const ink = PDF_PALETTE.pine;
   const bottomContentLimit = pageHeight - 82;
   let y = 0;
 
@@ -624,14 +633,14 @@ export function createAdminPdfBuffer(payload) {
     doc.rect(0, 0, pageWidth, pageHeight, "F");
     doc.setFillColor(forest);
     doc.rect(0, 0, pageWidth, 92, "F");
-    doc.setTextColor(copper);
+    doc.setTextColor(PDF_PALETTE.sage);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("GILBERT DEVLYN ADVISOR REPORT", margin, 38);
     doc.setTextColor("#ffffff");
     doc.setFontSize(22);
     doc.text(title, margin, 68);
-    doc.setTextColor("#EDE3D0");
+    doc.setTextColor(PDF_PALETTE.sage);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text("Confidential internal follow-up notes", pageWidth - margin, 38, { align: "right" });
@@ -908,11 +917,11 @@ export function createComparisonPdfBuffer(payload) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 46;
-  const forest = "#0F463C";
-  const copper = "#EF563D";
-  const parchment = "#F4EEE2";
-  const muted = "#5F6A60";
-  const ink = "#17352E";
+  const forest = PDF_PALETTE.pine;
+  const copper = PDF_PALETTE.pine;
+  const parchment = PDF_PALETTE.surface;
+  const muted = PDF_PALETTE.pine;
+  const ink = PDF_PALETTE.pine;
   let y = 0;
 
   function pageHeader(title) {
@@ -920,14 +929,14 @@ export function createComparisonPdfBuffer(payload) {
     doc.rect(0, 0, pageWidth, pageHeight, "F");
     doc.setFillColor(forest);
     doc.rect(0, 0, pageWidth, 92, "F");
-    doc.setTextColor(copper);
+    doc.setTextColor(PDF_PALETTE.sage);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text(text.headerEyebrow, margin, 38);
     doc.setTextColor("#ffffff");
     doc.setFontSize(22);
     doc.text(title, margin, 68);
-    doc.setTextColor("#EDE3D0");
+    doc.setTextColor(PDF_PALETTE.sage);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(text.confidential, pageWidth - margin, 38, { align: "right" });
