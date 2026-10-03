@@ -26,13 +26,13 @@ export default {
         mist: "#B7C9B9"
       },
       boxShadow: {
-        soft: "0 24px 70px rgba(50, 83, 93, 0.14)",
+        soft: "0 16px 40px rgba(50, 83, 93, 0.16)",
         line: "0 1px 0 rgba(50, 83, 93, 0.09)",
         nav: "0 10px 30px rgba(50, 83, 93, 0.08)"
       },
       fontFamily: {
         sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Outfit", "Manrope", "ui-sans-serif", "system-ui", "sans-serif"]
+        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"]
       }
     }
   },

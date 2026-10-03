@@ -60,7 +60,7 @@ const COMPARISON_COLORS = [
 const NEXT_STEP_BADGE_STYLES = [
   "border-coral bg-coral text-white",
   "border-gold bg-gold text-forest",
-  "border-lavender bg-lavender text-white"
+  "border-blue bg-blue text-white"
 ];
 const SCREEN_ROUTES = {
   home: "/",
@@ -591,7 +591,7 @@ function CountrySearchSelect({
                     type="button"
                     className={`flex min-h-11 w-full items-center gap-3 px-4 text-left text-sm font-semibold transition ${
                       active
-                        ? "bg-lavender text-white"
+                        ? "bg-blue text-white"
                         : "text-forest hover:bg-parchment"
                     }`}
                     role="option"
@@ -1264,93 +1264,95 @@ export default function App() {
         />
       )}
 
-      {screen === "home" && (
-        <HomePage
-          copy={copy}
-          language={language}
-          onNavigate={navigate}
-        />
-      )}
+      <div key={screen} className="route-fade w-full">
+        {screen === "home" && (
+          <HomePage
+            copy={copy}
+            language={language}
+            onNavigate={navigate}
+          />
+        )}
 
-      {screen === "about" && (
-        <AboutPage
-          copy={copy}
-          language={language}
-          onNavigate={navigate}
-        />
-      )}
+        {screen === "about" && (
+          <AboutPage
+            copy={copy}
+            language={language}
+            onNavigate={navigate}
+          />
+        )}
 
-      {screen === "services" && (
-        <ServicesPage
-          copy={copy}
-          language={language}
-          onNavigate={navigate}
-        />
-      )}
+        {screen === "services" && (
+          <ServicesPage
+            copy={copy}
+            language={language}
+            onNavigate={navigate}
+          />
+        )}
 
-      {screen === "assessment-home" && (
-        <AssessmentLanding
-          copy={copy}
-          language={language}
-          onStart={startMode}
-        />
-      )}
+        {screen === "assessment-home" && (
+          <AssessmentLanding
+            copy={copy}
+            language={language}
+            onStart={startMode}
+          />
+        )}
 
-      {screen === "assessment" && (
-        <AssessmentFlow
-          copy={copy}
-          language={language}
-          mode={activeMode}
-          pendingGroupId={pendingGroupId}
-          initialDraft={assessmentDraft}
-          onDraftChange={handleDraftChange}
-          onBack={() => navigate("assessment-home")}
-          onComplete={handleComplete}
-          privacyPolicyOpen={privacyPolicyOpen}
-          onOpenPrivacyPolicy={() => setPrivacyPolicyOpen(true)}
-        />
-      )}
+        {screen === "assessment" && (
+          <AssessmentFlow
+            copy={copy}
+            language={language}
+            mode={activeMode}
+            pendingGroupId={pendingGroupId}
+            initialDraft={assessmentDraft}
+            onDraftChange={handleDraftChange}
+            onBack={() => navigate("assessment-home")}
+            onComplete={handleComplete}
+            privacyPolicyOpen={privacyPolicyOpen}
+            onOpenPrivacyPolicy={() => setPrivacyPolicyOpen(true)}
+          />
+        )}
 
-      {screen === "loading" && <LoadingScreen copy={copy} />}
+        {screen === "loading" && <LoadingScreen copy={copy} />}
 
-      {screen === "results" && latestResult && (
-        <ResultsScreen
-          copy={copy}
-          language={language}
-          resultPackage={latestResult}
-          onRetake={restart}
-          onSubmitFinal={submitFinalResult}
-        />
-      )}
+        {screen === "results" && latestResult && (
+          <ResultsScreen
+            copy={copy}
+            language={language}
+            resultPackage={latestResult}
+            onRetake={restart}
+            onSubmitFinal={submitFinalResult}
+          />
+        )}
 
-      {screen === "comparison" && activeComparisonGroup && (
-        <ComparisonScreen
-          copy={copy}
-          language={language}
-          group={activeComparisonGroup}
-          onBackToResult={() => setScreen(latestResult ? "results" : "assessment-home")}
-        />
-      )}
+        {screen === "comparison" && activeComparisonGroup && (
+          <ComparisonScreen
+            copy={copy}
+            language={language}
+            group={activeComparisonGroup}
+            onBackToResult={() => setScreen(latestResult ? "results" : "assessment-home")}
+          />
+        )}
 
-      {screen === "invite-share" && inviteShareContext && (
-        <CompareInvitePage
-          copy={copy}
-          language={language}
-          groupId={inviteShareContext.groupId}
-          inviterName={inviteShareContext.name}
-          onNavigateHome={() => navigate("home")}
-        />
-      )}
+        {screen === "invite-share" && inviteShareContext && (
+          <CompareInvitePage
+            copy={copy}
+            language={language}
+            groupId={inviteShareContext.groupId}
+            inviterName={inviteShareContext.name}
+            onNavigateHome={() => navigate("home")}
+          />
+        )}
 
-      {["home", "about", "services", "assessment-home", "results", "comparison", "invite-share"].includes(
-        screen
-      ) && (
-        <SiteFooter
-          copy={copy}
-          language={language}
-          onNavigate={navigate}
-        />
-      )}
+        {["home", "about", "services", "assessment-home", "results", "comparison", "invite-share"].includes(
+          screen
+        ) && (
+          <SiteFooter
+            copy={copy}
+            language={language}
+            onNavigate={navigate}
+          />
+        )}
+      </div>
 
       {!isMockDemoRoute && !isMockResultRoute && (
         <CookieConsentBanner
@@ -1423,21 +1425,24 @@ function SiteHeader({
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b bg-parchment/88 backdrop-blur-xl transition-shadow duration-300 ${
+      className={`sticky top-0 z-40 border-b bg-white/96 backdrop-blur-md transition-shadow duration-300 ${
         scrolled ? "border-forest/12 shadow-nav" : "border-forest/8"
       }`}
     >
-      <div className="mx-auto grid min-h-0 w-full max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-3 sm:px-8 sm:py-4 lg:min-h-20 lg:grid-cols-[1fr_auto_1fr] lg:gap-3">
+      <div className="mx-auto grid min-h-0 w-full max-w-[1320px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-3 sm:px-8 sm:py-4 lg:min-h-24 lg:grid-cols-[1fr_auto_1fr] lg:gap-3">
         <button
           type="button"
           className="group col-start-1 row-start-1 min-w-0 text-left"
+          aria-label={copy.brandName}
           onClick={() => onNavigate("home")}
         >
-          <span>
-            <span className="block font-display text-xl font-semibold leading-tight tracking-tight text-forest">
-              {copy.brandName}
-            </span>
-            <span className="block text-sm font-medium text-ink/62">{copy.brandLine}</span>
+          <img
+            src="/gilbert-devlyn-wordmark-pine.png"
+            alt=""
+            className="h-auto w-[98px] sm:w-[104px]"
+          />
+          <span className="mt-0.5 block whitespace-nowrap text-[0.375rem] font-semibold uppercase leading-none tracking-[0.01em] text-forest/76 sm:text-[0.4rem]">
+            {copy.brandLine}
           </span>
         </button>
 
@@ -1451,12 +1456,12 @@ function SiteHeader({
               <button
                 key={item.id}
                 type="button"
-                className={`min-h-10 min-w-0 rounded-md px-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 sm:px-4 ${
+                className={`min-h-10 min-w-0 border-b-2 px-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 sm:px-4 ${
                   active
-                    ? "bg-blue text-white shadow-line"
+                    ? "border-blue text-forest"
                     : item.secondary
-                      ? "text-forest/68 hover:bg-white/70 hover:text-forest"
-                      : "text-forest hover:bg-white/80 hover:text-forest"
+                      ? "border-transparent text-forest/82 hover:bg-white/70 hover:text-forest"
+                      : "border-transparent text-forest hover:bg-white/80 hover:text-forest"
                 }`}
                 aria-current={active ? "page" : undefined}
                 onClick={() => goTo(item.id)}
@@ -1495,12 +1500,12 @@ function SiteHeader({
                 <button
                   key={item.id}
                   type="button"
-                  className={`min-h-11 min-w-0 rounded-md px-3 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 ${
+                  className={`min-h-11 min-w-0 border-b-2 px-3 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 ${
                     active
-                      ? "bg-blue text-white shadow-line"
+                      ? "border-blue text-forest"
                       : item.secondary
-                        ? "text-forest/68 hover:bg-parchment hover:text-forest"
-                        : "text-forest hover:bg-parchment hover:text-forest"
+                        ? "border-transparent text-forest/82 hover:bg-white hover:text-forest"
+                        : "border-transparent text-forest hover:bg-parchment hover:text-forest"
                   }`}
                   aria-current={active ? "page" : undefined}
                   onClick={() => goTo(item.id)}
@@ -1809,21 +1814,20 @@ function HomePage({ copy, language, onNavigate }) {
 
   return (
     <section className="w-full">
-      <section className="relative overflow-hidden border-b border-forest/10 bg-cream">
-        <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-8 px-4 py-8 sm:px-8 sm:py-14 lg:min-h-[calc(100dvh-80px)] lg:grid-cols-[minmax(0,0.92fr)_minmax(460px,0.78fr)] lg:items-center lg:px-12 xl:px-8">
+      <section className="relative overflow-hidden border-b border-forest/10 bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)]">
+        <div className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-10 px-5 py-10 sm:px-8 sm:py-16 lg:min-h-[calc(100dvh-96px)] lg:grid-cols-[minmax(0,0.92fr)_minmax(460px,0.78fr)] lg:items-center lg:gap-16 lg:px-10 lg:py-20 xl:px-0">
           <div className="min-w-0 max-w-4xl">
-            <div className="fade-up inline-flex max-w-full items-center gap-2 rounded-full border border-forest/12 bg-white/72 px-3 py-2 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-forest shadow-line sm:gap-3 sm:px-4 sm:text-xs sm:tracking-[0.18em]">
-              <span className="h-1.5 w-1.5 rounded-full bg-copper status-breathe" />
+            <div className="fade-up inline-flex max-w-full items-center gap-3 text-xs font-bold uppercase tracking-[0.14em] text-forest sm:text-sm">
               {heroLabel}
             </div>
             <h1
-              className="fade-up mt-5 max-w-full break-words font-display text-[2.25rem] font-semibold leading-[1.06] tracking-tight text-forest sm:mt-6 sm:text-6xl xl:text-7xl"
+              className="fade-up mt-6 max-w-[12ch] break-words font-display text-[2.8rem] font-medium leading-[0.99] tracking-[-0.025em] text-forest sm:text-6xl lg:text-[4.5rem] xl:text-[5.4rem]"
               style={{ "--index": 1 }}
             >
               {copy.home.title}
             </h1>
             <p
-              className="fade-up mt-5 max-w-full text-[1.02rem] leading-7 text-ink/76 sm:mt-6 sm:max-w-3xl sm:text-lg sm:leading-9"
+              className="fade-up mt-6 max-w-[62ch] text-[1.02rem] leading-8 text-ink/82 sm:text-lg sm:leading-9"
               style={{ "--index": 2 }}
             >
               {copy.home.subtitle}
@@ -1834,15 +1838,19 @@ function HomePage({ copy, language, onNavigate }) {
             >
               <button
                 type="button"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-px active:scale-[0.99]"
+                className="relative inline-flex min-h-12 items-center justify-center gap-2 overflow-hidden rounded border border-lavender/55 bg-white/60 px-6 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-lavender hover:bg-white active:translate-y-px active:scale-[0.99]"
                 onClick={startConversation}
               >
+                <span
+                  aria-hidden="true"
+                  className="absolute right-0 top-0 h-4 w-4 bg-lavender [clip-path:polygon(0_0,100%_0,100%_100%)]"
+                />
                 {copy.home.heroCta}
                 <ArrowRight aria-hidden="true" size={18} />
               </button>
               <button
                 type="button"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-forest/24 px-5 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-forest/40 active:translate-y-px active:scale-[0.99]"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-forest/30 px-6 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-forest hover:text-white active:translate-y-px active:scale-[0.99]"
                 onClick={() => onNavigate("about")}
               >
                 {copy.home.primaryCta}
@@ -1850,7 +1858,7 @@ function HomePage({ copy, language, onNavigate }) {
               </button>
             </div>
             <div
-              className="fade-up mt-7 grid max-w-3xl grid-cols-1 gap-2 sm:mt-10 md:grid-cols-2 sm:gap-3 lg:grid-cols-1 xl:grid-cols-2"
+              className="fade-up mt-10 grid max-w-3xl grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
               style={{ "--index": 5 }}
             >
               {heroStats.map((item) => (
@@ -1875,20 +1883,20 @@ function HomePage({ copy, language, onNavigate }) {
       <HomeAssessmentEntrySection copy={copy} language={language} />
 
       <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1400px] overflow-hidden rounded-lg bg-forest text-white shadow-soft lg:grid lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="mx-auto max-w-[1320px] overflow-hidden rounded bg-forest text-white lg:grid lg:grid-cols-[minmax(0,1fr)_420px]">
           <div className="px-6 py-10 sm:px-10 lg:px-14 lg:py-12">
             <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
               {finalCta.title}
             </h2>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-white/76 sm:text-lg">
+            <p className="mt-4 max-w-3xl text-base leading-8 text-white/84 sm:text-lg">
               {finalCta.body}
             </p>
-            <p className="mt-4 text-sm font-semibold text-white/58">{finalCta.note}</p>
+            <p className="mt-4 text-sm font-semibold text-white/80">{finalCta.note}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-lavender px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-                onClick={startConversation}
+                onClick={() => onNavigate("about")}
               >
                 {finalCta.primary}
                 <ArrowRight aria-hidden="true" size={18} />
@@ -1918,57 +1926,46 @@ function HomePage({ copy, language, onNavigate }) {
 }
 
 function HomeProblemSection({ copy, language }) {
-  const sectionLabel =
-    language === "es"
-      ? "Los problemas que Gilbert ayuda a atender"
-      : "The Problems Gilbert Helps Families Address";
-  const mapLabel = language === "es" ? "Mapa de temas" : "Issue map";
   const icons = [Handshake, CalendarDays, Landmark, Scale, Compass, UsersRound];
 
   return (
-    <section className="border-b border-forest/10 bg-cream px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-[0.36fr_0.64fr] lg:items-start">
-        <div className="max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {sectionLabel}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+    <section className="border-b border-forest/10 bg-white px-5 py-20 sm:px-8 sm:py-24 lg:px-12 xl:px-8">
+      <div className="mx-auto max-w-[1320px]">
+        <div className="grid gap-8 lg:grid-cols-[0.58fr_0.42fr] lg:items-end lg:gap-16">
+          <h2 className="max-w-[13ch] font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-6xl">
             {copy.home.helpingTitle}
           </h2>
-          <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg sm:leading-9">
-            {copy.home.helpingIntro ?? copy.home.challengeIntro}
-          </p>
-          <p className="mt-6 border-l-2 border-lavender pl-4 text-sm font-semibold leading-6 text-forest/76">
-            {copy.home.patternBody}
-          </p>
+          <div>
+            <p className="text-base leading-8 text-ink/82 sm:text-lg sm:leading-9">
+              {copy.home.helpingIntro ?? copy.home.challengeIntro}
+            </p>
+            <p className="mt-5 border-t border-forest/20 pt-5 text-sm font-semibold leading-7 text-forest/82">
+              {copy.home.patternBody}
+            </p>
+          </div>
         </div>
 
-        <div className="rounded-xl bg-white p-5 shadow-line sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
-            {mapLabel}
-          </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {copy.home.challengeItems.map((item, index) => {
-              const Icon = icons[index] ?? Compass;
+        <div className="mt-14 grid border-t border-forest/24 sm:grid-cols-2 xl:grid-cols-3">
+          {copy.home.challengeItems.map((item, index) => {
+            const Icon = icons[index] ?? Compass;
 
-              return (
-                <article
-                  key={item.title}
-                  className="grid grid-cols-[40px_1fr] gap-4 rounded-lg bg-parchment p-4 shadow-line"
-                >
-                  <span className="grid h-10 w-10 place-items-center rounded-md bg-lavender text-white">
-                    <Icon aria-hidden="true" size={18} />
-                  </span>
-                  <div>
-                    <h3 className="font-display text-xl font-semibold leading-tight text-forest">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-ink/70">{item.body}</p>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+            return (
+              <article
+                key={item.title}
+                className="grid grid-cols-[34px_1fr] gap-4 border-b border-forest/16 py-7 sm:px-6 sm:[&:nth-child(odd)]:border-r xl:[&:nth-child(2)]:border-r xl:[&:nth-child(3)]:border-r-0 xl:[&:nth-child(odd)]:border-r"
+              >
+                <span className="grid h-8 w-8 place-items-center rounded-full border border-forest/24 text-forest">
+                  <Icon aria-hidden="true" size={15} />
+                </span>
+                <div>
+                  <h3 className="font-display text-2xl font-medium leading-tight text-forest">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-ink/82">{item.body}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1979,30 +1976,27 @@ function HomeCredibilitySection({ language }) {
   const credibility = getHomeCredibilityCopy(language);
 
   return (
-    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.45fr_0.55fr] lg:items-start">
-        <div className="max-w-2xl lg:sticky lg:top-28">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {credibility.label}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+    <section className="border-b border-white/12 bg-forest px-5 py-14 text-white sm:px-8 sm:py-16 lg:px-12 xl:px-8">
+      <div className="mx-auto max-w-[1320px]">
+        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-20">
+          <h2 className="max-w-[15ch] font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-white sm:text-5xl">
             {credibility.title}
           </h2>
-          <p className="mt-5 text-base leading-8 text-ink/76 sm:text-lg sm:leading-9">
+          <p className="max-w-2xl text-base leading-8 text-white/84 sm:text-lg sm:leading-9">
             {credibility.body}
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="mt-12 grid gap-px border-y border-white/24 bg-white/24 sm:grid-cols-2 lg:grid-cols-3">
           {credibility.proof.map((item) => (
             <article
               key={item.label}
-              className="rounded-lg border border-forest/10 bg-parchment/32 p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft"
+              className="min-h-[132px] bg-forest py-7 sm:px-6 lg:px-8"
             >
-              <p className="font-display text-2xl font-semibold leading-none tracking-tight text-forest">
+              <p className="font-display text-3xl font-medium leading-none tracking-[-0.02em] text-white">
                 {item.value}
               </p>
-              <p className="mt-3 text-sm leading-6 text-ink/70">{item.label}</p>
+              <p className="mt-3 text-sm leading-6 text-white/80">{item.label}</p>
             </article>
           ))}
         </div>
@@ -2015,22 +2009,19 @@ function HomeHowGilbertWorksSection({ copy, language }) {
   const icons = [Compass, Landmark, Handshake, UsersRound];
 
   return (
-    <section className="border-b border-forest/10 bg-cream px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-x-8 gap-y-8 lg:grid-cols-[0.42fr_0.58fr] lg:items-start">
+    <section className="border-b border-forest/10 bg-mist/26 px-5 py-20 sm:px-8 sm:py-24 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1320px] gap-x-12 gap-y-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-start">
         <div className="lg:col-start-1">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {copy.services.previewLabel}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+          <h2 className="font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-6xl">
             {copy.services.previewTitle}
           </h2>
         </div>
 
-        <p className="max-w-2xl text-base leading-8 text-ink/74 sm:text-lg lg:col-start-2 lg:self-end lg:pb-2">
+        <p className="max-w-2xl text-base leading-8 text-ink/82 sm:text-lg lg:col-start-2 lg:self-end lg:pb-2">
           {copy.home.approachSubtitle}
         </p>
 
-        <div className="h-[300px] overflow-hidden rounded-xl shadow-soft sm:h-[360px] lg:col-start-1 lg:row-start-2 lg:h-full lg:min-h-[520px]">
+        <div className="h-[320px] overflow-hidden rounded-3xl sm:h-[400px] lg:col-start-1 lg:row-start-2 lg:h-full lg:min-h-[560px]">
           <img
             className="h-full w-full object-cover object-[58%_center]"
             src="/family-advisory-conversation.jpg"
@@ -2040,22 +2031,22 @@ function HomeHowGilbertWorksSection({ copy, language }) {
           />
         </div>
 
-        <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:col-start-2 lg:row-start-2">
+        <div className="grid border-t border-forest/22 md:grid-cols-2 lg:col-start-2 lg:row-start-2">
           {copy.services.items.map((service, index) => {
             const Icon = icons[index] ?? Compass;
 
             return (
               <article
                 key={service.title}
-                className="flex min-h-[220px] flex-col rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
+                className="flex min-h-[230px] flex-col border-b border-forest/14 py-7 md:px-6 md:[&:nth-child(odd)]:border-r"
               >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-white">
-                  <Icon aria-hidden="true" size={20} />
+                <div className="mb-6 grid h-9 w-9 place-items-center rounded-full border border-forest/22 text-forest">
+                  <Icon aria-hidden="true" size={17} />
                 </div>
-                <h4 className="font-display text-2xl font-semibold leading-tight text-forest">
+                <h4 className="font-display text-3xl font-medium leading-tight text-forest">
                   {service.title}
                 </h4>
-                <p className="mt-3 text-sm leading-6 text-ink/72">{service.previewSummary ?? service.summary}</p>
+                <p className="mt-3 text-sm leading-7 text-ink/78">{service.previewSummary ?? service.summary}</p>
               </article>
             );
           })}
@@ -2069,19 +2060,16 @@ function HomeAssessmentEntrySection({ copy, language }) {
   const steps = getHomeAssessmentSteps(language);
 
   return (
-    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-10 rounded-lg bg-parchment p-6 shadow-line sm:p-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
+    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1320px] gap-10 bg-mist/34 px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.42fr_0.58fr] lg:items-center lg:px-14">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {copy.nav.assessment}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+          <h2 className="font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-5xl">
             {copy.home.toolTitle}
           </h2>
         </div>
         <div className="grid gap-4">
           {copy.home.toolParagraphs.map((paragraph) => (
-            <p key={paragraph} className="text-base leading-8 text-ink/74 sm:text-lg">
+            <p key={paragraph} className="text-base leading-8 text-ink/82 sm:text-lg">
               {paragraph}
             </p>
           ))}
@@ -2116,10 +2104,10 @@ function ServicesPage({ copy, language, onNavigate }) {
 
   return (
     <section className="w-full">
-      <section className="border-b border-forest/10 bg-[linear-gradient(135deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.56fr_0.44fr] lg:items-end">
+      <section className="border-b border-forest/10 bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
+        <div className="mx-auto max-w-[1320px]">
           <div className="max-w-4xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+            <p className="text-sm font-bold uppercase tracking-[0.2em] text-forest">
               {copy.services.label}
             </p>
             <h1 className="mt-4 font-display text-[2.65rem] font-semibold leading-[1.04] tracking-tight text-forest sm:text-6xl xl:text-7xl">
@@ -2129,20 +2117,11 @@ function ServicesPage({ copy, language, onNavigate }) {
               {copy.services.intro}
             </p>
           </div>
-
-          <aside className="rounded-lg border border-forest/10 bg-white/76 p-6 shadow-line backdrop-blur sm:p-8">
-            <h2 className="font-display text-3xl font-semibold leading-tight text-forest">
-              {copy.services.promiseTitle}
-            </h2>
-            <p className="mt-4 text-base leading-8 text-ink/72">
-              {copy.services.promiseBody}
-            </p>
-          </aside>
         </div>
       </section>
 
-      <section className="bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-5 lg:grid-cols-2">
+      <section className="bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
+        <div className="mx-auto max-w-[1320px] border-b border-forest/18">
           {copy.services.items.map((service, index) => {
             const Icon = serviceIcons[index] ?? Compass;
             return (
@@ -2159,12 +2138,12 @@ function ServicesPage({ copy, language, onNavigate }) {
       </section>
 
       <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-8 rounded-lg bg-forest px-8 py-10 text-white shadow-soft sm:px-12 sm:py-10 lg:grid-cols-[0.72fr_0.28fr] lg:items-center lg:px-14 lg:py-10">
+        <div className="mx-auto grid max-w-[1320px] gap-8 rounded bg-forest px-8 py-10 text-white sm:px-12 sm:py-12 lg:grid-cols-[0.72fr_0.28fr] lg:items-center lg:px-14">
           <div>
             <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
               {copy.services.ctaTitle}
             </h2>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-white/76 sm:text-lg">
+            <p className="mt-4 max-w-3xl text-base leading-8 text-white/84 sm:text-lg">
               {copy.services.ctaBody}
             </p>
           </div>
@@ -2195,23 +2174,24 @@ function ServicesPage({ copy, language, onNavigate }) {
 function ServiceDetailCard({ service, icon: Icon, labels, index }) {
   return (
     <article
-      className="rounded-lg border border-forest/10 bg-parchment/46 p-6 shadow-line transition duration-200 hover:-translate-y-1 hover:bg-parchment/62 hover:shadow-soft sm:p-8"
+      className="grid gap-8 border-t border-forest/18 py-10 sm:py-12 lg:grid-cols-[120px_minmax(0,0.78fr)_minmax(0,1.22fr)] lg:gap-12"
       style={{ "--index": index }}
     >
-      <div className="flex items-start justify-between gap-5">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-lavender text-white">
-          <Icon aria-hidden="true" size={22} />
+      <div className="flex items-center justify-between gap-5 lg:flex-col lg:items-start lg:justify-start">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-forest/22 text-forest">
+          <Icon aria-hidden="true" size={20} />
         </div>
-        <span className="font-display text-5xl font-semibold leading-none text-copper/30">
+        <span className="font-display text-5xl font-medium leading-none text-forest/24">
           {String(index + 1).padStart(2, "0")}
         </span>
       </div>
-      <h2 className="mt-6 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
-        {service.title}
-      </h2>
-      <p className="mt-4 text-base leading-8 text-ink/74">{service.summary}</p>
-
-      <div className="mt-6 grid gap-4">
+      <div>
+        <h2 className="font-display text-4xl font-medium leading-[1.08] tracking-[-0.02em] text-forest sm:text-5xl">
+          {service.title}
+        </h2>
+        <p className="mt-5 text-base leading-8 text-ink/80">{service.summary}</p>
+      </div>
+      <div className="grid border-t border-forest/14">
         <ServiceDetail label={labels.forLabel} body={service.forWhom} />
         <ServiceDetail label={labels.helpsLabel} body={service.helpsWith} />
         <ServiceDetail label={labels.outcomeLabel} body={service.outcome} />
@@ -2222,9 +2202,9 @@ function ServiceDetailCard({ service, icon: Icon, labels, index }) {
 
 function ServiceDetail({ label, body }) {
   return (
-    <div className="rounded-md border border-forest/10 bg-white/76 p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">{label}</p>
-      <p className="mt-2 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">{body}</p>
+    <div className="grid gap-2 border-b border-forest/14 py-5 sm:grid-cols-[150px_1fr] sm:gap-6">
+      <p className="text-xs font-bold uppercase tracking-[0.11em] text-forest/78">{label}</p>
+      <p className="text-sm leading-7 text-ink/80 sm:text-base">{body}</p>
     </div>
   );
 }
@@ -2240,7 +2220,7 @@ function VideoPlaceholderSection({ video, language }) {
           <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
             {video.title}
           </h2>
-          <p className="mt-4 text-base leading-8 text-ink/74 sm:text-lg">
+          <p className="mt-4 text-base leading-8 text-ink/82 sm:text-lg">
             {video.body}
           </p>
         </div>
@@ -2335,11 +2315,12 @@ function AboutVideoSection({ video, language }) {
 
 function HeroStat({ value, label }) {
   return (
-    <div className="min-w-0 rounded-lg border border-forest/10 bg-white/70 p-3 shadow-line backdrop-blur sm:p-4">
-      <p className="font-display text-2xl font-semibold leading-none tracking-tight text-forest sm:text-3xl">
+    <div className="min-w-0 rounded-2xl border border-forest/12 bg-white/55 px-5 py-5 shadow-[0_10px_28px_rgba(50,83,93,0.06)] backdrop-blur-sm sm:px-6 sm:py-6">
+      <div className="mb-4 h-0.5 w-10 rounded-full bg-slate" />
+      <p className="font-display text-2xl font-semibold leading-[1.12] tracking-[-0.025em] text-forest sm:text-[1.7rem]">
         {value}
       </p>
-      <p className="mt-2 text-[0.62rem] font-bold uppercase leading-4 tracking-[0.11em] text-muted sm:text-xs sm:tracking-[0.14em]">{label}</p>
+      <p className="mt-3 max-w-[42ch] text-[0.67rem] font-bold uppercase leading-[1.65] tracking-[0.075em] text-forest/72 sm:text-[0.7rem]">{label}</p>
     </div>
   );
 }
@@ -2350,13 +2331,13 @@ function AdvisorPortrait({ language }) {
       className="fade-up relative min-h-[430px] w-full sm:min-h-[560px] lg:min-h-[640px]"
       style={{ "--index": 2 }}
     >
-      <div className="portrait-frame absolute inset-0 overflow-hidden rounded-lg border border-forest/12 bg-forest shadow-soft">
+      <div className="portrait-frame absolute inset-0 overflow-hidden rounded-3xl bg-forest">
         <img
           className="h-full w-full object-cover object-[50%_10%]"
           src="/gilbert-casual-window-headshot.jpg"
           alt={language === "es" ? "Retrato de Gilbert Devlyn" : "Portrait of Gilbert Devlyn"}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-forest/84 via-forest/12 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest/48 via-transparent to-transparent" />
       </div>
     </aside>
   );
@@ -2365,10 +2346,10 @@ function AdvisorPortrait({ language }) {
 function AboutPage({ copy, language, onNavigate }) {
   return (
     <section className="w-full">
-      <section className="px-5 py-10 sm:px-8 sm:py-12 lg:px-12 lg:py-16 xl:px-8">
-        <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-stretch">
-          <div className="flex flex-col gap-4 lg:h-full">
-            <div className="portrait-frame relative h-[420px] overflow-hidden rounded-lg bg-forest shadow-soft sm:h-[520px] lg:h-[640px] xl:h-[720px]">
+      <section className="bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
+        <div className="mx-auto max-w-[1320px]">
+          <div className="grid gap-12 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-start lg:gap-16">
+            <div className="portrait-frame relative h-[440px] overflow-hidden rounded-3xl bg-forest sm:h-[560px] lg:h-[620px] xl:h-[680px]">
               <img
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 src="/gilbert-casual-window-portrait.jpg"
@@ -2380,31 +2361,32 @@ function AboutPage({ copy, language, onNavigate }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-forest/64 via-transparent to-transparent" />
             </div>
+
+            <div className="lg:pt-1">
+              <h1 className="max-w-[12ch] font-display text-[3rem] font-medium leading-[0.99] tracking-[-0.025em] text-forest sm:text-[4rem] xl:text-[5rem]">
+                {copy.about.title}
+              </h1>
+              <div className="mt-8 grid border-y border-forest/18 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                {copy.about.quickFacts.map((fact) => (
+                  <div key={fact.label} className="py-5 md:px-5 md:first:pl-0 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-forest/14 lg:border-l-0 lg:px-0 xl:[&:not(:first-child)]:border-l xl:px-5 xl:first:pl-0">
+                    <p className="font-display text-3xl font-medium leading-none tracking-[-0.02em] text-forest">
+                      {fact.value}
+                    </p>
+                    <p className="mt-2 text-[0.68rem] font-bold uppercase leading-5 tracking-[0.09em] text-forest/78">
+                      {fact.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="flex min-h-full flex-col justify-start lg:py-1">
-            <h2 className="max-w-4xl font-display text-[2.65rem] font-semibold leading-[1.04] text-forest sm:text-[3.45rem] xl:text-[4rem]">
-              {copy.about.title}
-            </h2>
-            <div className="mt-6 grid gap-3 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-              {copy.about.quickFacts.map((fact) => (
-                <div key={fact.label} className="rounded-lg border border-forest/10 bg-white/72 p-4 shadow-line">
-                  <p className="font-display text-3xl font-semibold leading-none tracking-tight text-forest">
-                    {fact.value}
-                  </p>
-                  <p className="mt-2 text-[0.66rem] font-bold uppercase leading-4 tracking-[0.13em] text-muted">
-                    {fact.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 space-y-4">
-              {copy.about.bio.map((paragraph) => (
-                <p key={paragraph} className="text-base leading-7 text-ink/76 sm:text-[1.02rem] sm:leading-8">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+          <div className="mx-auto mt-10 max-w-[1180px] space-y-6 border-t border-forest/14 pt-10">
+            {copy.about.bio.map((paragraph) => (
+              <p key={paragraph} className="text-base leading-8 text-ink/82 sm:text-[1.03rem]">
+                {paragraph}
+              </p>
+            ))}
           </div>
         </div>
       </section>
@@ -2412,8 +2394,8 @@ function AboutPage({ copy, language, onNavigate }) {
       <AboutContextSection copy={copy} />
 
       <section className="border-y border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1400px]">
-          <div className="grid gap-5 lg:grid-cols-2">
+        <div className="mx-auto max-w-[1320px] border-t border-forest/18">
+          <div className="grid lg:grid-cols-2">
             <CredentialList
               title={copy.about.familyExperienceTitle}
               items={copy.about.familyExperienceItems}
@@ -2425,7 +2407,7 @@ function AboutPage({ copy, language, onNavigate }) {
             <CredentialList title={copy.about.educationTitle} items={copy.about.educationItems} />
             <CredentialList title={copy.about.industryTitle} items={copy.about.industryItems} />
           </div>
-          <div className="mt-5">
+          <div>
             <CredentialList title={copy.about.focusTitle} items={copy.about.focusItems} />
           </div>
         </div>
@@ -2442,13 +2424,13 @@ function AboutPage({ copy, language, onNavigate }) {
                 {copy.about.testimonialsSubtitle}
               </p>
             </div>
-            <section className="rounded-lg border border-forest/10 bg-white p-6 shadow-line sm:p-8">
+            <section className="border-t border-forest/20 py-7 sm:py-9">
               <h3 className="font-display text-3xl font-semibold leading-tight text-forest">
                 {copy.about.situationsTitle}
               </h3>
               <ul className="mt-5 space-y-3">
                 {copy.about.situations.map((item) => (
-                  <li key={item} className="flex gap-3 text-base leading-7 text-ink/74">
+                  <li key={item} className="flex gap-3 text-base leading-7 text-ink/82">
                     <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
                     <span>{item}</span>
                   </li>
@@ -2460,7 +2442,7 @@ function AboutPage({ copy, language, onNavigate }) {
       </section>
 
       <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1400px] rounded-lg bg-forest p-6 text-white shadow-soft sm:p-10 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-10">
+        <div className="mx-auto max-w-[1320px] rounded bg-forest p-7 text-white sm:p-10 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-mist">
               {copy.nav.assessment}
@@ -2468,7 +2450,7 @@ function AboutPage({ copy, language, onNavigate }) {
             <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
               {copy.about.toolTitle}
             </h2>
-            <p className="mt-5 text-lg leading-8 text-white/76">{copy.about.toolIntro}</p>
+            <p className="mt-5 text-lg leading-8 text-white/84">{copy.about.toolIntro}</p>
           </div>
           <div className="mt-8 lg:mt-0">
             <div className="grid gap-4 sm:grid-cols-3">
@@ -2483,7 +2465,7 @@ function AboutPage({ copy, language, onNavigate }) {
               ))}
             </div>
 
-            <p className="mt-6 text-base leading-7 text-white/76">{copy.about.toolReceiveBody}</p>
+            <p className="mt-6 text-base leading-7 text-white/84">{copy.about.toolReceiveBody}</p>
 
             <button
               type="button"
@@ -2505,33 +2487,33 @@ function AboutContextSection({ copy }) {
   const icons = [UsersRound, Landmark, Compass, ShieldCheck];
 
   return (
-    <section className="border-y border-forest/10 bg-parchment/46 px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[0.43fr_0.57fr] lg:items-start">
+    <section className="border-y border-forest/10 bg-parchment/46 px-5 py-20 sm:px-8 sm:py-24 lg:px-12 xl:px-8">
+      <div className="mx-auto grid max-w-[1320px] gap-14 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
         <div className="max-w-3xl lg:sticky lg:top-28">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
+          <p className="text-sm font-bold text-forest/80">
             {copy.about.contextLabel}
           </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
+          <h2 className="mt-5 font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-6xl">
             {copy.about.contextTitle}
           </h2>
-          <p className="mt-5 text-base leading-8 text-ink/74 sm:text-lg">
+          <p className="mt-5 text-base leading-8 text-ink/82 sm:text-lg">
             {copy.about.contextBody}
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid border-t border-forest/22 sm:grid-cols-2">
           {copy.about.contextItems.map((item, index) => {
             const Icon = icons[index] ?? Compass;
 
             return (
               <article
                 key={item.title}
-                className="rounded-lg border border-forest/10 bg-white p-5 shadow-line transition duration-200 hover:-translate-y-1 hover:border-forest/20 hover:shadow-soft sm:p-6"
+                className="border-b border-forest/14 py-7 sm:px-6 sm:[&:nth-child(odd)]:border-r"
               >
-                <div className="mb-5 grid h-11 w-11 place-items-center rounded-lg bg-lavender text-white">
-                  <Icon aria-hidden="true" size={20} />
+                <div className="mb-6 grid h-9 w-9 place-items-center rounded-full border border-forest/22 text-forest">
+                  <Icon aria-hidden="true" size={17} />
                 </div>
-                <h3 className="font-display text-2xl font-semibold leading-tight text-forest">
+                <h3 className="font-display text-3xl font-medium leading-tight text-forest">
                   {item.title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">
@@ -2548,13 +2530,13 @@ function AboutContextSection({ copy }) {
 
 function CredentialList({ title, items }) {
   return (
-    <section className="rounded-lg border border-forest/10 bg-white p-6 shadow-line sm:p-8">
-      <h2 className="font-display text-3xl font-semibold tracking-tight text-forest sm:text-4xl">
+    <section className="border-b border-forest/18 py-8 sm:px-7 sm:py-10 sm:[&:nth-child(odd)]:border-r">
+      <h2 className="font-display text-3xl font-medium tracking-[-0.02em] text-forest sm:text-4xl">
         {title}
       </h2>
       <ul className="mt-5 space-y-3">
         {items.map((item) => (
-          <li key={item} className="flex gap-3 text-base leading-7 text-ink/74">
+          <li key={item} className="flex gap-3 text-base leading-7 text-ink/82">
             <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
             <span>{item}</span>
           </li>
@@ -2565,207 +2547,108 @@ function CredentialList({ title, items }) {
 }
 
 function AssessmentLanding({ copy, language, onStart }) {
-  const outcomeIcons = [Compass, ShieldCheck, CalendarDays];
   const diagnosticFacts =
     language === "es"
       ? [
           { value: "50", label: "preguntas" },
           { value: "8", label: "áreas prácticas" },
-          { value: "~10", label: "minutos" },
-          { value: "Sin", label: "preparación necesaria" }
+          { value: "~10", label: "minutos" }
         ]
       : [
           { value: "50", label: "questions" },
           { value: "8", label: "practical areas" },
-          { value: "~10", label: "minutes" },
-          { value: "No", label: "preparation needed" }
+          { value: "~10", label: "minutes" }
         ];
-  const deliverables =
-    language === "es"
-      ? ["Mapa visual", "Resumen claro", "Áreas de enfoque"]
-      : ["Visual map", "Clear summary", "Focus areas"];
 
   return (
-    <section className="w-full flex-1 px-4 py-8 sm:px-8 sm:py-10 lg:px-12 xl:px-8">
-      <div className="mx-auto w-full max-w-[1400px]">
-        <div className="grid overflow-hidden rounded-xl border border-forest/10 bg-white shadow-soft lg:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.58fr)]">
-          <section className="relative overflow-hidden bg-forest p-6 text-white sm:p-8 lg:p-10 xl:p-12">
-            <div className="pointer-events-none absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:38px_38px]" />
-            <div className="relative">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-mist sm:text-sm">
-                  {copy.nav.assessment}
-                </p>
-                <span className="rounded-full border border-white/16 bg-white/8 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/72 sm:text-xs">
-                  {copy.assessmentIntro.introBadge}
-                </span>
-              </div>
-              <h1 className="mt-5 max-w-4xl font-display text-[2.2rem] font-semibold leading-[1.04] [text-wrap:balance] sm:text-5xl lg:text-6xl">
-                {copy.assessmentIntro.title}
-              </h1>
-              <p className="mt-5 max-w-3xl text-base leading-7 text-white/80 sm:text-lg sm:leading-8">
-                {copy.assessmentIntro.body}
+    <section className="w-full flex-1 bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
+      <div className="mx-auto w-full max-w-[1180px]">
+        <header className="border-b border-forest/18 pb-10 sm:pb-12">
+          <p className="text-sm font-bold text-forest/82">{copy.nav.assessment}</p>
+          <h1 className="mt-5 max-w-[14ch] font-display text-[2.8rem] font-medium leading-[1] tracking-[-0.025em] text-forest sm:text-6xl lg:text-[4.8rem]">
+            {copy.assessmentIntro.title}
+          </h1>
+          <p className="mt-6 max-w-[70ch] text-base leading-8 text-ink/84 sm:text-lg sm:leading-9">
+            {copy.assessmentIntro.body}
+          </p>
+          <p className="mt-3 max-w-[70ch] text-sm font-medium leading-7 text-forest/82 sm:text-base">
+            {copy.assessmentIntro.startingPointNote}
+          </p>
+          <button
+            type="button"
+            className="mt-8 inline-flex min-h-[3.2rem] w-full items-center justify-center gap-3 rounded bg-lavender px-6 text-base font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-0 sm:w-auto"
+            onClick={() => onStart("full")}
+          >
+            {copy.assessmentIntro.conversationCta}
+            <ArrowRight aria-hidden="true" size={19} />
+          </button>
+        </header>
+
+        <div className="grid border-b border-forest/18 sm:grid-cols-3">
+          {diagnosticFacts.map((item) => (
+            <div key={item.label} className="py-6 sm:px-6 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:border-forest/14 sm:first:pl-0">
+              <span className="block font-display text-4xl font-medium leading-none text-forest">
+                {item.value}
+              </span>
+              <span className="mt-2 block text-sm font-semibold text-forest/80">{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid border-b border-forest/18 lg:grid-cols-2">
+          <section className="py-10 lg:border-r lg:border-forest/16 lg:pr-12">
+            <h2 className="font-display text-3xl font-medium leading-tight text-forest sm:text-4xl">
+              {copy.assessmentIntro.notAuditTitle}
+            </h2>
+            <p className="mt-4 text-base leading-8 text-ink/84">{copy.notAudit}</p>
+            <div className="mt-7 border-t border-forest/16 pt-7">
+              <h3 className="text-base font-bold text-forest">
+                {copy.assessmentIntro.gilbertContextTitle}
+              </h3>
+              <p className="mt-2 text-sm leading-7 text-ink/82">
+                {copy.assessmentIntro.gilbertContextBody}
               </p>
-              <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-white/62 sm:text-base">
-                {copy.assessmentIntro.startingPointNote}
-              </p>
-
-              <button
-                type="button"
-                className="mt-7 inline-flex min-h-[3.15rem] w-full items-center justify-center gap-3 rounded-md bg-lavender px-5 text-base font-semibold text-white shadow-line transition duration-200 hover:bg-white hover:text-forest active:translate-y-px lg:hidden"
-                onClick={() => onStart("full")}
-              >
-                {copy.assessmentIntro.conversationCta}
-                <ArrowRight aria-hidden="true" size={19} />
-              </button>
-
-              <div className="mt-8 grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4">
-                {diagnosticFacts.map((item) => (
-                  <div key={item.label} className="border-l border-white/22 pl-4">
-                    <span className="block font-display text-3xl font-semibold leading-none text-white sm:text-[2.6rem]">
-                      {item.value}
-                    </span>
-                    <span className="mt-2 block text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-white/62 sm:text-xs">
-                      {item.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-7 rounded-lg border border-white/18 bg-white/8 p-4 sm:p-5">
-                <div className="grid gap-5 xl:grid-cols-[minmax(0,0.76fr)_minmax(0,1.24fr)] xl:items-start">
-                  <div>
-                    <p className="text-base font-semibold text-white">
-                      {copy.assessmentIntro.notAuditTitle}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-white/70">
-                      {copy.notAudit}
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mist">
-                        {copy.assessmentIntro.journeyLabel}
-                      </p>
-                      <div className="mt-3 grid gap-2">
-                        {copy.assessmentIntro.journey.map((item, index) => (
-                          <span key={item.title} className="flex items-start gap-2 text-sm font-semibold text-white/80">
-                            <span className="grid shrink-0 place-items-center rounded-full border border-white/24 px-2 py-0.5 text-[0.68rem] text-mist">
-                              {stepLabel(language, index + 1)}
-                            </span>
-                            <span className="min-w-0">
-                              {item.title}
-                              {index === 0 && (
-                                <span className="mt-2 block text-sm font-normal leading-6 text-white/70">
-                                  {item.body}
-                                </span>
-                              )}
-                            </span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-mist">
-                        {copy.assessmentIntro.resultSignalsLabel}
-                      </p>
-                      <div className="mt-3 grid gap-2">
-                        {copy.assessmentIntro.resultSignals.map((item) => (
-                          <span
-                            key={item}
-                            className="flex items-center gap-2 text-sm font-semibold text-white/80"
-                          >
-                            <Check aria-hidden="true" size={15} className="shrink-0 text-mist" />
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-3 rounded-lg border border-white/18 bg-white/8 p-4 sm:items-start sm:p-5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/12 text-mist">
-                  <Handshake aria-hidden="true" size={19} />
-                </span>
-                <span>
-                  <span className="block text-base font-semibold text-white">
-                    {copy.assessmentIntro.gilbertContextTitle}
-                  </span>
-                  <span className="mt-1 block text-sm leading-6 text-white/70">
-                    {copy.assessmentIntro.gilbertContextBody}
-                  </span>
-                </span>
-              </div>
             </div>
           </section>
 
-          <aside className="flex flex-col justify-between gap-8 bg-white p-6 sm:p-8 lg:p-10">
-            <div>
-              <div className="flex items-start gap-4">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-lavender text-white shadow-line">
-                  <ClipboardCheck aria-hidden="true" size={24} />
-                </span>
-                <span>
-                  <span className="block font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl">
-                    {copy.modes.full.title}
+          <section className="py-10 lg:pl-12">
+            <h2 className="font-display text-3xl font-medium leading-tight text-forest sm:text-4xl">
+              {copy.assessmentIntro.journeyLabel}
+            </h2>
+            <ol className="mt-6 border-t border-forest/18">
+              {copy.assessmentIntro.journey.map((item, index) => (
+                <li key={item.title} className="grid grid-cols-[44px_1fr] gap-4 border-b border-forest/14 py-5">
+                  <span className="font-display text-xl font-medium text-forest/72">
+                    {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="mt-2 block text-base leading-7 text-ink/70">
-                    {copy.modes.full.description}
+                  <span>
+                    <span className="block font-semibold text-forest">{item.title}</span>
+                    <span className="mt-1 block text-sm leading-6 text-ink/82">{item.body}</span>
                   </span>
-                </span>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                {deliverables.map((item) => (
-                  <span
-                    key={item}
-                    className="flex min-h-11 items-center gap-2 rounded-md border border-forest/10 bg-white px-3 text-sm font-semibold text-forest"
-                  >
-                    <Check aria-hidden="true" size={16} className="shrink-0 text-copper" />
-                    {item}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-7 space-y-5">
-                {copy.assessmentIntro.outcomes.map((item, index) => {
-                  const Icon = outcomeIcons[index] ?? Compass;
-                  return (
-                    <article key={item.title} className="flex gap-4">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-lavender/30 text-forest">
-                        <Icon aria-hidden="true" size={18} />
-                      </span>
-                      <span>
-                        <span className="block text-base font-semibold text-forest">
-                          {item.title}
-                        </span>
-                        <span className="mt-1 block text-sm leading-6 text-muted">
-                          {item.body}
-                        </span>
-                      </span>
-                    </article>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                type="button"
-                className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-3 rounded-md bg-lavender px-5 py-4 text-base font-semibold text-white shadow-line transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-0"
-                onClick={() => onStart("full")}
-              >
-                {copy.assessmentIntro.conversationCta}
-                <ArrowRight aria-hidden="true" size={19} />
-              </button>
-            </div>
-          </aside>
+                </li>
+              ))}
+            </ol>
+          </section>
         </div>
 
+        <section className="py-10">
+          <h2 className="font-display text-3xl font-medium leading-tight text-forest sm:text-4xl">
+            {copy.modes.full.title}
+          </h2>
+          <p className="mt-3 max-w-[70ch] text-base leading-8 text-ink/82">
+            {copy.modes.full.description}
+          </p>
+          <div className="mt-7 grid border-t border-forest/18 md:grid-cols-3">
+            {copy.assessmentIntro.outcomes.map((item) => (
+              <article key={item.title} className="border-b border-forest/14 py-6 md:px-6 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-forest/14 md:first:pl-0">
+                <h3 className="font-display text-2xl font-medium leading-tight text-forest">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-ink/82">{item.body}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
     </section>
   );
@@ -2799,8 +2682,8 @@ function LanguageToggle({ language, setLanguage, variant = "light", disabled = f
               active
                 ? "bg-blue text-white"
                 : dark
-                  ? "text-white/70 hover:text-white"
-                  : "text-forest/68 hover:text-forest"
+                  ? "text-white/82 hover:text-white"
+                  : "text-forest/82 hover:text-forest"
             }`}
             aria-pressed={active}
             onClick={() => {
@@ -2829,39 +2712,49 @@ function SiteFooter({ copy, language, onNavigate }) {
       className="mt-auto border-t border-white/10 bg-forest px-5 py-10 text-white sm:px-8 sm:py-12 lg:px-12 xl:px-8"
       role="contentinfo"
     >
-      <div className="mx-auto max-w-[1400px]">
-        <div className="flex flex-col items-center text-center">
+      <div className="mx-auto max-w-[1320px]">
+        <div className="grid gap-10 border-b border-white/14 pb-10 lg:grid-cols-[0.9fr_0.65fr_1.15fr] lg:gap-16">
+          <div>
           <button
             type="button"
             className="group w-fit text-left"
+            aria-label={copy.brandName}
             onClick={() => onNavigate("home")}
           >
-            <span>
-              <span className="block font-display text-2xl font-semibold leading-tight tracking-tight text-white">
-                {copy.brandName}
-              </span>
-              <span className="block text-sm font-medium text-white/62">{copy.brandLine}</span>
+            <img
+              src="/gilbert-devlyn-wordmark-white.png"
+              alt=""
+              className="h-auto w-[142px]"
+            />
+            <span className="mt-1.5 block text-[0.6rem] font-semibold uppercase leading-none tracking-[0.1em] text-white/78">
+              {copy.brandLine}
             </span>
           </button>
 
-          <p className="mt-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-white/76">
+          <p className="mt-5 flex max-w-sm items-start gap-2 text-xs font-bold uppercase leading-6 tracking-[0.11em] text-white/84">
             <UsersRound aria-hidden="true" size={15} />
             {footer.trusted}
           </p>
 
-          <div className="mt-6 flex items-center justify-center gap-4" aria-label={footer.socialLabel}>
+          <div className="mt-7 flex items-center gap-3" aria-label={footer.socialLabel}>
             {socialLinks.map((link) => (
               <FooterSocialLink key={link.label} {...link} />
             ))}
           </div>
-        </div>
+          </div>
 
-        <div className="mx-auto mt-8 grid max-w-sm justify-items-center gap-10 border-t border-white/12 pt-8 text-center">
-          <div className="w-full max-w-xs">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-mist">
+          <nav className="grid content-start gap-3 text-sm font-semibold text-white/72" aria-label="Footer navigation">
+            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("home")}>{copy.nav.home}</button>
+            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("about")}>{copy.nav.about}</button>
+            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("services")}>{copy.nav.services}</button>
+            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("assessment-home")}>{copy.nav.assessment}</button>
+          </nav>
+
+          <div className="max-w-lg">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-mist">
               {footer.credentialsLabel}
             </p>
-            <ul className="mt-4 space-y-2.5 text-sm leading-7 text-white/68">
+            <ul className="mt-5 grid gap-x-8 gap-y-3 text-sm leading-7 text-white/72 sm:grid-cols-2">
               {footer.credentials.map((credential) => (
                 <li key={credential}>
                   {credential}
@@ -2871,7 +2764,7 @@ function SiteFooter({ copy, language, onNavigate }) {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 border-t border-white/12 pt-5 text-xs leading-5 text-white/54 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 pt-6 text-xs leading-5 text-white/78 lg:flex-row lg:items-center lg:justify-between">
           <p>{copy.footerRights}</p>
           <p>{footer.trustLine}</p>
         </div>
@@ -2980,8 +2873,8 @@ function AssessmentProfileIntake({
           <h1 className="mt-4 font-display text-4xl font-semibold leading-tight sm:text-5xl">
             {intake.title}
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-white/76">{intake.body}</p>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-white/58">
+          <p className="mt-5 max-w-xl text-lg leading-8 text-white/84">{intake.body}</p>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-white/78">
             {intake.privacyReassurance}
           </p>
 
@@ -2996,7 +2889,7 @@ function AssessmentProfileIntake({
 
           <div className="mt-6">
             <p className="text-sm font-semibold text-white/72">{intake.contextTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-white/58">{intake.contextBody}</p>
+            <p className="mt-2 text-sm leading-6 text-white/78">{intake.contextBody}</p>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
@@ -3024,7 +2917,7 @@ function AssessmentProfileIntake({
                 {intake.includes.map((item) => (
                   <span
                     key={item}
-                    className="rounded-full border border-white/12 px-3 py-1 text-xs font-semibold text-white/58"
+                    className="rounded-full border border-white/12 px-3 py-1 text-xs font-semibold text-white/78"
                   >
                     {item}
                   </span>
@@ -3153,7 +3046,7 @@ function AssessmentProfileIntake({
                             type="button"
                             className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition ${
                               active
-                                ? "bg-lavender text-white"
+                                ? "bg-blue text-white"
                                 : "text-forest hover:bg-parchment"
                             }`}
                             aria-pressed={active}
@@ -3669,7 +3562,7 @@ function AssessmentFlow({
                     type="button"
                     className={`flex min-h-[94px] flex-col items-center justify-center rounded-xl border p-3 text-center transition duration-200 focus-visible:ring-2 focus-visible:ring-copper sm:min-h-[118px] ${
                       selected
-                        ? "border-lavender bg-lavender text-white shadow-soft"
+                        ? "border-blue bg-blue text-white shadow-soft"
                         : "border-forest/14 bg-parchment/55 text-forest hover:-translate-y-0.5 hover:border-copper hover:bg-white"
                     }`}
                     aria-pressed={selected}
@@ -3862,7 +3755,7 @@ function ResultsScreen({
               <h1 className="mt-4 font-display text-3xl font-semibold leading-tight sm:text-5xl">
                 {stage.level[language]} — {stage.labels[language]}
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-white/76 sm:text-lg sm:leading-8">
+              <p className="mt-4 max-w-2xl text-base leading-7 text-white/84 sm:text-lg sm:leading-8">
                 {stage.descriptions[language]}
               </p>
             </div>
@@ -3931,7 +3824,7 @@ function ResultsScreen({
                     {unknownPillars.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between gap-3 text-sm leading-5 text-ink/74"
+                        className="flex items-center justify-between gap-3 text-sm leading-5 text-ink/82"
                       >
                         <span>{item.pillar.shortLabels[language]}</span>
                         <span className="font-semibold text-forest">{item.unknown}</span>
@@ -3951,7 +3844,7 @@ function ResultsScreen({
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
               {copy.reflection}
             </p>
-            <p className="mt-4 max-w-5xl text-lg leading-8 text-ink/74">
+            <p className="mt-4 max-w-5xl text-lg leading-8 text-ink/82">
               {stage.reflections[language]}
             </p>
           </div>
@@ -3985,7 +3878,7 @@ function ResultsScreen({
             </h2>
             <p className="mt-2 text-sm leading-6 text-ink/70">{finalCopy.body}</p>
 
-            <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-ink/74">
+            <label className="mt-5 flex items-start gap-3 text-sm leading-6 text-ink/82">
               <input
                 type="checkbox"
                 className="mt-1 h-4 w-4 shrink-0 rounded border-forest/30 text-forest focus:ring-forest"
@@ -4497,12 +4390,12 @@ function ComparisonMetricCard({ icon: Icon, label, value, suffix, featured = fal
   return (
     <div className={`rounded-md bg-white/8 ${featured ? "p-4" : "p-3.5"}`}>
       <div className="mb-1.5 flex items-center justify-between gap-3">
-        <p className="text-[0.68rem] font-bold uppercase tracking-[0.11em] text-white/62">{label}</p>
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.11em] text-white/80">{label}</p>
         {Icon && <Icon aria-hidden="true" size={16} className="text-mist" />}
       </div>
       <p className={`font-display font-semibold leading-none ${featured ? "text-3xl" : "text-2xl"}`}>
         {value}
-        <span className="ml-1 text-sm font-bold text-white/58">{suffix}</span>
+        <span className="ml-1 text-sm font-bold text-white/78">{suffix}</span>
       </p>
     </div>
   );
@@ -4853,7 +4746,7 @@ function getHomeFinalCtaCopy(language) {
       body:
         "Cuando los roles, las expectativas o las decisiones importantes siguen sin estar claros, la conversación adecuada puede abrir un camino práctico para avanzar.",
       note: "Comienza por la decisión, el rol o la transición que necesita atención ahora.",
-      primary: "Iniciar una conversación",
+      primary: "Conoce a Gilbert",
       secondary: "Comenzar la autoevaluación"
     };
   }
@@ -4863,7 +4756,7 @@ function getHomeFinalCtaCopy(language) {
     body:
       "When roles, expectations or important decisions remain unclear, the right conversation can create a practical way forward.",
     note: "Start with the decision, role, or transition that needs attention now.",
-    primary: "Start a conversation",
+    primary: "Meet Gilbert",
     secondary: "Begin the Self-Assessment"
   };
 }

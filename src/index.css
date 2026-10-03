@@ -52,6 +52,22 @@ body {
   background: #FAFAF8;
   color: #32535D;
   font-size: 16px;
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
 }
 
 #root,
@@ -101,11 +117,8 @@ button:disabled {
   z-index: 1;
   pointer-events: none;
   content: "";
-  background-image:
-    linear-gradient(rgba(50, 83, 93, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(50, 83, 93, 0.022) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 72%);
+  background-image: linear-gradient(90deg, transparent 0, transparent calc(50% - 1px), rgba(50, 83, 93, 0.035) 50%, transparent calc(50% + 1px));
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.42), transparent 48%);
 }
 
 .page-grain > * {
@@ -114,8 +127,12 @@ button:disabled {
 }
 
 .fade-up {
-  animation: fadeUp 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(var(--index, 0) * 90ms);
+  animation: fadeUp 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--index, 0) * 110ms);
+}
+
+.route-fade {
+  animation: routeFadeIn 360ms ease-out both;
 }
 
 .status-breathe {
@@ -164,6 +181,16 @@ button:disabled {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes routeFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

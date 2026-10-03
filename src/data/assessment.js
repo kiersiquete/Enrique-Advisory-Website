@@ -1331,7 +1331,7 @@ export const COPY = {
       body:
         "In about 10 minutes, explore eight practical areas that shape how your family makes decisions and works together.",
       startingPointNote:
-        "This is a starting point for conversation, not a diagnostic tool or a prescribed action plan.",
+        "This is a starting point for conversation, not a judgment or a prescribed action plan.",
       introBadge: "Simple starting point",
       languageNote: "Available in EN and ES",
       journeyLabel: "What happens next",
@@ -2252,7 +2252,7 @@ export const COPY = {
       body:
         "En alrededor de 10 minutos, observa qué tan claramente toma decisiones y trabaja junta tu familia en ocho áreas prácticas.",
       startingPointNote:
-        "Este es un punto de partida para la conversación, no una herramienta de diagnóstico ni un plan de acción prescrito.",
+        "Este es un punto de partida para la conversación, no un juicio ni un plan de acción prescrito.",
       introBadge: "Punto de partida sencillo",
       languageNote: "Disponible en EN y ES",
       journeyLabel: "Qué ocurre después",
