@@ -2348,8 +2348,8 @@ function AboutPage({ copy, language, onNavigate }) {
     <section className="w-full">
       <section className="bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
         <div className="mx-auto max-w-[1320px]">
-          <div className="grid gap-12 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-start lg:gap-16">
-            <div className="portrait-frame relative h-[440px] overflow-hidden rounded-3xl bg-forest sm:h-[560px] lg:h-[620px] xl:h-[680px]">
+          <div className="grid gap-12 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-stretch lg:gap-16">
+            <div className="portrait-frame relative h-[440px] overflow-hidden rounded-3xl bg-forest sm:h-[560px] lg:h-auto lg:min-h-[620px] xl:min-h-[680px]">
               <img
                 className="absolute inset-0 h-full w-full object-cover object-center"
                 src="/gilbert-casual-window-portrait.jpg"
@@ -2362,14 +2362,14 @@ function AboutPage({ copy, language, onNavigate }) {
               <div className="absolute inset-0 bg-gradient-to-t from-forest/64 via-transparent to-transparent" />
             </div>
 
-            <div className="lg:pt-1">
+            <div className="flex h-full flex-col lg:pt-1">
               <h1 className="max-w-[12ch] font-display text-[3rem] font-medium leading-[0.99] tracking-[-0.025em] text-forest sm:text-[4rem] xl:text-[5rem]">
                 {copy.about.title}
               </h1>
-              <div className="mt-8 grid border-y border-forest/18 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              <div className="mt-8 grid border-y-2 border-forest/45 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                 {copy.about.quickFacts.map((fact) => (
-                  <div key={fact.label} className="py-5 md:px-5 md:first:pl-0 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-forest/14 lg:border-l-0 lg:px-0 xl:[&:not(:first-child)]:border-l xl:px-5 xl:first:pl-0">
-                    <p className="font-display text-3xl font-medium leading-none tracking-[-0.02em] text-forest">
+                  <div key={fact.label} className="py-5 md:px-5 md:first:pl-0 md:[&:not(:first-child)]:border-l-2 md:[&:not(:first-child)]:border-forest/65 lg:border-l-0 lg:px-0 xl:[&:not(:first-child)]:border-l-2 xl:px-5 xl:first:pl-0">
+                    <p className="font-display text-[1.7rem] font-medium leading-[1.02] tracking-[-0.025em] text-forest">
                       {fact.value}
                     </p>
                     <p className="mt-2 text-[0.68rem] font-bold uppercase leading-5 tracking-[0.09em] text-forest/78">
