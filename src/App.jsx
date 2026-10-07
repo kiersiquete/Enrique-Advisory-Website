@@ -164,7 +164,7 @@ const RESULT_DETAIL_COPY = {
   es: {
     implementationGapTitle: "La brecha de ejecución",
     implementationGapBody:
-      "Después de la autoevaluación, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es decidir quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo seguir avanzando cuando aparecen conversaciones sensibles. Gilbert ayuda a convertir esa claridad en una secuencia de conversaciones, acuerdos y siguientes pasos prácticos.",
+      "Después de la Autoevaluación, muchas familias pueden ver el problema e incluso estar de acuerdo con la solución. Lo difícil es decidir quién lidera el trabajo, cómo se financian las decisiones, cuánto tiempo puede dedicar la familia y cómo seguir avanzando cuando aparecen conversaciones sensibles. Gilbert ayuda a convertir esa claridad en una secuencia de conversaciones, acuerdos y siguientes pasos prácticos.",
     topicSummaryLabel: "Mapa de temas",
     topicSummaryTitle: "Resultados por tema",
     topicSummaryIntro:
@@ -293,7 +293,7 @@ const PILLAR_GUIDANCE = {
     vision: {
       familyActions: [
         "Nombrar el propósito compartido y los pocos valores que deben orientar las decisiones de propiedad.",
-        "Traducir esos valores en criterios para crecimiento, reinversión y roles familiares."
+        "Traducir esos valores en criterios para crecimiento, reinversión y responsabilidades familiares."
       ],
       executionRisk:
         "Las declaraciones de propósito suelen quedarse en aspiración si no se conectan con decisiones reales y revisión familiar.",
@@ -338,21 +338,21 @@ const PILLAR_GUIDANCE = {
       executionRisk:
         "Un consejo puede verse formal y aun así evitar conversaciones de sucesión, riesgo o desempeño.",
       gilbertHelp:
-        "Gilbert puede ayudar a aclarar los roles del consejo y conectar sus decisiones con la estrategia del negocio y el contexto familiar."
+        "Gilbert puede ayudar a aclarar las responsabilidades del consejo y conectar sus decisiones con la estrategia del negocio y el contexto familiar."
     },
     management: {
       familyActions: [
-        "Aclarar roles, autoridad, expectativas de desempeño y rutas de sucesión para ejecutivos familiares y no familiares.",
+        "Aclarar responsabilidades, autoridad, expectativas de desempeño y rutas de sucesión para ejecutivos familiares y no familiares.",
         "Separar pertenencia familiar de rendición de cuentas en la gestión."
       ],
       executionRisk:
-        "Dar mayor claridad y estructura a los roles de gestión se vuelve difícil cuando entran en juego la identidad familiar, la compensación o el legado.",
+        "Dar mayor claridad y estructura a las responsabilidades de gestión se vuelve difícil cuando entran en juego la identidad familiar, la compensación o el legado.",
       gilbertHelp:
-        "Gilbert puede presentar la claridad de los roles de gestión como trabajo de continuidad, no como juicio sobre miembros de la familia."
+        "Gilbert puede presentar la claridad de las responsabilidades de gestión como trabajo de continuidad, no como juicio sobre miembros de la familia."
     },
     "next-generation": {
       familyActions: [
-        "Crear una ruta de aprendizaje para futuros propietarios antes de pedirles roles formales.",
+        "Crear una ruta de aprendizaje para futuros propietarios antes de pedirles responsabilidades formales.",
         "Definir reglas de participación, mentoría y expectativas para entrar al negocio o a los espacios familiares de decisión."
       ],
       executionRisk:
@@ -1784,24 +1784,24 @@ function HomePage({ copy, language, onNavigate }) {
       value: language === "es" ? "Cinco perspectivas" : "Five Perspectives",
       label:
         language === "es"
-          ? "empresa familiar de tercera generación • propietario • ejecutivo • consejero no ejecutivo • gobierno familiar"
+          ? "Tercera generación de una familia empresaria • Propietario • Ejecutivo • Consejero • Líder de gobierno familiar"
           : "third-generation family enterprise • owner • executive • non-executive board member • family governance"
     },
     {
       value:
         language === "es"
-          ? "Asesoría, coaching y consejo"
+          ? "Asesoría, coaching y preparación para consejos"
           : "Advisory, Coaching & Board Expertise",
       label:
         language === "es"
-          ? "ASESORÍA EN EMPRESA FAMILIAR • ASESORÍA PATRIMONIAL FAMILIAR • COACHING EJECUTIVO Y DE SIGUIENTE GENERACIÓN • CERTIFICACIÓN COMO CONSEJERO"
+          ? "Familias empresarias • Patrimonio familiar • Coaching ejecutivo y para nuevas generaciones • Board Director Diploma · IMD"
           : "FAMILY ENTERPRISE ADVISORY • FAMILY WEALTH ADVISING • EXECUTIVE & NEXT-GENERATION COACHING • BOARD DIRECTOR CERTIFICATION"
     }
   ];
 
   const heroLabel =
     language === "es"
-      ? "Asesoría para empresas familiares"
+      ? "Asesoría para familias empresarias"
       : "Family Enterprise Advisory";
   const finalCta = getHomeFinalCtaCopy(language);
   const startConversation = () => {
@@ -2552,7 +2552,7 @@ function AssessmentLanding({ copy, language, onStart }) {
       ? [
           { value: "50", label: "preguntas" },
           { value: "8", label: "áreas prácticas" },
-          { value: "~10", label: "minutos" }
+          { value: "10", label: "minutos aprox." }
         ]
       : [
           { value: "50", label: "questions" },
@@ -2666,7 +2666,7 @@ function LanguageToggle({ language, setLanguage, variant = "light", disabled = f
       title={
         disabled
           ? language === "es"
-            ? "Termina o reinicia la autoevaluación para cambiar de idioma"
+            ? "Termina o reinicia la Autoevaluación para cambiar de idioma"
             : "Finish or restart the self-assessment to change language"
           : undefined
       }
@@ -4024,7 +4024,7 @@ function CompareInvitePage({ copy, language, groupId, inviterName, onNavigateHom
     const inviteLink = getInviteUrl(groupId, language);
     const safeInviterName = String(inviterName || "").replace(/[\r\n]+/g, " ").trim();
     const subject = language === "es"
-      ? "Invitación a la Autoevaluación de Empresa Familiar"
+      ? "Invitación a la Autoevaluación para familias empresarias"
       : "Invitation to the Family Enterprise Self-Assessment";
     const body = language === "es"
       ? `${safeInviterName ? `${safeInviterName} te invita` : "Te invito"} a completar la autoevaluación privada de Gilbert Devlyn:\n\n${inviteLink}`
@@ -4742,12 +4742,12 @@ function getResultDetailCopy(language) {
 function getHomeFinalCtaCopy(language) {
   if (language === "es") {
     return {
-      title: "¿Listos para aclarar la siguiente decisión?",
+      title: "¿Listos para tomar la siguiente decisión con mayor claridad?",
       body:
-        "Cuando los roles, las expectativas o las decisiones importantes siguen sin estar claros, la conversación adecuada puede abrir un camino práctico para avanzar.",
-      note: "Comienza por la decisión, el rol o la transición que necesita atención ahora.",
-      primary: "Conoce a Gilbert",
-      secondary: "Comenzar la autoevaluación"
+        "Cuando las responsabilidades, las expectativas o el camino a seguir no están claros, la conversación adecuada puede ayudar a la familia a encontrar una forma práctica de avanzar.",
+      note: "Empieza por la decisión, la responsabilidad o la transición que hoy necesita mayor claridad.",
+      primary: "Iniciar una conversación",
+      secondary: "Comenzar la Autoevaluación"
     };
   }
 
@@ -4768,9 +4768,9 @@ function stepLabel(language, step) {
 function getHomeAssessmentSteps(language) {
   if (language === "es") {
     return [
-      "Recibe y guarda tu reporte individual de la autoevaluación",
-      "Gilbert recibe la información necesaria para identificar temas compartidos y diferencias de perspectiva",
-      "Paso 3: Elige si quieres que Gilbert te contacte"
+      "Completa la Autoevaluación y recibe tu reporte individual",
+      "Gilbert recibe tus resultados y, cuando participan varios familiares, un resumen que le permite identificar coincidencias y distintas perspectivas",
+      "Tú decides si quieres que Gilbert te contacte para revisar los resultados"
     ];
   }
 
@@ -4785,15 +4785,15 @@ function getHomeCredibilityCopy(language) {
   if (language === "es") {
     return {
       label: "Experiencia y credibilidad",
-      title: "No es un asesor de empresas familiares cualquiera.",
+      title: "Gilbert no es el típico asesor de familias empresarias",
       body:
-        "Gilbert aporta la perspectiva de alguien que ha vivido la empresa familiar desde dentro, como propietario, ejecutivo, consejero no ejecutivo y líder de gobierno familiar.",
+        "Gilbert aporta la perspectiva de quien ha vivido la realidad de una familia empresaria desde dentro: como integrante de la tercera generación, propietario, ejecutivo, consejero y líder de gobierno familiar.",
       proof: [
-        { value: "15+ años", label: "Parte de una empresa familiar de tercera generación" },
-        { value: "12+ años", label: "Roles operativos y ejecutivos" },
-        { value: "Desde 2018", label: "Consejero No Ejecutivo" },
+        { value: "15+ años", label: "Como parte de la tercera generación de una familia empresaria" },
+        { value: "12+ años", label: "Responsabilidades operativas y ejecutivas dentro de la familia empresaria" },
+        { value: "Desde 2018", label: "Consejero no ejecutivo" },
         { value: "Desde 2020", label: "Presidente del Consejo de Familia" },
-        { value: "5+ años", label: "Participación en comités" },
+        { value: "Más de 5 años", label: "En comités de consejo y gobierno familiar" },
         { value: "Desde 2025", label: "Presidente del Comité de Prácticas Societarias" }
       ]
     };
@@ -4824,12 +4824,12 @@ function getCompareInviteCopy(language) {
         "Una sola perspectiva muestra dónde está una persona. Comparar perspectivas muestra dónde la familia realmente coincide y dónde no.",
       steps: [
         {
-          title: "Ya completaste tu autoevaluación",
+          title: "Ya completaste tu Autoevaluación",
           body: "Tus resultados están guardados y listos para comparar."
         },
         {
           title: "Invita a un familiar o colega",
-          body: "Esa persona completa la misma autoevaluación de forma privada, a su propio ritmo."
+          body: "Esa persona completa la misma Autoevaluación de forma privada, a su propio ritmo."
         },
         {
           title: "Descubre en qué coinciden y en qué difieren",
@@ -4899,20 +4899,20 @@ function getFinalActionCopy(language) {
         "Tu reporte debería llegar a tu email en unos minutos. Si no lo recibes, no dudes en escribirnos para dar seguimiento.",
       contactCheckboxLabel:
         "Me gustaría que Gilbert me contacte para conversar sobre estos resultados.",
-      error: "No se pudo guardar la autoevaluación. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
+      error: "No se pudo guardar la Autoevaluación. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo.",
       apiErrors: {
         "Unable to save assessment result":
-          "No se pudo guardar la autoevaluación. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo."
+          "No se pudo guardar la Autoevaluación. Revisa la configuración de Airtable en Vercel e inténtalo de nuevo."
       },
       validationErrors: {
         "Respondent email is required": "El email del participante es obligatorio.",
         "Respondent name is required": "El nombre del participante es obligatorio.",
-        "Assessment answers are required": "Las respuestas de la autoevaluación son obligatorias.",
+        "Assessment answers are required": "Las respuestas de la Autoevaluación son obligatorias.",
         "Assessment answers contain unknown question IDs":
-          "Hubo un problema con tus respuestas. Por favor reinicia la autoevaluación sin cambiar de idioma a la mitad.",
+          "Hubo un problema con tus respuestas. Por favor reinicia la Autoevaluación sin cambiar de idioma a la mitad.",
         "Assessment answers contain invalid score values":
-          "Hubo un problema con tus respuestas. Por favor reinicia la autoevaluación e inténtalo de nuevo.",
-        "Assessment result score is required": "El puntaje de la autoevaluación es obligatorio.",
+          "Hubo un problema con tus respuestas. Por favor reinicia la Autoevaluación e inténtalo de nuevo.",
+        "Assessment result score is required": "El puntaje de la Autoevaluación es obligatorio.",
         "Assessment pillar scores are required": "Los puntajes por pilar son obligatorios."
       },
       close: "Cerrar"
@@ -5049,19 +5049,19 @@ function pillarBandClasses(bandId) {
 function getFooterContent(language) {
   if (language === "es") {
     return {
-      trusted: "Ayudando a las familias a aclarar decisiones sobre propiedad, sucesión y consejo",
-      credentialsLabel: "Credenciales y confianza",
+      trusted: "Acompañando a familias empresarias en decisiones sobre propiedad, sucesión y consejos",
+      credentialsLabel: "Formación y credenciales",
       credentials: [
         "IMBA · University of Denver",
         "FFI Family Business & Wealth Advising Certificate",
         "Certified Professional Coach · iPEC",
-        "Board Director Certification · IMD"
+        "Board Director Diploma · IMD"
       ],
       linkedin: "linkedin.com/in/gilbertdevlyn/",
       linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
       socialLabel: "Canales sociales",
       emailLabel: "Email",
-      trustLine: "Las conversaciones privadas y la información sensible se manejan con discreción."
+      trustLine: "Las conversaciones privadas y la información sensible se tratan con discreción."
     };
   }
 

@@ -35,7 +35,7 @@ const esPayload = buildSummaryReportPayload(sampleBody("es", "advanced"), {});
 assert.equal(enPayload.level, "Level 4 - Advanced");
 assert.equal(esPayload.level, "Nivel 4 - Avanzado");
 assert.equal(enPayload.pillarScores[0].label, "Family Vision, Values & Purpose");
-assert.equal(esPayload.pillarScores[0].label, "Visión, Valores y Propósito Familiar");
+assert.equal(esPayload.pillarScores[0].label, "Visión, valores y propósito familiar");
 assert.match(esPayload.interpretation, /reflexión/);
 assert.match(esPayload.resultSummary, /familia/);
 
