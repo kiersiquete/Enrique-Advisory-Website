@@ -1554,7 +1554,7 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
         <div className="flex shrink-0">
           <button
             type="button"
-            className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-lavender px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest sm:w-auto"
+            className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-blue px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest sm:w-auto"
             onClick={acceptCookies}
           >
             {copy.accept}
