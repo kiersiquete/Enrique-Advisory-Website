@@ -2282,7 +2282,7 @@ function AboutVideoSection({ video, language }) {
           </p>
         </div>
         <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="aspect-video bg-[linear-gradient(135deg,rgba(50,83,93,0.92),rgba(50,83,93,0.72)),url('/gilbert-casual-window-headshot.jpg')] bg-cover bg-[center_18%]">
+          <div className="aspect-video bg-[linear-gradient(135deg,rgba(50,83,93,0.92),rgba(50,83,93,0.72)),url('/gilbert-home.jpg')] bg-cover bg-[center_18%]">
             {video.embedUrl ? (
               <iframe
                 className="h-full w-full"
@@ -2334,7 +2334,7 @@ function AdvisorPortrait({ language }) {
       <div className="portrait-frame absolute inset-0 overflow-hidden rounded-3xl bg-forest">
         <img
           className="h-full w-full object-cover object-[50%_10%]"
-          src="/gilbert-casual-window-headshot.jpg"
+          src="/gilbert-home.jpg"
           alt={language === "es" ? "Retrato de Gilbert Devlyn" : "Portrait of Gilbert Devlyn"}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-forest/48 via-transparent to-transparent" />
@@ -2352,7 +2352,7 @@ function AboutPage({ copy, language, onNavigate }) {
             <div className="portrait-frame relative h-[440px] overflow-hidden rounded-3xl bg-forest sm:h-[560px] lg:h-auto lg:min-h-[620px] xl:min-h-[680px]">
               <img
                 className="absolute inset-0 h-full w-full object-cover object-center"
-                src="/gilbert-casual-window-portrait.jpg"
+                src="/gilbert-about.jpg"
                 alt={
                   language === "es"
                     ? "Retrato profesional de Gilbert Devlyn"
