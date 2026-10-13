@@ -69,19 +69,30 @@ const SCREEN_ROUTES = {
   "assessment-home": "/diagnostic"
 };
 const ROUTE_SCREENS = new Map(Object.entries(SCREEN_ROUTES).map(([screen, path]) => [path, screen]));
+const LANGUAGE_ROUTES = {
+  en: "/english",
+  es: "/spanish"
+};
+Object.values(LANGUAGE_ROUTES).forEach((path) => ROUTE_SCREENS.set(path, "home"));
+
+function routeLanguageFromLocation() {
+  if (typeof window === "undefined") return "en";
+  return window.location.pathname === LANGUAGE_ROUTES.es ? "es" : "en";
+}
 
 function routeScreenFromLocation() {
   if (typeof window === "undefined") return "home";
   return ROUTE_SCREENS.get(window.location.pathname) ?? "home";
 }
 
-function publicScreenPath(screenName) {
+function publicScreenPath(screenName, language) {
+  if (screenName === "home" && LANGUAGE_ROUTES[language]) return LANGUAGE_ROUTES[language];
   return SCREEN_ROUTES[screenName] ?? null;
 }
 
-function updateBrowserRoute(screenName, mode = "push", search = "") {
+function updateBrowserRoute(screenName, mode = "push", search = "", language) {
   if (typeof window === "undefined") return;
-  const path = publicScreenPath(screenName);
+  const path = publicScreenPath(screenName, language);
   if (!path) return;
   const nextUrl = `${path}${search}`;
   if (nextUrl === `${window.location.pathname}${window.location.search}`) return;
@@ -1004,7 +1015,7 @@ function getMockParticipantCount(params, key) {
 }
 
 export default function App() {
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState(routeLanguageFromLocation);
   const [screen, setScreen] = useState(routeScreenFromLocation);
   const [activeMode, setActiveMode] = useState(null);
   const [latestResult, setLatestResult] = useState(loadLatestResult);
@@ -1029,6 +1040,7 @@ export default function App() {
   useEffect(() => {
     function handlePopState() {
       const nextScreen = routeScreenFromLocation();
+      if (nextScreen === "home") setLanguage(routeLanguageFromLocation());
       setActiveMode(null);
       setPendingGroupId(null);
       setActiveComparisonGroup(null);
@@ -1160,12 +1172,18 @@ export default function App() {
     setPendingGroupId(null);
     setActiveComparisonGroup(null);
     setScreen(screenName);
-    updateBrowserRoute(screenName);
+    updateBrowserRoute(screenName, "push", "", language);
     if (screenName === "home" && loadAssessmentDraft()) {
       setAssessmentDraft(loadAssessmentDraft());
       setShowResumePrompt(true);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function changeLanguage(nextLanguage) {
+    setLanguage(nextLanguage);
+    if (screen !== "home") return;
+    window.history.replaceState({}, "", LANGUAGE_ROUTES[nextLanguage]);
   }
 
   function handleComplete(answers, profile, privacyConsent) {
@@ -1258,7 +1276,7 @@ export default function App() {
         <SiteHeader
           copy={copy}
           language={language}
-          setLanguage={setLanguage}
+          setLanguage={changeLanguage}
           activeScreen={screen}
           onNavigate={navigate}
         />

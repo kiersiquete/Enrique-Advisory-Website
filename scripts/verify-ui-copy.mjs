@@ -40,6 +40,9 @@ assert.match(appSource, /expiresAt:\s*Date\.now\(\) \+ ttlMs/, "browser records 
 assert.match(appSource, /browserStoredResult/, "completed browser results must be minimized");
 assert.doesNotMatch(storedResultSource, /\b(profile|answers|groupId|participantId):/, "stored results must omit PII, answers, and bearer IDs");
 assert.match(appSource, /ENABLE_MOCK_ROUTES\s*=\s*import\.meta\.env\.DEV/, "mock routes must be development-only");
+assert.match(appSource, /en:\s*["']\/english["']/, "English must have a direct public route");
+assert.match(appSource, /es:\s*["']\/spanish["']/, "Spanish must have a direct public route");
+assert.match(appSource, /useState\(routeLanguageFromLocation\)/, "the initial language must come from the public route");
 assert.match(copySource, /I understand and agree - begin/, "privacy acceptance must be explicit");
 assert.match(copySource, /Open invitation email/, "invitation copy must describe the client-side mail action");
 
