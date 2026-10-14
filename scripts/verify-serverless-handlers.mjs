@@ -1,11 +1,35 @@
 import assert from "node:assert/strict";
 
 import { FULL_QUESTIONS } from "../src/data/assessment.js";
-import { resetRateLimitsForTests } from "../server/http-security.js";
+import { isTrustedApiRequest, resetRateLimitsForTests } from "../server/http-security.js";
 import { PRIVACY_POLICY_VERSION } from "../server/validation.js";
 
 process.env.AIRTABLE_API_TOKEN = "test-token";
 process.env.AIRTABLE_BASE_ID = "appTestBase";
+
+delete process.env.PUBLIC_SITE_URL;
+const sameOriginRequest = {
+  headers: {
+    origin: "https://gilbertdevlyn.com",
+    "sec-fetch-site": "same-origin",
+    "x-forwarded-host": "gilbertdevlyn.com",
+    "x-forwarded-proto": "https"
+  }
+};
+assert.equal(
+  isTrustedApiRequest(sameOriginRequest),
+  true,
+  "same-origin production requests must work without PUBLIC_SITE_URL"
+);
+assert.equal(
+  isTrustedApiRequest({
+    ...sameOriginRequest,
+    headers: { ...sameOriginRequest.headers, origin: "https://attacker.invalid", "sec-fetch-site": "cross-site" }
+  }),
+  false,
+  "cross-site requests must remain blocked"
+);
+
 process.env.PUBLIC_SITE_URL = "https://gilbertdevlyn.com";
 delete process.env.SMTP_HOST;
 delete process.env.SMTP_PORT;

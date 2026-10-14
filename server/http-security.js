@@ -67,7 +67,7 @@ export function isTrustedApiRequest(req) {
   if (configuredOrigin && origin === configuredOrigin) return true;
 
   const currentOrigin = requestOrigin(req);
-  return Boolean(configuredOrigin && currentOrigin === configuredOrigin && origin === currentOrigin);
+  return Boolean(currentOrigin && origin === currentOrigin);
 }
 
 export function prepareApiRequest(req, res) {
