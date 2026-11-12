@@ -6,6 +6,7 @@ import {
   Radar,
   RadarChart,
   ResponsiveContainer,
+  Text,
   Tooltip
 } from "recharts";
 import { PILLARS } from "../data/assessment.js";
@@ -45,6 +46,7 @@ function useViewportMatch(query) {
 export default function RadarPanel({ result, language }) {
   const isMobile = useViewportMatch("(max-width: 640px)");
   const useCompactLabels = useViewportMatch("(max-width: 1180px)");
+  const reducedMotion = useViewportMatch("(prefers-reduced-motion: reduce)");
   const data = useMemo(
     () =>
       PILLARS.map((pillar) => {
@@ -63,14 +65,12 @@ export default function RadarPanel({ result, language }) {
   );
   const chartConfig = isMobile
     ? {
-        className: "h-[380px] w-full",
-        margin: { top: 14, right: 54, bottom: 14, left: 54 },
+        margin: { top: 30, right: 56, bottom: 30, left: 56 },
         outerRadius: "94%",
-        angleTick: { fill: "#32535D", fontSize: 14, fontWeight: 500 },
+        angleTick: { fill: "#32535D", fontSize: 12, fontWeight: 500 },
         radiusTick: { fill: "#32535D", fontSize: 12, dx: -7, dy: 6 }
       }
     : {
-        className: "h-[420px] w-full sm:h-[650px]",
         margin: { top: 18, right: 68, bottom: 18, left: 68 },
         outerRadius: "94%",
         angleTick: { fill: "#32535D", fontSize: 14, fontWeight: 500 },
@@ -78,7 +78,7 @@ export default function RadarPanel({ result, language }) {
       };
 
   return (
-    <div className={chartConfig.className}>
+    <div className="radar-panel mx-auto aspect-square w-full max-w-[650px]">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart
           data={data}
@@ -88,15 +88,28 @@ export default function RadarPanel({ result, language }) {
           <PolarGrid stroke="#B7C9B9" />
           <PolarAngleAxis
             dataKey="label"
-            tick={chartConfig.angleTick}
+            tick={({ x, y, textAnchor, payload }) => (
+              <Text
+                x={x}
+                y={y}
+                textAnchor={textAnchor}
+                verticalAnchor="middle"
+                width={isMobile ? 52 : 80}
+                className="recharts-polar-angle-axis-tick-value"
+                {...chartConfig.angleTick}
+              >
+                {payload.value}
+              </Text>
+            )}
             tickLine={false}
+            tickSize={isMobile ? 4 : 8}
           />
           <PolarRadiusAxis
             angle={78}
             domain={[0, 100]}
             axisLine={false}
             tick={chartConfig.radiusTick}
-            tickCount={6}
+            tickCount={isMobile ? 3 : 6}
           />
           <Tooltip
             cursor={false}
@@ -112,7 +125,7 @@ export default function RadarPanel({ result, language }) {
             fill="#32535D"
             fillOpacity={0.24}
             strokeWidth={2}
-            isAnimationActive
+            isAnimationActive={!reducedMotion}
           />
         </RadarChart>
       </ResponsiveContainer>

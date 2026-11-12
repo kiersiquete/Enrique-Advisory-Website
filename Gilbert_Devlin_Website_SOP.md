@@ -910,6 +910,9 @@ The earlier checklist is retained below so meeting requirements do not disappear
 
 - [ ] UI/UX redesign for readability and polish.
   - November layouts are implemented and locally checked; final Enrique/Gilbert review remains open.
+  - Completed locally November 12: mobile responsiveness across Home, About, Services, assessment landing/intake/questions, results and invitation views. Improved touch targets, narrow-screen headings, question controls, chart sizing/labels, topic-score stacking, and scrolling menus/privacy dialogs. Assessment refresh now offers the saved-progress prompt on the assessment landing page as well as Home.
+  - Mobile QA: `scripts/verify-mobile-browser.mjs` passed in English and Spanish at 320x740, 390x844, 430x932, 844x390, 768x1024, 1024x900, 1280x900 and 1440x1000. Includes six full 50-question runs, Back/Next, refresh/resume, zero/unknown answers, contact checkbox, mocked save failure/retry/success, invitation error/full states, loaded images, chart-label bounds and short-screen cookie/privacy checks. All API requests were intercepted; no real reports or records were created. Screenshots are in ignored `output/mobile/`.
+  - Existing profile browser checks and `npm run verify` passed. These are browser-emulated device checks, not physical iPhone/Android testing. Run the mobile script with `PLAYWRIGHT_MODULE` pointing to an available Playwright installation and the local dev server running. Deployment and physical-phone/client review remain open.
   - Completed November 12: replaced the AI-generated Home assessment roundtable image with the approved real photograph by Vlada Karpovich; source/license tracked in `docs/image-credits.md`.
   - The separate Home Services preview photograph remains unchanged and needs final approval.
   - Reduce dense, cramped boxes, especially on the Home page.
@@ -937,9 +940,9 @@ The earlier checklist is retained below so meeting requirements do not disappear
 
 - [ ] Confirm production email settings.
   - November 12 live verification passed: one clearly labeled synthetic assessment saved to Airtable, a separate read-back found one participant, and the server confirmed both participant/advisor messages were accepted. The participant email was visually confirmed in the approved Gmail Inbox with the PDF attachment, matching test label and expected 60/100 score. Follow-up contact was unchecked.
-  - Gilbert's actual Outlook inbox receipt/forwarding remains unverified; successful provider acceptance is not proof of inbox placement. One QA assessment remains in production for verification.
+  - November 12: the user confirmed seeing Gilbert's report in Outlook. This is user-confirmed inbox receipt, not a separate agent inspection of Outlook or forwarding configuration. One QA assessment remains in production for verification.
   - November 12 local verification: no `.env` file or Airtable/SMTP/Resend environment configuration was present. A complete browser assessment submitted to `/api/results` returned HTTP 500; the API log confirmed `Missing Airtable configuration`. The email function returned `missing-smtp-config`. This does not establish the deployed site's configuration or delivery status.
-  - Local configuration still needs restoring if localhost must send/save real reports. Production participant delivery and persistence are verified; finish by confirming the intended Outlook inbox.
+  - Local configuration still needs restoring if localhost must send/save real reports. Production participant delivery and persistence are verified; Gilbert's Outlook receipt is user-confirmed.
   - Make sure production email environment variables send public contact and system notifications to the intended inbox.
   - Confirm the exact final email/domain spelling because current site copy uses `info@gilbertdevlyn.com`, the July 1 Fathom summary mentions `info@gilbertdevlin.com`, and the Gilbert Rev3 checklist mentions `info@gilbertdevly.com`.
   - Research forwarding options from the older host/domain setup to Gilbert's current inbox, including whether Gmail "Send mail as" or forwarding can solve it.

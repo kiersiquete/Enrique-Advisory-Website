@@ -1213,6 +1213,7 @@ export default function App() {
     setAssessmentDraft(null);
     setShowResumePrompt(false);
     setScreen("loading");
+    window.scrollTo({ top: 0, behavior: "auto" });
 
     window.setTimeout(() => {
       const result = calculateResults(questions, cleanAnswers);
@@ -1243,6 +1244,7 @@ export default function App() {
     setActiveMode(null);
     setScreen("assessment-home");
     updateBrowserRoute("assessment-home", "push", "", language);
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function handleDraftChange(draft) {
@@ -1402,7 +1404,7 @@ export default function App() {
         />
       )}
 
-      {screen === "home" && showResumePrompt && assessmentDraft && (
+      {["home", "assessment-home"].includes(screen) && showResumePrompt && assessmentDraft && (
         <ResumeAssessmentPrompt
           copy={copy.resumeAssessment}
           draft={assessmentDraft}
@@ -1434,7 +1436,7 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
 
   return createPortal(
     <section className="pointer-events-none fixed inset-x-0 bottom-0 z-[9980] px-3 pb-3 sm:px-6 sm:pb-6">
-      <div className="pointer-events-auto mx-auto flex w-full max-w-3xl flex-col gap-3 rounded-lg border border-forest/12 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+      <div className="pointer-events-auto mx-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col gap-3 overflow-y-auto rounded-lg border border-forest/12 bg-white p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-2xl">
           <p className="text-sm font-bold text-forest">{copy.title}</p>
           <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">{copy.body}</p>
@@ -1449,7 +1451,7 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
         <div className="flex shrink-0">
           <button
             type="button"
-            className="inline-flex min-h-10 w-full items-center justify-center rounded-md bg-blue px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest sm:w-auto"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-blue px-4 text-sm font-bold text-white transition duration-200 hover:bg-forest sm:w-auto"
             onClick={acceptCookies}
           >
             {copy.accept}
@@ -1485,14 +1487,14 @@ function PrivacyPolicyModal({ copy, onClose }) {
       aria-labelledby="privacy-policy-title"
     >
       <div className="flex max-h-[88dvh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-forest/12 bg-white shadow-soft">
-        <div className="flex items-start justify-between gap-4 border-b border-forest/10 p-5 sm:p-6">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-forest/10 p-4 sm:p-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-copper">
               {copy.label}
             </p>
             <h2
               id="privacy-policy-title"
-              className="mt-2 font-display text-3xl font-semibold leading-tight text-forest sm:text-4xl"
+              className="mt-2 font-display text-2xl font-semibold leading-tight text-forest sm:text-3xl"
             >
               {copy.title}
             </h2>
@@ -1508,7 +1510,7 @@ function PrivacyPolicyModal({ copy, onClose }) {
           </button>
         </div>
 
-        <div className="overflow-y-auto p-5 sm:p-6">
+        <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
           <div className="space-y-4 text-sm leading-7 text-ink/76 sm:text-base">
             {copy.intro.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
@@ -1527,7 +1529,7 @@ function PrivacyPolicyModal({ copy, onClose }) {
                 </div>
                 {section.table && (
                   <div className="mt-4 overflow-hidden rounded-lg border border-forest/10">
-                    <div className="grid grid-cols-3 bg-parchment/60 text-xs font-bold uppercase tracking-[0.14em] text-forest">
+                    <div className="hidden grid-cols-3 bg-parchment/60 text-xs font-bold uppercase tracking-[0.14em] text-forest sm:grid">
                       {section.table.headers.map((header) => (
                         <div key={header} className="border-r border-forest/10 p-3 last:border-r-0">
                           {header}
@@ -1535,9 +1537,10 @@ function PrivacyPolicyModal({ copy, onClose }) {
                       ))}
                     </div>
                     {section.table.rows.map((row) => (
-                      <div key={row.join("-")} className="grid grid-cols-3 border-t border-forest/10 text-sm leading-6 text-muted">
-                        {row.map((cell) => (
-                          <div key={cell} className="border-r border-forest/10 p-3 last:border-r-0">
+                      <div key={row.join("-")} className="grid border-t border-forest/10 text-sm leading-6 text-muted sm:grid-cols-3">
+                        {row.map((cell, cellIndex) => (
+                          <div key={cell} className="border-forest/10 p-3 last:border-r-0 sm:border-r">
+                            <span className="block text-xs font-bold text-forest sm:hidden">{section.table.headers[cellIndex]}</span>
                             {cell}
                           </div>
                         ))}
@@ -1550,7 +1553,7 @@ function PrivacyPolicyModal({ copy, onClose }) {
           </div>
         </div>
 
-        <div className="border-t border-forest/10 p-4 sm:p-5">
+        <div className="shrink-0 border-t border-forest/10 p-4 sm:p-5">
           <button
             type="button"
             className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-lavender px-5 text-sm font-bold text-white transition hover:bg-forest sm:w-auto"
@@ -1629,7 +1632,7 @@ function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver
 
   return createPortal(
     <section className="fixed inset-x-0 bottom-24 z-[9970] px-4 sm:px-6">
-      <div className="mx-auto max-w-3xl rounded-xl border border-forest/12 bg-white p-5 shadow-soft sm:p-6">
+      <div className="mx-auto max-h-[calc(100dvh-7rem)] max-w-3xl overflow-y-auto rounded-xl border border-forest/12 bg-white p-5 shadow-soft sm:p-6">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-copper">
           {copy.label}
         </p>
@@ -2287,6 +2290,10 @@ function AssessmentFlow({
   }
 
   useEffect(() => {
+    if (profileStepComplete) window.scrollTo({ top: 0, behavior: "auto" });
+  }, [index, profileStepComplete]);
+
+  useEffect(() => {
     if (!profileStepComplete) return undefined;
 
     function handleScoreKey(event) {
@@ -2316,12 +2323,6 @@ function AssessmentFlow({
     if (!isAssessmentAnswered(currentAnswer)) return;
     if (isLast) {
       onComplete(answers, profileForResult(), privacyConsent);
-      return;
-    }
-    const nextQuestion = questions[index + 1];
-    if (nextQuestion.pillarId !== question.pillarId) {
-      setIndex((value) => value + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     setIndex((value) => value + 1);
@@ -2368,7 +2369,7 @@ function AssessmentFlow({
   }
 
   return (
-    <section className="flex min-h-[calc(100dvh-80px)] w-full flex-col px-5 py-6 sm:px-8 lg:px-16 xl:px-24">
+    <section className="assessment-flow flex min-h-[calc(100dvh-80px)] w-full flex-col px-4 py-5 sm:px-8 lg:px-16 xl:px-24">
       {showPrivacyNotice && (
         <PreAssessmentPrivacyModal
           copy={copy.preAssessmentPrivacy}
@@ -2376,11 +2377,11 @@ function AssessmentFlow({
           onReadPolicy={readPrivacyPolicyFromNotice}
         />
       )}
-      <header className="mb-8">
+      <header className="mb-5 sm:mb-8">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
-          className="inline-flex w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-forest hover:bg-white"
+          className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-forest hover:bg-white"
           onClick={onBack}
         >
           <ArrowLeft aria-hidden="true" size={18} />
@@ -2446,21 +2447,21 @@ function AssessmentFlow({
         </aside>
 
         <div className="flex items-start lg:items-center">
-          <article className="w-full rounded-xl border border-forest/12 bg-white p-5 shadow-soft sm:p-8 lg:p-12">
-            <div className="mx-auto mb-8 max-w-4xl text-center">
+          <article className="w-full rounded-xl border border-forest/12 bg-white p-4 shadow-soft sm:p-8 lg:p-10">
+            <div className="mx-auto mb-6 max-w-4xl text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-copper">
                 {pillar.labels[language]}
               </p>
               <p className="mx-auto mb-6 max-w-2xl text-base leading-7 text-muted">
                 {pillar.descriptions[language]}
               </p>
-              <h1 className="font-display text-4xl font-semibold leading-tight text-forest sm:text-5xl lg:text-6xl">
+              <h1 className="font-display text-2xl font-semibold leading-tight text-forest sm:text-4xl lg:text-4xl xl:text-5xl">
                 {question.text}
               </h1>
               <p className="mt-5 text-lg text-ink/70">{copy.scorePrompt}</p>
             </div>
 
-            <div className="mx-auto grid max-w-5xl grid-cols-3 gap-2 sm:gap-3 xl:grid-cols-6">
+            <div className="assessment-answers mx-auto grid max-w-5xl grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 2xl:grid-cols-6">
               {copy.scaleAnchors.map((label, score) => {
                 const selected = currentAnswer === score;
                 return (
@@ -2491,7 +2492,7 @@ function AssessmentFlow({
             <div className="mx-auto mt-3 max-w-5xl">
               <button
                 type="button"
-                className={`flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border px-4 text-center transition duration-200 focus-visible:ring-2 focus-visible:ring-copper ${
+                className={`flex min-h-14 w-full items-center justify-center gap-3 rounded-xl border px-4 py-3 text-center transition duration-200 focus-visible:ring-2 focus-visible:ring-copper ${
                   currentAnswer === UNKNOWN_ANSWER
                     ? "border-forest/30 bg-forest/[0.06] text-forest shadow-line"
                     : "border-forest/12 bg-parchment text-ink/68 hover:-translate-y-0.5 hover:border-forest/24 hover:bg-white"
@@ -2507,7 +2508,7 @@ function AssessmentFlow({
               </button>
             </div>
 
-            <div className="mt-8 grid gap-4 border-t border-forest/10 pt-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <div className="assessment-question-actions mt-6 grid gap-4 border-t border-forest/10 pt-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
               <p className="max-w-3xl text-sm leading-6 text-ink/60">{copy.scaleNote}</p>
               <div className="grid w-full grid-cols-2 gap-3 sm:w-[18rem]">
                 <button
@@ -2516,7 +2517,7 @@ function AssessmentFlow({
                   onClick={() => setIndex((value) => Math.max(0, value - 1))}
                   disabled={index === 0}
                 >
-                  <ArrowLeft aria-hidden="true" size={18} />
+                  <ArrowLeft aria-hidden="true" size={18} className="shrink-0" />
                   {copy.back}
                 </button>
                 <button
@@ -2526,7 +2527,7 @@ function AssessmentFlow({
                   disabled={!isAssessmentAnswered(currentAnswer)}
                 >
                   {isLast ? copy.finish : copy.next}
-                  <ArrowRight aria-hidden="true" size={18} />
+                  <ArrowRight aria-hidden="true" size={18} className="shrink-0" />
                 </button>
               </div>
             </div>
@@ -2627,11 +2628,11 @@ function ResultsScreen({
   }
 
   return (
-    <section className="w-full px-5 py-8 sm:px-8 lg:px-16 xl:px-24">
+    <section className="assessment-results w-full px-4 py-6 sm:px-8 lg:px-16 xl:px-24">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
-          className="inline-flex w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-forest hover:bg-white"
+          className="inline-flex min-h-11 w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-forest hover:bg-white"
           onClick={onRetake}
         >
           <ArrowLeft aria-hidden="true" size={18} />
@@ -2647,19 +2648,19 @@ function ResultsScreen({
         </button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(280px,0.72fr)_minmax(560px,1.28fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <section className="rounded-xl bg-forest p-6 text-white shadow-soft sm:p-8 lg:p-10">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-mist">
             {copy.overallScore}
           </p>
-          <div className="mt-5 flex flex-col gap-8 sm:flex-row sm:items-center">
+          <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center xl:flex-col xl:items-start">
             <ScoreRing score={result.overall} />
             <div>
-              <div className="font-display text-6xl font-semibold leading-none sm:text-8xl">
+              <div className="font-display text-6xl font-semibold leading-none sm:text-7xl">
                 {roundedScore(result.overall)}
                 <span className="ml-2 text-2xl text-white/46 sm:text-3xl">/ 100</span>
               </div>
-              <h1 className="mt-4 font-display text-3xl font-semibold leading-tight sm:text-5xl">
+              <h1 className="mt-4 font-display text-3xl font-semibold leading-tight sm:text-4xl">
                 {stage.level[language]} — {stage.labels[language]}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/84 sm:text-lg sm:leading-8">
@@ -2669,10 +2670,10 @@ function ResultsScreen({
           </div>
         </section>
 
-        <section className="rounded-xl border border-forest/12 bg-white p-5 shadow-line sm:p-6">
+        <section className="results-chart rounded-xl border border-forest/12 bg-white p-4 shadow-line sm:p-6">
           <Suspense
             fallback={
-              <div className="grid h-[420px] w-full place-items-center text-sm font-semibold text-muted sm:h-[650px]">
+              <div className="mx-auto grid aspect-square w-full max-w-[650px] place-items-center text-sm font-semibold text-muted">
                 {detailCopy.loadingChart}
               </div>
             }
@@ -2756,7 +2757,7 @@ function ResultsScreen({
             </p>
           </div>
 
-          <div id="diagnostic-breakdown" className="border-t border-forest/10 p-6 sm:p-8">
+          <div id="diagnostic-breakdown" className="border-t border-forest/10 p-4 sm:p-8">
             <div className="mb-7">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -2798,12 +2799,12 @@ function ResultsScreen({
 
             <button
               type="button"
-              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-lavender px-4 text-left text-sm font-bold text-white transition hover:bg-forest disabled:cursor-not-allowed disabled:bg-lavender/60"
+              className="mt-5 inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-md bg-lavender px-4 py-3 text-left text-sm font-bold text-white transition hover:bg-forest disabled:cursor-not-allowed disabled:bg-lavender/60"
               onClick={submitResult}
               disabled={submitPending || submitted}
             >
               {submitted ? finalCopy.saved : submitPending ? finalCopy.saving : finalCopy.continue}
-              <ArrowRight aria-hidden="true" size={18} />
+              <ArrowRight aria-hidden="true" size={18} className="shrink-0" />
             </button>
             {submitted && (
               <p role="status" className="mt-3 rounded-md border border-success bg-success/10 px-3 py-2 text-sm leading-6 text-ink">
@@ -2833,7 +2834,7 @@ function PillarSummaryGrid({ breakdowns, copy }) {
             key={breakdown.id}
             className="rounded-lg border border-forest/10 bg-parchment/32 p-4"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
               <div className="min-w-0">
                 <h3 className="text-base font-bold leading-tight text-forest">
                   {breakdown.label}

@@ -1035,6 +1035,18 @@
   }
 }
 @media (max-width: 959px) {
+  .site-language button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .mobile-navigation {
+    max-height: calc(100dvh - 78px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .site-header-inner {
+    gap: 16px;
+  }
   .site-header-inner {
     grid-template-columns: 1fr auto;
     min-height: 78px;
@@ -1144,6 +1156,34 @@
   }
 }
 @media (max-width: 639px) {
+  .mobile-navigation {
+    max-height: calc(100dvh - 74px);
+  }
+  .site-footer nav a,
+  .footer-contact a,
+  .footer-contact button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .site-footer nav {
+    gap: 4px;
+  }
+  .footer-social a {
+    width: 44px;
+    height: 44px;
+  }
+  .profile-dialog-close {
+    width: 44px;
+    height: 44px;
+  }
+  .profile-phone-menu button {
+    min-height: 44px;
+  }
+  .website .assessment-journey h3 {
+    font-size: 21px;
+    gap: 12px;
+  }
   .site-container {
     width: calc(100% - 40px);
   }
@@ -1342,7 +1382,7 @@
   }
 }
 @media (max-width: 359px) {
-  .assessment-hero h1 {
+  .website h1 {
     font-size: 32px;
   }
 }
