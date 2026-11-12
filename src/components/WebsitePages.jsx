@@ -136,26 +136,19 @@ export function SiteHeader({
           {copy.nav[screen]}
         </PageLink>
       ))}
-      <a
-        href={`mailto:${copy.contactEmail}`}
-        onClick={() => setMenuOpen(false)}
+      <PageLink
+        className={mobile ? "site-button" : undefined}
+        screen="assessment-home"
+        language={language}
+        aria-current={assessmentActive ? "page" : undefined}
+        onNavigate={(next) => {
+          setMenuOpen(false);
+          onNavigate(next);
+        }}
       >
-        {text.contact}
-      </a>
-      {mobile && (
-        <PageLink
-          className="site-button"
-          screen="assessment-home"
-          language={language}
-          onNavigate={(next) => {
-            setMenuOpen(false);
-            onNavigate(next);
-          }}
-        >
-          {text.begin}
-          <ArrowRight size={16} aria-hidden="true" />
-        </PageLink>
-      )}
+        {copy.nav.assessment}
+        {mobile && <ArrowRight size={16} aria-hidden="true" />}
+      </PageLink>
     </nav>
   );
   return (

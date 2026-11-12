@@ -131,6 +131,20 @@ try {
         assert.equal(new URL(page.url()).searchParams.get("lang"), language === "en" ? "es" : "en");
       }
 
+      await page.goto(`${baseUrl}${routes.home}`);
+      if (width < 960) await page.locator(".site-menu-toggle").click();
+      const navigation = page.locator(width < 960 ? "#mobile-navigation" : ".desktop-navigation");
+      const assessmentLink = navigation.getByRole("link", { name: copy.nav.assessment, exact: true });
+      assert.equal(await assessmentLink.count(), 1, "one self-assessment navigation link");
+      assert.equal(await navigation.locator('a[href^="mailto:"]').count(), 0, "navigation opens pages, not an email app");
+      assert.equal(await assessmentLink.getAttribute("href"), routes.assessment);
+      await assessmentLink.click();
+      assert.equal(new URL(page.url()).pathname, "/diagnostic");
+      assert.equal(new URL(page.url()).searchParams.get("lang"), language);
+      assert.equal(await page.locator('.desktop-navigation a[href^="/diagnostic"]').getAttribute("aria-current"), "page");
+      if (width < 960) assert.equal(await page.locator("#mobile-navigation").count(), 0);
+      await page.getByRole("button", { name: website.begin, exact: true }).first().waitFor();
+
       // Complete actual intake and all 50 questions on narrow, standard and landscape phones.
       if ([320, 390, 844].includes(width)) {
         await page.evaluate(() => localStorage.removeItem("family-business-maturity-latest"));
