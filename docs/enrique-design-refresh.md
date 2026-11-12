@@ -42,7 +42,7 @@ The single task list is section 23 of `Gilbert_Devlin_Website_SOP.md`. This docu
 - Confirmed in a browser with a simulated API response: `email.sent: false` still produces "Report saved and sent". This is an open product bug, not evidence of a sent email.
 - Confirmed with an isolated API fixture: after persistence succeeds but the provider fails, retrying the submission skips mail as a duplicate. Delivery retry handling is an open product bug.
 - `verify:airtable`, `verify:api`, `verify:serverless` and `verify:i18n` pass using fixtures. They do not prove production connectivity or inbox receipt.
-- Synthetic address: `assessment-qa@example.invalid`. No real provider emails or Airtable records were created. Deployed-site delivery and Outlook receipt remain unverified; a configured environment and approved test recipient are needed.
+- Local-only synthetic address: `assessment-qa@example.invalid`. Those local/error-simulation checks created no real provider emails or Airtable records. The later authorized production test is recorded below.
 - Reproduction script and screenshots are local, git-ignored artifacts under `output/`. Both bugs and the configuration/live-verification steps are tracked in SOP section 23. No application behavior was changed during this verification.
 
 ## Production Verification - November 12
@@ -51,7 +51,12 @@ The single task list is section 23 of `Gilbert_Devlin_Website_SOP.md`. This docu
 - Live profile/browser checks passed in English and Spanish at 1440, 1024, 390 and 320px. API writes were blocked during those checks.
 - A read-only `/api/group-status` lookup using an unused random group returned HTTP 200 and zero participants. Production Airtable read access works; this alone does not verify writes.
 - Completed all 50 questions on the live site and reached the results page. An empty `/api/results` request correctly returned HTTP 400 without saving anything.
-- The real save/report action has not been triggered: an approved test recipient address is still needed. Database writes, participant/advisor email acceptance and actual inbox receipt remain unverified. The existing false-success/retry bugs remain open.
+- Authorized real submission completed at approximately 05:00 UTC (13:00 Manila), labeled `QA TEST - Live verification 2026-11-12T05:00:09.342Z`, with synthetic answers and follow-up contact unchecked. One test assessment was submitted to the approved Gmail recipient.
+- `/api/results` returned HTTP 200, `persistence: airtable` and `email: { sent: true, skipped: false }`. A separate group-status read-back returned one participant, confirming the saved session can be retrieved.
+- Confirmed the participant report in the intended Gmail Inbox, from `info@gilbertdevlyn.com`, subject "Your self-assessment summary report is ready", at 13:00 Manila. The message contains the exact test label, expected score 60/100 and `gilbert-self-assessment-summary.pdf` attachment.
+- The API's email success status is returned after both participant and advisor sends complete, so both messages were accepted by the provider. Gilbert's Outlook inbox receipt/forwarding has not been independently checked.
+- One clearly labeled synthetic assessment remains in the production database for verification. No consultation request, extra participant invitation or duplicate test submission was sent.
+- The delivered email lacks the Invite Someone action despite a one-person group. Inspect production `PUBLIC_SITE_URL`: the email builder suppresses the invitation when no valid public origin is available. This is a likely configuration cause, not a directly inspected environment value. The false-success/retry bugs also remain open.
 
 ## Reference Files
 

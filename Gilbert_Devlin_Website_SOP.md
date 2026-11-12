@@ -837,6 +837,7 @@ The earlier checklist is retained below so meeting requirements do not disappear
   - When the diagnostic is completed in Spanish, make sure the report/email arrives in Spanish.
 
 - [ ] Gilbert Rev3: Follow-up, consent, and email CTAs.
+  - November 12 live email review: the received report has the PDF attachment and conversation email link, but no Invite Someone action. Investigate production `PUBLIC_SITE_URL` because the email builder omits this action when the public origin is missing or invalid; the test group had only one participant.
   - Simplify the post-assessment action area to one primary "Save and email me my report" button.
   - Do not ask the user to enter their email again because it was already collected at the start.
   - Add an optional checkbox: "I would like Gilbert to contact me to discuss the results."
@@ -934,9 +935,10 @@ The earlier checklist is retained below so meeting requirements do not disappear
   - Confirm how Gilbert is notified when enough participants complete a group for internal comparison.
 
 - [ ] Confirm production email settings.
-  - November 12 after deploying design commit `fdda6ee`: live profile checks passed in both languages at four widths, the 50-question flow reached results, and the read-only group-status endpoint returned HTTP 200. This confirms production Airtable read access, not writes or email delivery. The save/report test is awaiting an approved recipient email address.
+  - November 12 live verification passed: one clearly labeled synthetic assessment saved to Airtable, a separate read-back found one participant, and the server confirmed both participant/advisor messages were accepted. The participant email was visually confirmed in the approved Gmail Inbox with the PDF attachment, matching test label and expected 60/100 score. Follow-up contact was unchecked.
+  - Gilbert's actual Outlook inbox receipt/forwarding remains unverified; successful provider acceptance is not proof of inbox placement. One QA assessment remains in production for verification.
   - November 12 local verification: no `.env` file or Airtable/SMTP/Resend environment configuration was present. A complete browser assessment submitted to `/api/results` returned HTTP 500; the API log confirmed `Missing Airtable configuration`. The email function returned `missing-smtp-config`. This does not establish the deployed site's configuration or delivery status.
-  - Restore the existing local project configuration securely, or confirm the deployed environment and a test recipient. Then verify an actual saved record plus receipt of participant/advisor emails, including the intended Outlook inbox.
+  - Local configuration still needs restoring if localhost must send/save real reports. Production participant delivery and persistence are verified; finish by confirming the intended Outlook inbox.
   - Make sure production email environment variables send public contact and system notifications to the intended inbox.
   - Confirm the exact final email/domain spelling because current site copy uses `info@gilbertdevlyn.com`, the July 1 Fathom summary mentions `info@gilbertdevlin.com`, and the Gilbert Rev3 checklist mentions `info@gilbertdevly.com`.
   - Research forwarding options from the older host/domain setup to Gilbert's current inbox, including whether Gmail "Send mail as" or forwarding can solve it.
