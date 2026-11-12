@@ -23,7 +23,7 @@ The single task list is section 23 of `Gilbert_Devlin_Website_SOP.md`. This docu
 - The PDFs disagree on FFI membership/certification wording. The site uses certification wording, not the unconfirmed Fellow claim.
 - The supplied Denver degree label differs from existing site content. The existing IMBA and Management/Marketing wording is retained pending Enrique's confirmation.
 - The new Home reference has no video section. The implementation follows the new reference; a real Gilbert video remains a separate content decision.
-- The two Home supporting photographs are existing project assets and can be replaced when final images are supplied.
+- The Home self-assessment image was replaced with the user-approved Vlada Karpovich photograph from Pexels on November 12. Source and license are recorded in `docs/image-credits.md`. The separate Services preview photograph is unchanged.
 - The hero uses a flat light-sage background instead of the reference fade. Compact typography and the modal process presentation are responsive adaptations, not pixel-identical copies.
 
 ## Verification

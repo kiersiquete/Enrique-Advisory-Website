@@ -754,7 +754,7 @@ Additional source: Gilbert Rev3 written checklist and identity exploration image
 | Source | Implemented locally | Remaining review / dependency |
 | --- | --- | --- |
 | Design System V1-1 | Inter, supplied primary palette, heading scale, navigation/button typography, semantic status colors, shared header/footer | Final visual sign-off; compact/mobile type is intentionally smaller. Hero uses a flat light-sage background, not the reference fade. |
-| Home V2 | Hero/portrait, experience grid, credentials, six illustrated focus areas, assessment/process, services preview | Approve the two existing supporting photographs; confirm whether the earlier video request still applies. |
+| Home V2 | Hero/portrait, experience grid, credentials, six illustrated focus areas, assessment/process, services preview; approved real Pexels assessment photograph | Confirm the separate Services preview photograph and whether the earlier video request still applies. |
 | About V1 | Portrait/bio, context, experience, qualifications, focus areas, advisory invitation/process | Confirm conflicting FFI and Denver credential wording before publishing new claims. |
 | Services V1 | Four illustrated services, audience/help/outcome blocks and closing CTA | Client copy sign-off. Duplicate Board copy in 1:1 and reversed help/outcome labels were corrected rather than reproduced. |
 | Self-Assessment V1 | Unbroken title, starting-point emphasis, privacy explanation, separated facts, process, left-aligned contact strip | Contact currently opens email; the separate automated conversation-request requirement remains below. |
@@ -910,7 +910,8 @@ The earlier checklist is retained below so meeting requirements do not disappear
 
 - [ ] UI/UX redesign for readability and polish.
   - November layouts are implemented and locally checked; final Enrique/Gilbert review remains open.
-  - Approve or replace the two existing Home supporting photographs used in the reference's empty image slots.
+  - Completed November 12: replaced the AI-generated Home assessment roundtable image with the approved real photograph by Vlada Karpovich; source/license tracked in `docs/image-credits.md`.
+  - The separate Home Services preview photograph remains unchanged and needs final approval.
   - Reduce dense, cramped boxes, especially on the Home page.
   - Use more white space, long-scroll sections, minimalistic diagrams, frameworks, icons, and professional images.
   - Make the information feel beautiful, polished, and easy to read for the two-week finish window.

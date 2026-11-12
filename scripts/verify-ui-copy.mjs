@@ -65,6 +65,9 @@ for (const asset of ["portrait-home", "portrait-about", "wordmark", "wordmark-wh
   assert.ok(existsSync(`public/brand/${asset}.webp`), `missing design asset: ${asset}`);
 }
 const websiteSource = readFileSync("src/components/WebsitePages.jsx", "utf8");
+assert.ok(existsSync("public/brand/advisory-meeting-vlada-karpovich-7433856.jpg"), "missing licensed assessment photograph");
+assert.match(websiteSource, /advisory-meeting-vlada-karpovich-7433856\.jpg/, "Home must use the selected real photograph");
+assert.doesNotMatch(websiteSource, /family-governance-roundtable\.png/, "Home must not reference the replaced AI-generated image");
 assert.doesNotMatch(websiteSource, /555.?123|123.?4567|Family Business.*Fellow/, "do not publish placeholder phone numbers or unconfirmed qualifications");
 assert.match(websiteSource, /FULL_QUESTIONS\[language\]\.length/, "question count must come from the assessment data");
 assert.match(websiteSource, /PILLARS\.length/, "topic count must come from the assessment data");

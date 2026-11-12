@@ -145,6 +145,7 @@ export const WEBSITE_COPY = {
     profileIntro:
       "Your information helps Gilbert read the results in the right context. This profile stays connected to your result.",
     portraitAlt: "Gilbert Devlyn, family enterprise advisor",
+    assessmentImageAlt: "Professionals discussing documents around a conference table",
     advisoryImageAlt: "A family discussing ownership and leadership decisions",
     policy: "Privacy Policy",
   },
@@ -295,6 +296,7 @@ export const WEBSITE_COPY = {
     profileIntro:
       "Tu información ayuda a Gilbert a interpretar los resultados en el contexto adecuado. Este perfil permanece vinculado a tu resultado.",
     portraitAlt: "Gilbert Devlyn, asesor de familias empresarias",
+    assessmentImageAlt: "Profesionales conversando sobre documentos alrededor de una mesa de reuniones",
     advisoryImageAlt:
       "Una familia conversando sobre decisiones de propiedad y liderazgo",
     policy: "Política de privacidad",

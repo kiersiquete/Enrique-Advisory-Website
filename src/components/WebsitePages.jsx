@@ -407,10 +407,10 @@ export function HomePage({ copy, language, onNavigate }) {
           </div>
           <img
             className="assessment-photo"
-            src="/family-governance-roundtable.png"
-            alt={text.advisoryImageAlt}
-            width="1024"
-            height="1536"
+            src="/brand/advisory-meeting-vlada-karpovich-7433856.jpg"
+            alt={text.assessmentImageAlt}
+            width="1125"
+            height="750"
             loading="lazy"
           />
         </div>
