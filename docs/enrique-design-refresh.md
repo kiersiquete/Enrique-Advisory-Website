@@ -45,8 +45,16 @@ The single task list is section 23 of `Gilbert_Devlin_Website_SOP.md`. This docu
 - Synthetic address: `assessment-qa@example.invalid`. No real provider emails or Airtable records were created. Deployed-site delivery and Outlook receipt remain unverified; a configured environment and approved test recipient are needed.
 - Reproduction script and screenshots are local, git-ignored artifacts under `output/`. Both bugs and the configuration/live-verification steps are tracked in SOP section 23. No application behavior was changed during this verification.
 
+## Production Verification - November 12
+
+- Design/UI commit `fdda6eef2b11a0d9df203c1b98208797345a89c7` was pushed to `main`. Vercel reported a successful Production deployment; the updated profile controls are present at `https://gilbertdevlyn.com`.
+- Live profile/browser checks passed in English and Spanish at 1440, 1024, 390 and 320px. API writes were blocked during those checks.
+- A read-only `/api/group-status` lookup using an unused random group returned HTTP 200 and zero participants. Production Airtable read access works; this alone does not verify writes.
+- Completed all 50 questions on the live site and reached the results page. An empty `/api/results` request correctly returned HTTP 400 without saving anything.
+- The real save/report action has not been triggered: an approved test recipient address is still needed. Database writes, participant/advisor email acceptance and actual inbox receipt remain unverified. The existing false-success/retry bugs remain open.
+
 ## Reference Files
 
 Six PDFs from the user-provided `Enrique Feedback for Gilbert` folder: Design System V1-1, Home V2, About V1, Services V1, Self-Assessment V1 and Self-Assessment Modal.
 
-No production deployment or push has been performed.
+The design refresh has been pushed and deployed. The delivery-check limitations above remain in effect.

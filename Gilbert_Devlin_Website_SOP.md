@@ -934,6 +934,7 @@ The earlier checklist is retained below so meeting requirements do not disappear
   - Confirm how Gilbert is notified when enough participants complete a group for internal comparison.
 
 - [ ] Confirm production email settings.
+  - November 12 after deploying design commit `fdda6ee`: live profile checks passed in both languages at four widths, the 50-question flow reached results, and the read-only group-status endpoint returned HTTP 200. This confirms production Airtable read access, not writes or email delivery. The save/report test is awaiting an approved recipient email address.
   - November 12 local verification: no `.env` file or Airtable/SMTP/Resend environment configuration was present. A complete browser assessment submitted to `/api/results` returned HTTP 500; the API log confirmed `Missing Airtable configuration`. The email function returned `missing-smtp-config`. This does not establish the deployed site's configuration or delivery status.
   - Restore the existing local project configuration securely, or confirm the deployed environment and a test recipient. Then verify an actual saved record plus receipt of participant/advisor emails, including the intended Outlook inbox.
   - Make sure production email environment variables send public contact and system notifications to the intended inbox.
