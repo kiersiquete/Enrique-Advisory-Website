@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const manifest = JSON.parse(readFileSync("package.json", "utf8"));
-const lockfile = readFileSync("pnpm-lock.yaml", "utf8");
+const lockfile = readFileSync("pnpm-lock.yaml", "utf8").replace(/\r\n/g, "\n");
 
 function getLockedSpecifier(name) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

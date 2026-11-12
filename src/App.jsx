@@ -8,35 +8,32 @@ import {
 import {
   ArrowLeft,
   ArrowRight,
-  CalendarDays,
   Check,
+  ChevronDown,
   CircleHelp,
-  ClipboardCheck,
   Compass,
-  Handshake,
-  Landmark,
-  Linkedin,
   Mail,
-  Menu,
-  Play,
   RefreshCcw,
   Scale,
   Search,
   Send,
   ShieldCheck,
-  X,
-  UsersRound
+  X
 } from "lucide-react";
 import {
   COPY,
   FULL_QUESTIONS,
-  LANGUAGES,
   PHONE_COUNTRY_OPTIONS,
   PILLARS,
   SUPPORT_MESSAGE,
   UNKNOWN_ANSWER
 } from "./data/assessment.js";
 import { calculateResults, roundedScore } from "./utils/results.js";
+import {
+  AboutPage, AssessmentLanding, AssessmentSteps, HomePage, ProfileDialog,
+  ServicesPage, SiteFooter, SiteHeader
+} from "./components/WebsitePages.jsx";
+import { WEBSITE_COPY } from "./data/website.js";
 
 const RadarPanel = lazy(() => import("./components/RadarPanel.jsx"));
 
@@ -57,11 +54,6 @@ const COMPARISON_COLORS = [
   { line: "#68659E", soft: "rgba(104, 101, 158, 0.12)" },
   { line: "#8AA7BD", soft: "rgba(138, 167, 189, 0.16)" }
 ];
-const NEXT_STEP_BADGE_STYLES = [
-  "border-coral bg-coral text-white",
-  "border-gold bg-gold text-forest",
-  "border-blue bg-blue text-white"
-];
 const SCREEN_ROUTES = {
   home: "/",
   about: "/about",
@@ -77,7 +69,8 @@ Object.values(LANGUAGE_ROUTES).forEach((path) => ROUTE_SCREENS.set(path, "home")
 
 function routeLanguageFromLocation() {
   if (typeof window === "undefined") return "en";
-  return window.location.pathname === LANGUAGE_ROUTES.es ? "es" : "en";
+  return window.location.pathname === LANGUAGE_ROUTES.es ||
+    new URLSearchParams(window.location.search).get("lang") === "es" ? "es" : "en";
 }
 
 function routeScreenFromLocation() {
@@ -94,7 +87,11 @@ function updateBrowserRoute(screenName, mode = "push", search = "", language) {
   if (typeof window === "undefined") return;
   const path = publicScreenPath(screenName, language);
   if (!path) return;
-  const nextUrl = `${path}${search}`;
+  const url = new URL(path, window.location.origin);
+  url.search = search;
+  if (screenName === "home") url.searchParams.delete("lang");
+  if (screenName !== "home" && language) url.searchParams.set("lang", language);
+  const nextUrl = `${url.pathname}${url.search}`;
   if (nextUrl === `${window.location.pathname}${window.location.search}`) return;
   window.history[mode === "replace" ? "replaceState" : "pushState"]({}, "", nextUrl);
 }
@@ -515,6 +512,7 @@ function CountryFlag({ countryCode, className = "" }) {
 }
 
 function CountrySearchSelect({
+  label,
   value,
   options,
   onChange,
@@ -526,6 +524,7 @@ function CountrySearchSelect({
   const [query, setQuery] = useState("");
   const menuRef = useRef(null);
   const searchRef = useRef(null);
+  const countryButtonRef = useRef(null);
   const selectedOption = options.find((option) => option.id === value) ?? options[0];
   const filteredOptions = options.filter((option) =>
     normalizeSearchText(option.label).includes(normalizeSearchText(query))
@@ -555,11 +554,24 @@ function CountrySearchSelect({
   }
 
   return (
-    <div ref={menuRef} className="relative">
+    <div
+      ref={menuRef}
+      className="relative"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && open) {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(false);
+          countryButtonRef.current?.focus();
+        }
+      }}
+    >
       <button
+        ref={countryButtonRef}
         type="button"
         className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border border-forest/16 bg-white px-4 text-left text-base text-ink transition hover:bg-parchment/45 focus:border-copper focus:outline-none focus:ring-2 focus:ring-copper/20"
         aria-haspopup="listbox"
+        aria-label={label}
         aria-expanded={open}
         aria-invalid={invalid}
         onClick={openMenu}
@@ -581,7 +593,7 @@ function CountrySearchSelect({
       {open && (
         <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-lg border border-forest/14 bg-white shadow-soft">
           <div className="sticky top-0 border-b border-forest/10 bg-white p-2">
-            <div className="flex min-h-11 items-center gap-2 rounded-md border border-forest/14 bg-parchment/45 px-3 focus-within:border-copper focus-within:ring-2 focus-within:ring-copper/15">
+            <div className="profile-country-search flex min-h-11 items-center gap-2 rounded-md border border-forest/14 bg-parchment/45 px-3">
               <Search aria-hidden="true" size={16} className="shrink-0 text-forest/56" />
               <input
                 ref={searchRef}
@@ -589,6 +601,7 @@ function CountrySearchSelect({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
               />
             </div>
           </div>
@@ -602,7 +615,7 @@ function CountrySearchSelect({
                     type="button"
                     className={`flex min-h-11 w-full items-center gap-3 px-4 text-left text-sm font-semibold transition ${
                       active
-                        ? "bg-blue text-white"
+                        ? "bg-forest text-white"
                         : "text-forest hover:bg-parchment"
                     }`}
                     role="option"
@@ -610,6 +623,7 @@ function CountrySearchSelect({
                     onClick={() => {
                       onChange(option.id);
                       setOpen(false);
+                      countryButtonRef.current?.focus();
                     }}
                   >
                     <CountryFlag countryCode={option.countryCode} />
@@ -1040,7 +1054,7 @@ export default function App() {
   useEffect(() => {
     function handlePopState() {
       const nextScreen = routeScreenFromLocation();
-      if (nextScreen === "home") setLanguage(routeLanguageFromLocation());
+      setLanguage(routeLanguageFromLocation());
       setActiveMode(null);
       setPendingGroupId(null);
       setActiveComparisonGroup(null);
@@ -1163,7 +1177,7 @@ export default function App() {
     setActiveComparisonGroup(null);
     setActiveMode(mode);
     setScreen("assessment");
-    updateBrowserRoute("assessment-home", "push", diagnosticSearch);
+    updateBrowserRoute("assessment-home", "push", diagnosticSearch, language);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1182,8 +1196,9 @@ export default function App() {
 
   function changeLanguage(nextLanguage) {
     setLanguage(nextLanguage);
-    if (screen !== "home") return;
-    window.history.replaceState({}, "", LANGUAGE_ROUTES[nextLanguage]);
+    if (SCREEN_ROUTES[screen]) {
+      updateBrowserRoute(screen, "replace", window.location.search, nextLanguage);
+    }
   }
 
   function handleComplete(answers, profile, privacyConsent) {
@@ -1227,7 +1242,7 @@ export default function App() {
     setActiveComparisonGroup(null);
     setActiveMode(null);
     setScreen("assessment-home");
-    updateBrowserRoute("assessment-home");
+    updateBrowserRoute("assessment-home", "push", "", language);
   }
 
   function handleDraftChange(draft) {
@@ -1248,7 +1263,7 @@ export default function App() {
     setAssessmentDraft(draft);
     setShowResumePrompt(false);
     setScreen("assessment");
-    updateBrowserRoute("assessment-home", "push", diagnosticSearch);
+    updateBrowserRoute("assessment-home", "push", diagnosticSearch, draftLanguage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1271,7 +1286,7 @@ export default function App() {
   }
 
   return (
-    <main className="page-grain flex min-h-[100dvh] w-full max-w-none flex-col overflow-x-hidden bg-parchment text-ink">
+    <main className="flex min-h-[100dvh] w-full max-w-none flex-col bg-white text-ink">
       {screen !== "loading" && (
         <SiteHeader
           copy={copy}
@@ -1368,6 +1383,7 @@ export default function App() {
             copy={copy}
             language={language}
             onNavigate={navigate}
+            onOpenPrivacyPolicy={() => setPrivacyPolicyOpen(true)}
           />
         )}
       </div>
@@ -1399,145 +1415,6 @@ export default function App() {
   );
 }
 
-function SiteHeader({
-  copy,
-  language,
-  setLanguage,
-  activeScreen,
-  onNavigate
-}) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navItems = [
-    { id: "home", label: copy.nav.home },
-    { id: "about", label: copy.nav.about },
-    { id: "services", label: copy.nav.services },
-    { id: "assessment-home", label: copy.nav.assessment, secondary: true }
-  ];
-
-  useEffect(() => {
-    function handleScroll() {
-      setScrolled(window.scrollY > 8);
-    }
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [activeScreen, language]);
-
-  function isNavActive(item) {
-    return (
-      activeScreen === item.id ||
-      (item.id === "assessment-home" &&
-        ["assessment", "results", "comparison", "followup", "invite-share"].includes(activeScreen))
-    );
-  }
-
-  function goTo(itemId) {
-    setMobileMenuOpen(false);
-    onNavigate(itemId);
-  }
-
-  return (
-    <header
-      className={`sticky top-0 z-40 border-b bg-white/96 backdrop-blur-md transition-shadow duration-300 ${
-        scrolled ? "border-forest/12 shadow-nav" : "border-forest/8"
-      }`}
-    >
-      <div className="mx-auto grid min-h-0 w-full max-w-[1320px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-3 sm:px-8 sm:py-4 lg:min-h-24 lg:grid-cols-[1fr_auto_1fr] lg:gap-3">
-        <button
-          type="button"
-          className="group col-start-1 row-start-1 min-w-0 text-left"
-          aria-label={copy.brandName}
-          onClick={() => onNavigate("home")}
-        >
-          <img
-            src="/gilbert-devlyn-wordmark-pine.png"
-            alt=""
-            className="h-auto w-[98px] sm:w-[104px]"
-          />
-          <span className="mt-0.5 block whitespace-nowrap text-[0.375rem] font-semibold uppercase leading-none tracking-[0.01em] text-forest/76 sm:text-[0.4rem]">
-            {copy.brandLine}
-          </span>
-        </button>
-
-        <nav
-          className="col-start-2 row-start-1 hidden w-auto min-w-0 flex-wrap justify-self-center lg:flex"
-          aria-label="Primary navigation"
-        >
-          {navItems.map((item) => {
-            const active = isNavActive(item);
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`min-h-10 min-w-0 border-b-2 px-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 sm:px-4 ${
-                  active
-                    ? "border-blue text-forest"
-                    : item.secondary
-                      ? "border-transparent text-forest/82 hover:bg-white/70 hover:text-forest"
-                      : "border-transparent text-forest hover:bg-white/80 hover:text-forest"
-                }`}
-                aria-current={active ? "page" : undefined}
-                onClick={() => goTo(item.id)}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="col-start-2 row-start-1 flex items-center gap-2 justify-self-end lg:col-start-3">
-          <LanguageToggle
-            language={language}
-            setLanguage={setLanguage}
-            disabled={activeScreen === "assessment"}
-          />
-          <button
-            type="button"
-            className="grid h-11 w-11 place-items-center rounded-full border border-forest/12 bg-white text-forest shadow-line transition duration-200 hover:border-copper hover:text-copper lg:hidden"
-            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-            aria-expanded={mobileMenuOpen}
-            onClick={() => setMobileMenuOpen((value) => !value)}
-          >
-            {mobileMenuOpen ? <X aria-hidden="true" size={20} /> : <Menu aria-hidden="true" size={20} />}
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <nav
-            className="col-span-2 col-start-1 row-start-2 grid w-full gap-2 rounded-lg border border-forest/10 bg-white/86 p-2 shadow-line lg:hidden"
-            aria-label="Mobile navigation"
-          >
-            {navItems.map((item) => {
-              const active = isNavActive(item);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`min-h-11 min-w-0 border-b-2 px-3 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-copper/40 ${
-                    active
-                      ? "border-blue text-forest"
-                      : item.secondary
-                        ? "border-transparent text-forest/82 hover:bg-white hover:text-forest"
-                        : "border-transparent text-forest hover:bg-parchment hover:text-forest"
-                  }`}
-                  aria-current={active ? "page" : undefined}
-                  onClick={() => goTo(item.id)}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-        )}
-      </div>
-    </header>
-  );
-}
 
 function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
   const [ready, setReady] = useState(false);
@@ -1587,7 +1464,11 @@ function CookieConsentBanner({ copy, onOpenPrivacyPolicy }) {
 function PrivacyPolicyModal({ copy, onClose }) {
   useEffect(() => {
     function handleKeyDown(event) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        onClose();
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -1796,1017 +1677,10 @@ function ResumeAssessmentPrompt({ copy, draft, language, onContinue, onStartOver
   );
 }
 
-function HomePage({ copy, language, onNavigate }) {
-  const heroStats = [
-    {
-      value: language === "es" ? "Cinco perspectivas" : "Five Perspectives",
-      label:
-        language === "es"
-          ? "Tercera generación de una familia empresaria • Propietario • Ejecutivo • Consejero • Líder de gobierno familiar"
-          : "third-generation family enterprise • owner • executive • non-executive board member • family governance"
-    },
-    {
-      value:
-        language === "es"
-          ? "Asesoría, coaching y preparación para consejos"
-          : "Advisory, Coaching & Board Expertise",
-      label:
-        language === "es"
-          ? "Familias empresarias • Patrimonio familiar • Coaching ejecutivo y para nuevas generaciones • Board Director Diploma · IMD"
-          : "FAMILY ENTERPRISE ADVISORY • FAMILY WEALTH ADVISING • EXECUTIVE & NEXT-GENERATION COACHING • BOARD DIRECTOR CERTIFICATION"
-    }
-  ];
-
-  const heroLabel =
-    language === "es"
-      ? "Asesoría para familias empresarias"
-      : "Family Enterprise Advisory";
-  const finalCta = getHomeFinalCtaCopy(language);
-  const startConversation = () => {
-    const subject =
-      language === "es"
-        ? "Conversación con Gilbert Devlyn"
-        : "Conversation with Gilbert Devlyn";
-    window.location.href = `mailto:${copy.contactEmail}?subject=${encodeURIComponent(subject)}`;
-  };
-
-  return (
-    <section className="w-full">
-      <section className="relative overflow-hidden border-b border-forest/10 bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)]">
-        <div className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-10 px-5 py-10 sm:px-8 sm:py-16 lg:min-h-[calc(100dvh-96px)] lg:grid-cols-[minmax(0,0.92fr)_minmax(460px,0.78fr)] lg:items-center lg:gap-16 lg:px-10 lg:py-20 xl:px-0">
-          <div className="min-w-0 max-w-4xl">
-            <div className="fade-up inline-flex max-w-full items-center gap-3 text-xs font-bold uppercase tracking-[0.14em] text-forest sm:text-sm">
-              {heroLabel}
-            </div>
-            <h1
-              className="fade-up mt-6 max-w-[12ch] break-words font-display text-[2.8rem] font-medium leading-[0.99] tracking-[-0.025em] text-forest sm:text-6xl lg:text-[4.5rem] xl:text-[5.4rem]"
-              style={{ "--index": 1 }}
-            >
-              {copy.home.title}
-            </h1>
-            <p
-              className="fade-up mt-6 max-w-[62ch] text-[1.02rem] leading-8 text-ink/82 sm:text-lg sm:leading-9"
-              style={{ "--index": 2 }}
-            >
-              {copy.home.subtitle}
-            </p>
-            <div
-              className="fade-up mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row"
-              style={{ "--index": 4 }}
-            >
-              <button
-                type="button"
-                className="relative inline-flex min-h-12 items-center justify-center gap-2 overflow-hidden rounded border border-lavender/55 bg-white/60 px-6 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:border-lavender hover:bg-white active:translate-y-px active:scale-[0.99]"
-                onClick={startConversation}
-              >
-                <span
-                  aria-hidden="true"
-                  className="absolute right-0 top-0 h-4 w-4 bg-lavender [clip-path:polygon(0_0,100%_0,100%_100%)]"
-                />
-                {copy.home.heroCta}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-              <button
-                type="button"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-forest/30 px-6 text-sm font-bold text-forest transition duration-200 hover:-translate-y-0.5 hover:bg-forest hover:text-white active:translate-y-px active:scale-[0.99]"
-                onClick={() => onNavigate("about")}
-              >
-                {copy.home.primaryCta}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-            </div>
-            <div
-              className="fade-up mt-10 grid max-w-3xl grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
-              style={{ "--index": 5 }}
-            >
-              {heroStats.map((item) => (
-                <HeroStat key={item.label} value={item.value} label={item.label} />
-              ))}
-            </div>
-          </div>
-
-          <AdvisorPortrait
-            copy={copy}
-            language={language}
-          />
-        </div>
-      </section>
-
-      <HomeCredibilitySection language={language} />
-
-      <HomeProblemSection copy={copy} language={language} />
-
-      <HomeHowGilbertWorksSection copy={copy} language={language} />
-
-      <HomeAssessmentEntrySection copy={copy} language={language} />
-
-      <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1320px] overflow-hidden rounded bg-forest text-white lg:grid lg:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="px-6 py-10 sm:px-10 lg:px-14 lg:py-12">
-            <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              {finalCta.title}
-            </h2>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-white/84 sm:text-lg">
-              {finalCta.body}
-            </p>
-            <p className="mt-4 text-sm font-semibold text-white/80">{finalCta.note}</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-lavender px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-                onClick={() => onNavigate("about")}
-              >
-                {finalCta.primary}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-              <button
-                type="button"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-white/24 px-4 text-xs font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-mist hover:text-mist active:translate-y-px active:scale-[0.99] sm:w-auto sm:px-5 sm:text-sm"
-                onClick={() => onNavigate("assessment-home")}
-              >
-                {finalCta.secondary}
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
-            </div>
-          </div>
-          <div className="relative hidden min-h-full overflow-hidden lg:block">
-            <img
-              className="absolute inset-0 h-full w-full object-cover object-[58%_center] opacity-80"
-              src="/family-governance-roundtable-gilbert-speaking.png"
-              alt=""
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-forest via-forest/60 to-transparent" />
-          </div>
-        </div>
-      </section>
-    </section>
-  );
-}
-
-function HomeProblemSection({ copy, language }) {
-  const icons = [Handshake, CalendarDays, Landmark, Scale, Compass, UsersRound];
-
-  return (
-    <section className="border-b border-forest/10 bg-white px-5 py-20 sm:px-8 sm:py-24 lg:px-12 xl:px-8">
-      <div className="mx-auto max-w-[1320px]">
-        <div className="grid gap-8 lg:grid-cols-[0.58fr_0.42fr] lg:items-end lg:gap-16">
-          <h2 className="max-w-[13ch] font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-6xl">
-            {copy.home.helpingTitle}
-          </h2>
-          <div>
-            <p className="text-base leading-8 text-ink/82 sm:text-lg sm:leading-9">
-              {copy.home.helpingIntro ?? copy.home.challengeIntro}
-            </p>
-            <p className="mt-5 border-t border-forest/20 pt-5 text-sm font-semibold leading-7 text-forest/82">
-              {copy.home.patternBody}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-14 grid border-t border-forest/24 sm:grid-cols-2 xl:grid-cols-3">
-          {copy.home.challengeItems.map((item, index) => {
-            const Icon = icons[index] ?? Compass;
-
-            return (
-              <article
-                key={item.title}
-                className="grid grid-cols-[34px_1fr] gap-4 border-b border-forest/16 py-7 sm:px-6 sm:[&:nth-child(odd)]:border-r xl:[&:nth-child(2)]:border-r xl:[&:nth-child(3)]:border-r-0 xl:[&:nth-child(odd)]:border-r"
-              >
-                <span className="grid h-8 w-8 place-items-center rounded-full border border-forest/24 text-forest">
-                  <Icon aria-hidden="true" size={15} />
-                </span>
-                <div>
-                  <h3 className="font-display text-2xl font-medium leading-tight text-forest">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-ink/82">{item.body}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HomeCredibilitySection({ language }) {
-  const credibility = getHomeCredibilityCopy(language);
-
-  return (
-    <section className="border-b border-white/12 bg-forest px-5 py-14 text-white sm:px-8 sm:py-16 lg:px-12 xl:px-8">
-      <div className="mx-auto max-w-[1320px]">
-        <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:gap-20">
-          <h2 className="max-w-[15ch] font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-white sm:text-5xl">
-            {credibility.title}
-          </h2>
-          <p className="max-w-2xl text-base leading-8 text-white/84 sm:text-lg sm:leading-9">
-            {credibility.body}
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-px border-y border-white/24 bg-white/24 sm:grid-cols-2 lg:grid-cols-3">
-          {credibility.proof.map((item) => (
-            <article
-              key={item.label}
-              className="min-h-[132px] bg-forest py-7 sm:px-6 lg:px-8"
-            >
-              <p className="font-display text-3xl font-medium leading-none tracking-[-0.02em] text-white">
-                {item.value}
-              </p>
-              <p className="mt-3 text-sm leading-6 text-white/80">{item.label}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HomeHowGilbertWorksSection({ copy, language }) {
-  const icons = [Compass, Landmark, Handshake, UsersRound];
-
-  return (
-    <section className="border-b border-forest/10 bg-mist/26 px-5 py-20 sm:px-8 sm:py-24 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1320px] gap-x-12 gap-y-10 lg:grid-cols-[0.44fr_0.56fr] lg:items-start">
-        <div className="lg:col-start-1">
-          <h2 className="font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-6xl">
-            {copy.services.previewTitle}
-          </h2>
-        </div>
-
-        <p className="max-w-2xl text-base leading-8 text-ink/82 sm:text-lg lg:col-start-2 lg:self-end lg:pb-2">
-          {copy.home.approachSubtitle}
-        </p>
-
-        <div className="h-[320px] overflow-hidden rounded-3xl sm:h-[400px] lg:col-start-1 lg:row-start-2 lg:h-full lg:min-h-[560px]">
-          <img
-            className="h-full w-full object-cover object-[58%_center]"
-            src="/family-advisory-conversation.jpg"
-            alt={language === "es"
-              ? "Familia empresaria conversando sobre decisiones importantes"
-              : "Business family discussing important decisions"}
-          />
-        </div>
-
-        <div className="grid border-t border-forest/22 md:grid-cols-2 lg:col-start-2 lg:row-start-2">
-          {copy.services.items.map((service, index) => {
-            const Icon = icons[index] ?? Compass;
-
-            return (
-              <article
-                key={service.title}
-                className="flex min-h-[230px] flex-col border-b border-forest/14 py-7 md:px-6 md:[&:nth-child(odd)]:border-r"
-              >
-                <div className="mb-6 grid h-9 w-9 place-items-center rounded-full border border-forest/22 text-forest">
-                  <Icon aria-hidden="true" size={17} />
-                </div>
-                <h4 className="font-display text-3xl font-medium leading-tight text-forest">
-                  {service.title}
-                </h4>
-                <p className="mt-3 text-sm leading-7 text-ink/78">{service.previewSummary ?? service.summary}</p>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HomeAssessmentEntrySection({ copy, language }) {
-  const steps = getHomeAssessmentSteps(language);
-
-  return (
-    <section className="border-b border-forest/10 bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1320px] gap-10 bg-mist/34 px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.42fr_0.58fr] lg:items-center lg:px-14">
-        <div>
-          <h2 className="font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-5xl">
-            {copy.home.toolTitle}
-          </h2>
-        </div>
-        <div className="grid gap-4">
-          {copy.home.toolParagraphs.map((paragraph) => (
-            <p key={paragraph} className="text-base leading-8 text-ink/82 sm:text-lg">
-              {paragraph}
-            </p>
-          ))}
-          <ol className="mt-4 grid gap-4 sm:grid-cols-3">
-            {steps.map((step, index) => (
-              <li key={step} className="border-l border-forest/18 pl-4">
-                <span className="font-display text-lg font-semibold leading-none text-copper">
-                  {stepLabel(language, index + 1)}
-                </span>
-                <p className="mt-2 text-sm font-medium leading-6 text-forest/78">{step}</p>
-              </li>
-            ))}
-          </ol>
-          {copy.home.reportNote ? (
-            <p className="mt-2 text-sm leading-6 text-ink/70">{copy.home.reportNote}</p>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ServicesPage({ copy, language, onNavigate }) {
-  const serviceIcons = [Compass, Landmark, Handshake, UsersRound];
-  const startConversation = () => {
-    const subject =
-      language === "es"
-        ? "Conversación con Gilbert Devlyn"
-        : "Conversation with Gilbert Devlyn";
-    window.location.href = `mailto:${copy.contactEmail}?subject=${encodeURIComponent(subject)}`;
-  };
-
-  return (
-    <section className="w-full">
-      <section className="border-b border-forest/10 bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
-        <div className="mx-auto max-w-[1320px]">
-          <div className="max-w-4xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-forest">
-              {copy.services.label}
-            </p>
-            <h1 className="mt-4 font-display text-[2.65rem] font-semibold leading-[1.04] tracking-tight text-forest sm:text-6xl xl:text-7xl">
-              {copy.services.title}
-            </h1>
-            <p className="mt-6 max-w-3xl text-base leading-8 text-ink/74 sm:text-lg sm:leading-9">
-              {copy.services.intro}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white px-5 py-16 sm:px-8 sm:py-20 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1320px] border-b border-forest/18">
-          {copy.services.items.map((service, index) => {
-            const Icon = serviceIcons[index] ?? Compass;
-            return (
-              <ServiceDetailCard
-                key={service.title}
-                service={service}
-                icon={Icon}
-                labels={copy.services}
-                index={index}
-              />
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="px-5 pb-16 pt-16 sm:px-8 sm:pt-20 lg:px-12 xl:px-8">
-        <div className="mx-auto grid max-w-[1320px] gap-8 rounded bg-forest px-8 py-10 text-white sm:px-12 sm:py-12 lg:grid-cols-[0.72fr_0.28fr] lg:items-center lg:px-14">
-          <div>
-            <h2 className="font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              {copy.services.ctaTitle}
-            </h2>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-white/84 sm:text-lg">
-              {copy.services.ctaBody}
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <button
-              type="button"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99]"
-              onClick={startConversation}
-            >
-              {copy.services.diagnosticCta}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-            <button
-              type="button"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-white/24 px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:border-mist hover:text-mist active:translate-y-px active:scale-[0.99]"
-              onClick={() => onNavigate("assessment-home")}
-            >
-              {copy.services.aboutCta}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-          </div>
-        </div>
-      </section>
-    </section>
-  );
-}
-
-function ServiceDetailCard({ service, icon: Icon, labels, index }) {
-  return (
-    <article
-      className="grid gap-8 border-t border-forest/18 py-10 sm:py-12 lg:grid-cols-[120px_minmax(0,0.78fr)_minmax(0,1.22fr)] lg:gap-12"
-      style={{ "--index": index }}
-    >
-      <div className="flex items-center justify-between gap-5 lg:flex-col lg:items-start lg:justify-start">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-forest/22 text-forest">
-          <Icon aria-hidden="true" size={20} />
-        </div>
-        <span className="font-display text-5xl font-medium leading-none text-forest/24">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-      </div>
-      <div>
-        <h2 className="font-display text-4xl font-medium leading-[1.08] tracking-[-0.02em] text-forest sm:text-5xl">
-          {service.title}
-        </h2>
-        <p className="mt-5 text-base leading-8 text-ink/80">{service.summary}</p>
-      </div>
-      <div className="grid border-t border-forest/14">
-        <ServiceDetail label={labels.forLabel} body={service.forWhom} />
-        <ServiceDetail label={labels.helpsLabel} body={service.helpsWith} />
-        <ServiceDetail label={labels.outcomeLabel} body={service.outcome} />
-      </div>
-    </article>
-  );
-}
-
-function ServiceDetail({ label, body }) {
-  return (
-    <div className="grid gap-2 border-b border-forest/14 py-5 sm:grid-cols-[150px_1fr] sm:gap-6">
-      <p className="text-xs font-bold uppercase tracking-[0.11em] text-forest/78">{label}</p>
-      <p className="text-sm leading-7 text-ink/80 sm:text-base">{body}</p>
-    </div>
-  );
-}
-
-function VideoPlaceholderSection({ video, language }) {
-  return (
-    <section className="border-b border-forest/10 bg-white px-5 py-12 sm:px-8 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1400px] gap-8 lg:grid-cols-[0.5fr_0.5fr] lg:items-center">
-        <div className="max-w-3xl lg:self-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-            {video.label}
-          </p>
-          <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl">
-            {video.title}
-          </h2>
-          <p className="mt-4 text-base leading-8 text-ink/82 sm:text-lg">
-            {video.body}
-          </p>
-        </div>
-
-        <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="relative aspect-video overflow-hidden bg-forest">
-            {video.embedUrl ? (
-              <iframe
-                className="h-full w-full"
-                src={video.embedUrl}
-                title={video.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            ) : (
-              <div className="relative flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
-                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(250,250,248,0.08)_0%,rgba(250,250,248,0)_42%),linear-gradient(90deg,rgba(250,250,248,0.1)_1px,transparent_1px),linear-gradient(0deg,rgba(250,250,248,0.07)_1px,transparent_1px)] bg-[length:auto,72px_72px,72px_72px]" />
-                <div className="absolute left-6 top-6 text-left font-display text-3xl font-semibold leading-none text-white/18 sm:text-5xl">
-                  Gilbert
-                  <br />
-                  Devlyn
-                </div>
-                <div className="absolute bottom-6 right-6 h-16 w-28 border-b border-r border-mist/55" />
-                <span className="grid h-16 w-16 place-items-center rounded-full border border-white/24 bg-white/14 text-white shadow-line backdrop-blur">
-                  <Play aria-hidden="true" size={28} fill="currentColor" />
-                </span>
-                <span className="rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white/82">
-                  {video.duration}
-                </span>
-                <p className="max-w-sm text-sm font-medium leading-6 text-white/72">
-                  {language === "es"
-                    ? "Espacio reservado para el video final de Gilbert."
-                    : "Reserved space for Gilbert's final video."}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AboutVideoSection({ video, language }) {
-  return (
-    <section className="px-5 py-12 sm:px-8 sm:py-14 lg:px-12 lg:py-16 xl:px-8">
-      <div className="mx-auto max-w-[1100px] text-center">
-        <div className="mx-auto mb-7 max-w-3xl">
-          {video.label ? (
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-copper">
-              {video.label}
-            </p>
-          ) : null}
-          <h1 className={`${video.label ? "mt-4 " : ""}font-display text-4xl font-semibold leading-tight tracking-tight text-forest sm:text-5xl lg:text-6xl`}>
-            {video.title}
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-ink/70 sm:text-lg">
-            {video.body}
-          </p>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-forest/10 bg-forest shadow-soft">
-          <div className="aspect-video bg-[linear-gradient(135deg,rgba(50,83,93,0.92),rgba(50,83,93,0.72)),url('/gilbert-home.jpg')] bg-cover bg-[center_18%]">
-            {video.embedUrl ? (
-              <iframe
-                className="h-full w-full"
-                src={video.embedUrl}
-                title={video.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center text-white">
-                <span className="grid h-14 w-14 place-items-center rounded-full border border-white/24 bg-white/14 text-white shadow-line backdrop-blur">
-                  <Play aria-hidden="true" size={24} fill="currentColor" />
-                </span>
-                <span className="rounded-full border border-white/20 bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white/82">
-                  {video.duration}
-                </span>
-                <p className="max-w-sm text-sm font-medium leading-6 text-white/72">
-                  {language === "es"
-                    ? "Espacio reservado para el video final de Gilbert."
-                    : "Reserved space for Gilbert's final video."}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HeroStat({ value, label }) {
-  return (
-    <div className="min-w-0 rounded-2xl border border-forest/12 bg-white/55 px-5 py-5 shadow-[0_10px_28px_rgba(50,83,93,0.06)] backdrop-blur-sm sm:px-6 sm:py-6">
-      <div className="mb-4 h-0.5 w-10 rounded-full bg-slate" />
-      <p className="font-display text-2xl font-semibold leading-[1.12] tracking-[-0.025em] text-forest sm:text-[1.7rem]">
-        {value}
-      </p>
-      <p className="mt-3 max-w-[42ch] text-[0.67rem] font-bold uppercase leading-[1.65] tracking-[0.075em] text-forest/72 sm:text-[0.7rem]">{label}</p>
-    </div>
-  );
-}
-
-function AdvisorPortrait({ language }) {
-  return (
-    <aside
-      className="fade-up relative min-h-[430px] w-full sm:min-h-[560px] lg:min-h-[640px]"
-      style={{ "--index": 2 }}
-    >
-      <div className="portrait-frame absolute inset-0 overflow-hidden rounded-3xl bg-forest">
-        <img
-          className="h-full w-full object-cover object-[50%_10%]"
-          src="/gilbert-home.jpg"
-          alt={language === "es" ? "Retrato de Gilbert Devlyn" : "Portrait of Gilbert Devlyn"}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-forest/48 via-transparent to-transparent" />
-      </div>
-    </aside>
-  );
-}
-
-function AboutPage({ copy, language, onNavigate }) {
-  return (
-    <section className="w-full">
-      <section className="bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
-        <div className="mx-auto max-w-[1320px]">
-          <div className="grid gap-12 lg:grid-cols-[minmax(360px,0.72fr)_minmax(0,0.95fr)] lg:items-stretch lg:gap-16">
-            <div className="portrait-frame relative h-[440px] overflow-hidden rounded-3xl bg-forest sm:h-[560px] lg:h-auto lg:min-h-[620px] xl:min-h-[680px]">
-              <img
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                src="/gilbert-about.jpg"
-                alt={
-                  language === "es"
-                    ? "Retrato profesional de Gilbert Devlyn"
-                    : "Professional portrait of Gilbert Devlyn"
-                }
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-forest/64 via-transparent to-transparent" />
-            </div>
-
-            <div className="flex h-full flex-col lg:pt-1">
-              <h1 className="max-w-[12ch] font-display text-[3rem] font-medium leading-[0.99] tracking-[-0.025em] text-forest sm:text-[4rem] xl:text-[5rem]">
-                {copy.about.title}
-              </h1>
-              <div className="mt-8 grid border-y-2 border-forest/45 md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                {copy.about.quickFacts.map((fact) => (
-                  <div key={fact.label} className="py-5 md:px-5 md:first:pl-0 md:[&:not(:first-child)]:border-l-2 md:[&:not(:first-child)]:border-forest/65 lg:border-l-0 lg:px-0 xl:[&:not(:first-child)]:border-l-2 xl:px-5 xl:first:pl-0">
-                    <p className="font-display text-[1.7rem] font-medium leading-[1.02] tracking-[-0.025em] text-forest">
-                      {fact.value}
-                    </p>
-                    <p className="mt-2 text-[0.68rem] font-bold uppercase leading-5 tracking-[0.09em] text-forest/78">
-                      {fact.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mx-auto mt-10 max-w-[1180px] space-y-6 border-t border-forest/14 pt-10">
-            {copy.about.bio.map((paragraph) => (
-              <p key={paragraph} className="text-base leading-8 text-ink/82 sm:text-[1.03rem]">
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <AboutContextSection copy={copy} />
-
-      <section className="border-y border-forest/10 bg-white px-5 py-14 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1320px] border-t border-forest/18">
-          <div className="grid lg:grid-cols-2">
-            <CredentialList
-              title={copy.about.familyExperienceTitle}
-              items={copy.about.familyExperienceItems}
-            />
-            <CredentialList
-              title={copy.about.governanceTitle}
-              items={copy.about.governanceItems}
-            />
-            <CredentialList title={copy.about.educationTitle} items={copy.about.educationItems} />
-            <CredentialList title={copy.about.industryTitle} items={copy.about.industryItems} />
-          </div>
-          <div>
-            <CredentialList title={copy.about.focusTitle} items={copy.about.focusItems} />
-          </div>
-        </div>
-      </section>
-
-      <section className="px-5 py-16 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1400px]">
-          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div className="max-w-3xl">
-              <h2 className="font-display text-4xl font-semibold tracking-tight text-forest sm:text-5xl">
-                {copy.about.testimonialsTitle}
-              </h2>
-              <p className="mt-4 text-lg leading-8 text-muted">
-                {copy.about.testimonialsSubtitle}
-              </p>
-            </div>
-            <section className="border-t border-forest/20 py-7 sm:py-9">
-              <h3 className="font-display text-3xl font-semibold leading-tight text-forest">
-                {copy.about.situationsTitle}
-              </h3>
-              <ul className="mt-5 space-y-3">
-                {copy.about.situations.map((item) => (
-                  <li key={item} className="flex gap-3 text-base leading-7 text-ink/82">
-                    <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-5 pb-16 sm:px-8 lg:px-12 xl:px-8">
-        <div className="mx-auto max-w-[1320px] rounded bg-forest p-7 text-white sm:p-10 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-mist">
-              {copy.nav.assessment}
-            </p>
-            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              {copy.about.toolTitle}
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-white/84">{copy.about.toolIntro}</p>
-          </div>
-          <div className="mt-8 lg:mt-0">
-            <div className="grid gap-4 sm:grid-cols-3">
-              {copy.about.toolSteps.map((step, index) => (
-                <div key={step.title} className="rounded-lg border border-white/16 bg-white/8 p-4">
-                  <span className="font-display text-lg font-semibold leading-none text-mist">
-                    {stepLabel(language, index + 1)}
-                  </span>
-                  <p className="mt-3 text-sm font-bold text-white">{step.title}</p>
-                  <p className="mt-2 text-sm leading-6 text-white/70">{step.body}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="mt-6 text-base leading-7 text-white/84">{copy.about.toolReceiveBody}</p>
-
-            <button
-              type="button"
-              className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:text-forest active:translate-y-px active:scale-[0.99]"
-              onClick={() => onNavigate("assessment-home")}
-            >
-              {copy.about.toolCta}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
-          </div>
-        </div>
-      </section>
-
-    </section>
-  );
-}
-
-function AboutContextSection({ copy }) {
-  const icons = [UsersRound, Landmark, Compass, ShieldCheck];
-
-  return (
-    <section className="border-y border-forest/10 bg-parchment/46 px-5 py-20 sm:px-8 sm:py-24 lg:px-12 xl:px-8">
-      <div className="mx-auto grid max-w-[1320px] gap-14 lg:grid-cols-[0.4fr_0.6fr] lg:items-start">
-        <div className="max-w-3xl lg:sticky lg:top-28">
-          <p className="text-sm font-bold text-forest/80">
-            {copy.about.contextLabel}
-          </p>
-          <h2 className="mt-5 font-display text-4xl font-medium leading-[1.05] tracking-[-0.02em] text-forest sm:text-6xl">
-            {copy.about.contextTitle}
-          </h2>
-          <p className="mt-5 text-base leading-8 text-ink/82 sm:text-lg">
-            {copy.about.contextBody}
-          </p>
-        </div>
-
-        <div className="grid border-t border-forest/22 sm:grid-cols-2">
-          {copy.about.contextItems.map((item, index) => {
-            const Icon = icons[index] ?? Compass;
-
-            return (
-              <article
-                key={item.title}
-                className="border-b border-forest/14 py-7 sm:px-6 sm:[&:nth-child(odd)]:border-r"
-              >
-                <div className="mb-6 grid h-9 w-9 place-items-center rounded-full border border-forest/22 text-forest">
-                  <Icon aria-hidden="true" size={17} />
-                </div>
-                <h3 className="font-display text-3xl font-medium leading-tight text-forest">
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-ink/72 sm:text-base sm:leading-7">
-                  {item.body}
-                </p>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CredentialList({ title, items }) {
-  return (
-    <section className="border-b border-forest/18 py-8 sm:px-7 sm:py-10 sm:[&:nth-child(odd)]:border-r">
-      <h2 className="font-display text-3xl font-medium tracking-[-0.02em] text-forest sm:text-4xl">
-        {title}
-      </h2>
-      <ul className="mt-5 space-y-3">
-        {items.map((item) => (
-          <li key={item} className="flex gap-3 text-base leading-7 text-ink/82">
-            <Check className="mt-1 shrink-0 text-copper" aria-hidden="true" size={18} />
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function AssessmentLanding({ copy, language, onStart }) {
-  const diagnosticFacts =
-    language === "es"
-      ? [
-          { value: "50", label: "preguntas" },
-          { value: "8", label: "áreas prácticas" },
-          { value: "10", label: "minutos aprox." }
-        ]
-      : [
-          { value: "50", label: "questions" },
-          { value: "8", label: "practical areas" },
-          { value: "~10", label: "minutes" }
-        ];
-
-  return (
-    <section className="w-full flex-1 bg-[linear-gradient(90deg,#FAFAF8_0%,#FAFAF8_48%,#B7C9B9_100%)] px-5 py-12 sm:px-8 sm:py-16 lg:px-12 lg:py-20 xl:px-8">
-      <div className="mx-auto w-full max-w-[1180px]">
-        <header className="border-b border-forest/18 pb-10 sm:pb-12">
-          <p className="text-sm font-bold text-forest/82">{copy.nav.assessment}</p>
-          <h1 className="mt-5 max-w-[14ch] font-display text-[2.8rem] font-medium leading-[1] tracking-[-0.025em] text-forest sm:text-6xl lg:text-[4.8rem]">
-            {copy.assessmentIntro.title}
-          </h1>
-          <p className="mt-6 max-w-[70ch] text-base leading-8 text-ink/84 sm:text-lg sm:leading-9">
-            {copy.assessmentIntro.body}
-          </p>
-          <p className="mt-3 max-w-[70ch] text-sm font-medium leading-7 text-forest/82 sm:text-base">
-            {copy.assessmentIntro.startingPointNote}
-          </p>
-          <button
-            type="button"
-            className="mt-8 inline-flex min-h-[3.2rem] w-full items-center justify-center gap-3 rounded bg-lavender px-6 text-base font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-0 sm:w-auto"
-            onClick={() => onStart("full")}
-          >
-            {copy.assessmentIntro.conversationCta}
-            <ArrowRight aria-hidden="true" size={19} />
-          </button>
-        </header>
-
-        <div className="grid border-b border-forest/18 sm:grid-cols-3">
-          {diagnosticFacts.map((item) => (
-            <div key={item.label} className="py-6 sm:px-6 sm:[&:not(:first-child)]:border-l sm:[&:not(:first-child)]:border-forest/14 sm:first:pl-0">
-              <span className="block font-display text-4xl font-medium leading-none text-forest">
-                {item.value}
-              </span>
-              <span className="mt-2 block text-sm font-semibold text-forest/80">{item.label}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid border-b border-forest/18 lg:grid-cols-2">
-          <section className="py-10 lg:border-r lg:border-forest/16 lg:pr-12">
-            <h2 className="font-display text-3xl font-medium leading-tight text-forest sm:text-4xl">
-              {copy.assessmentIntro.notAuditTitle}
-            </h2>
-            <p className="mt-4 text-base leading-8 text-ink/84">{copy.notAudit}</p>
-            <div className="mt-7 border-t border-forest/16 pt-7">
-              <h3 className="text-base font-bold text-forest">
-                {copy.assessmentIntro.gilbertContextTitle}
-              </h3>
-              <p className="mt-2 text-sm leading-7 text-ink/82">
-                {copy.assessmentIntro.gilbertContextBody}
-              </p>
-            </div>
-          </section>
-
-          <section className="py-10 lg:pl-12">
-            <h2 className="font-display text-3xl font-medium leading-tight text-forest sm:text-4xl">
-              {copy.assessmentIntro.journeyLabel}
-            </h2>
-            <ol className="mt-6 border-t border-forest/18">
-              {copy.assessmentIntro.journey.map((item, index) => (
-                <li key={item.title} className="grid grid-cols-[44px_1fr] gap-4 border-b border-forest/14 py-5">
-                  <span className="font-display text-xl font-medium text-forest/72">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span>
-                    <span className="block font-semibold text-forest">{item.title}</span>
-                    <span className="mt-1 block text-sm leading-6 text-ink/82">{item.body}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        </div>
-
-        <section className="py-10">
-          <h2 className="font-display text-3xl font-medium leading-tight text-forest sm:text-4xl">
-            {copy.modes.full.title}
-          </h2>
-          <p className="mt-3 max-w-[70ch] text-base leading-8 text-ink/82">
-            {copy.modes.full.description}
-          </p>
-          <div className="mt-7 grid border-t border-forest/18 md:grid-cols-3">
-            {copy.assessmentIntro.outcomes.map((item) => (
-              <article key={item.title} className="border-b border-forest/14 py-6 md:px-6 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-forest/14 md:first:pl-0">
-                <h3 className="font-display text-2xl font-medium leading-tight text-forest">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-ink/82">{item.body}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-      </div>
-    </section>
-  );
-}
-
-function LanguageToggle({ language, setLanguage, variant = "light", disabled = false }) {
-  const dark = variant === "dark";
-
-  return (
-    <div
-      className={`inline-flex rounded-full border p-1 ${
-        dark ? "w-fit border-white/24 bg-white/8" : "w-fit border-forest/15 bg-white"
-      } ${disabled ? "opacity-50" : ""}`}
-      aria-label="Language selection"
-      title={
-        disabled
-          ? language === "es"
-            ? "Termina o reinicia la Autoevaluación para cambiar de idioma"
-            : "Finish or restart the self-assessment to change language"
-          : undefined
-      }
-    >
-      {Object.values(LANGUAGES).map((item) => {
-        const active = item.code === language;
-        return (
-          <button
-            key={item.code}
-            type="button"
-            disabled={disabled}
-            className={`min-h-9 min-w-11 rounded-full px-2 text-xs font-semibold transition sm:min-h-10 sm:min-w-16 sm:px-4 sm:text-sm disabled:cursor-not-allowed ${
-              active
-                ? "bg-blue text-white"
-                : dark
-                  ? "text-white/82 hover:text-white"
-                  : "text-forest/82 hover:text-forest"
-            }`}
-            aria-pressed={active}
-            onClick={() => {
-              if (disabled) return;
-              setLanguage(item.code);
-            }}
-          >
-            {item.short}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function SiteFooter({ copy, language, onNavigate }) {
-  const footer = getFooterContent(language);
-  const socialLinks = [
-    { label: "LinkedIn", href: footer.linkedinUrl, icon: Linkedin },
-    { label: footer.emailLabel, href: `mailto:${copy.contactEmail}`, icon: Mail }
-  ];
-
-  return (
-    <footer
-      data-site-footer
-      className="mt-auto border-t border-white/10 bg-forest px-5 py-10 text-white sm:px-8 sm:py-12 lg:px-12 xl:px-8"
-      role="contentinfo"
-    >
-      <div className="mx-auto max-w-[1320px]">
-        <div className="grid gap-10 border-b border-white/14 pb-10 lg:grid-cols-[0.9fr_0.65fr_1.15fr] lg:gap-16">
-          <div>
-          <button
-            type="button"
-            className="group w-fit text-left"
-            aria-label={copy.brandName}
-            onClick={() => onNavigate("home")}
-          >
-            <img
-              src="/gilbert-devlyn-wordmark-white.png"
-              alt=""
-              className="h-auto w-[142px]"
-            />
-            <span className="mt-1.5 block text-[0.6rem] font-semibold uppercase leading-none tracking-[0.1em] text-white/78">
-              {copy.brandLine}
-            </span>
-          </button>
-
-          <p className="mt-5 flex max-w-sm items-start gap-2 text-xs font-bold uppercase leading-6 tracking-[0.11em] text-white/84">
-            <UsersRound aria-hidden="true" size={15} />
-            {footer.trusted}
-          </p>
-
-          <div className="mt-7 flex items-center gap-3" aria-label={footer.socialLabel}>
-            {socialLinks.map((link) => (
-              <FooterSocialLink key={link.label} {...link} />
-            ))}
-          </div>
-          </div>
-
-          <nav className="grid content-start gap-3 text-sm font-semibold text-white/72" aria-label="Footer navigation">
-            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("home")}>{copy.nav.home}</button>
-            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("about")}>{copy.nav.about}</button>
-            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("services")}>{copy.nav.services}</button>
-            <button type="button" className="w-fit transition hover:text-white" onClick={() => onNavigate("assessment-home")}>{copy.nav.assessment}</button>
-          </nav>
-
-          <div className="max-w-lg">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-mist">
-              {footer.credentialsLabel}
-            </p>
-            <ul className="mt-5 grid gap-x-8 gap-y-3 text-sm leading-7 text-white/72 sm:grid-cols-2">
-              {footer.credentials.map((credential) => (
-                <li key={credential}>
-                  {credential}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 pt-6 text-xs leading-5 text-white/78 lg:flex-row lg:items-center lg:justify-between">
-          <p>{copy.footerRights}</p>
-          <p>{footer.trustLine}</p>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-function FooterSocialLink({ icon: Icon, label, href }) {
-  return (
-    <a
-      className="grid h-11 w-11 place-items-center rounded-full border border-white/70 bg-transparent text-white transition duration-200 hover:-translate-y-0.5 hover:border-mist hover:bg-white hover:text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mist/60"
-      href={href}
-      target={href.startsWith("http") ? "_blank" : undefined}
-      rel={href.startsWith("http") ? "noreferrer" : undefined}
-      aria-label={label}
-    >
-      <Icon aria-hidden="true" size={18} />
-    </a>
-  );
-}
 
 function AssessmentProfileIntake({
   copy,
+  language,
   mode,
   profile,
   profileTouched,
@@ -2815,44 +1689,55 @@ function AssessmentProfileIntake({
   phoneIsValid,
   relationshipRequiresDetail,
   countryOptions,
-  onBack,
   onChange,
   onSubmit,
-  onOpenPrivacyPolicy
+  onOpenPrivacyPolicy,
 }) {
   const intake = copy.intake;
+  const website = WEBSITE_COPY[language];
+  const compactProfile = useViewportMatch("(max-width: 959px)");
   const selectedMode = copy.modes[mode] ?? copy.modes.full;
   const selectedPhoneCountry =
-    intake.phoneCountryOptions.find((option) => option.id === profile.phoneCountry) ??
-    intake.phoneCountryOptions[0];
+    intake.phoneCountryOptions.find(
+      (option) => option.id === profile.phoneCountry,
+    ) ?? intake.phoneCountryOptions[0];
   const phoneCountryMenuRef = useRef(null);
+  const phoneCountryButtonRef = useRef(null);
   const [phoneCountryOpen, setPhoneCountryOpen] = useState(false);
   const [phoneCountrySearch, setPhoneCountrySearch] = useState("");
   const phoneCountryLabels = useMemo(
     () => new Map(countryOptions.map((option) => [option.id, option.label])),
-    [countryOptions]
+    [countryOptions],
   );
   const selectedPhoneCountryLabel =
-    phoneCountryLabels.get(selectedPhoneCountry.id) ?? selectedPhoneCountry.countryCode;
+    phoneCountryLabels.get(selectedPhoneCountry.id) ??
+    selectedPhoneCountry.countryCode;
   const filteredPhoneCountryOptions = useMemo(() => {
     const searchTerm = phoneCountrySearch.trim().toLowerCase();
 
     if (!searchTerm) return intake.phoneCountryOptions;
 
     return intake.phoneCountryOptions.filter((option) => {
-      const countryName = phoneCountryLabels.get(option.id) ?? option.countryCode;
-      const searchableText = `${countryName} ${option.countryCode} ${option.dialCode}`.toLowerCase();
+      const countryName =
+        phoneCountryLabels.get(option.id) ?? option.countryCode;
+      const searchableText =
+        `${countryName} ${option.countryCode} ${option.dialCode}`.toLowerCase();
       return searchableText.includes(searchTerm);
     });
   }, [intake.phoneCountryOptions, phoneCountryLabels, phoneCountrySearch]);
   const showProfileError = profileTouched && !profileIsComplete;
-  const showEmailError = profileTouched && profile.email.trim() && !emailIsValid;
-  const showPhoneError = profileTouched && profile.phoneNumber.trim() && !phoneIsValid;
+  const showEmailError =
+    profileTouched && profile.email.trim() && !emailIsValid;
+  const showPhoneError =
+    profileTouched && profile.phoneNumber.trim() && !phoneIsValid;
   const inputClass =
-    "min-h-12 w-full rounded-lg border border-forest/16 bg-white px-4 text-base text-ink outline-none transition focus:border-copper focus:ring-2 focus:ring-copper/20";
+    "min-h-12 w-full rounded-lg border border-forest/16 bg-white px-4 text-base text-ink transition";
   const labelClass = "mb-2 block text-sm font-semibold leading-5 text-forest";
   const requiredMark = (
-    <span aria-hidden="true" className="ml-1 align-super text-sm font-bold leading-none text-copper">
+    <span
+      aria-hidden="true"
+      className="ml-1 align-super text-sm font-bold leading-none text-copper"
+    >
       *
     </span>
   );
@@ -2868,357 +1753,350 @@ function AssessmentProfileIntake({
     }
 
     document.addEventListener("mousedown", closePhoneCountryMenu);
-    return () => document.removeEventListener("mousedown", closePhoneCountryMenu);
+    return () =>
+      document.removeEventListener("mousedown", closePhoneCountryMenu);
   }, [phoneCountryOpen]);
 
   return (
-    <section className="w-full px-5 py-5 sm:px-8 lg:px-16 xl:px-24">
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-        <aside className="flex rounded-xl bg-forest p-6 text-white shadow-soft sm:p-8 lg:min-h-[560px]">
-          <div className="flex min-h-full w-full flex-col">
-          <button
-            type="button"
-            className="mb-7 inline-flex w-fit items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-white/82 transition hover:bg-white/10"
-            onClick={onBack}
-          >
-            <ArrowLeft aria-hidden="true" size={18} />
-            {copy.back}
-          </button>
+    <div className="profile-intake-layout">
+      <aside className="profile-intake-info">
+        <h2>{website.intakeAbout}</h2>
+        <p>{website.privacyBody}</p>
+        <p>
+          <strong>{website.privacyAssurance}</strong>
+        </p>
+        <details className="profile-process" open={!compactProfile}>
+          <summary>
+            {website.journeyTitle}
+            <ChevronDown aria-hidden="true" size={18} />
+          </summary>
+          <h3>{intake.modeSectionLabel}</h3>
+          <p>{selectedMode.description}</p>
+          <h3>{intake.contextTitle}</h3>
+          <p>{intake.contextBody}</p>
+          <AssessmentSteps language={language} />
+          <h3>{intake.includesTitle}</h3>
+          <ul className="profile-result-includes">
+            {intake.includes.map((item) => (
+              <li key={item}>
+                <Check aria-hidden="true" size={14} />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </details>
+      </aside>
+      <form className="profile-intake-form" noValidate onSubmit={onSubmit}>
+        <header>
+          <p className="site-eyebrow">{intake.eyebrow}</p>
+          <h2 id="profile-dialog-title">{website.profileTitle}</h2>
+          <p>{website.profileIntro}</p>
+        </header>
 
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-mist">
-            {intake.eyebrow}
-          </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight sm:text-5xl">
-            {intake.title}
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-white/84">{intake.body}</p>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-white/78">
-            {intake.privacyReassurance}
-          </p>
+        <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
+          <label className="block">
+            <span className={labelClass}>
+              {intake.name}
+              {requiredMark}
+            </span>
+            <input
+              className={inputClass}
+              value={profile.name}
+              onChange={(event) => onChange("name", event.target.value)}
+              placeholder={intake.namePlaceholder}
+              autoComplete="name"
+              required
+              aria-invalid={profileTouched && !profile.name.trim()}
+            />
+          </label>
 
-          <div className="mt-8 border-t border-white/14 pt-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/55">
-              {intake.modeSectionLabel}
-            </p>
-            <p className="mt-2 text-base leading-7 text-white/78">
-              {selectedMode.description}
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <p className="text-sm font-semibold text-white/72">{intake.contextTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-white/78">{intake.contextBody}</p>
-          </div>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <div className="rounded-lg border border-white/14 bg-white/10 p-4">
-              <p className="text-sm font-semibold text-white">{intake.nextTitle}</p>
-              <ol className="mt-3 space-y-3">
-                {intake.nextSteps.map((step, index) => (
-                  <li key={step} className="flex gap-3 text-sm leading-6 text-white/85">
-                    <span
-                      className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border text-xs font-semibold ${
-                        NEXT_STEP_BADGE_STYLES[index % NEXT_STEP_BADGE_STYLES.length]
-                      }`}
-                    >
-                      {index + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="p-1">
-              <p className="text-sm font-semibold text-white/72">{intake.includesTitle}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {intake.includes.map((item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-white/12 px-3 py-1 text-xs font-semibold text-white/78"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          </div>
-        </aside>
-
-        <form
-          className="rounded-xl border border-forest/12 bg-white p-5 shadow-soft sm:p-7 lg:p-8"
-          noValidate
-          onSubmit={onSubmit}
-        >
-          <div className="mb-6 grid gap-4 border-b border-forest/10 pb-6 md:grid-cols-[minmax(0,0.9fr)_minmax(260px,0.65fr)] md:items-end">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-copper">
-                {intake.formLabel}
+          <label className="block">
+            <span className={labelClass}>
+              {intake.email}
+              {requiredMark}
+            </span>
+            <input
+              className={inputClass}
+              value={profile.email}
+              onChange={(event) => onChange("email", event.target.value)}
+              placeholder={intake.emailPlaceholder}
+              autoComplete="email"
+              type="email"
+              inputMode="email"
+              required
+              aria-invalid={profileTouched && !emailIsValid}
+            />
+            {showEmailError && (
+              <p
+                role="alert"
+                className="mt-2 text-sm font-semibold text-red-700"
+              >
+                {intake.invalidEmail}
               </p>
-              <h2 className="mt-2 font-display text-[2rem] font-semibold leading-[1.08] text-forest sm:text-4xl">
-                {intake.formTitle}
-              </h2>
-            </div>
-            <p className="text-sm leading-6 text-muted">{intake.formNote}</p>
-          </div>
-
-          <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
-            <label className="block">
-              <span className={labelClass}>
-                {intake.name}
-                {requiredMark}
-              </span>
-              <input
-                className={inputClass}
-                value={profile.name}
-                onChange={(event) => onChange("name", event.target.value)}
-                placeholder={intake.namePlaceholder}
-                autoComplete="name"
-                required
-                aria-invalid={profileTouched && !profile.name.trim()}
-              />
-            </label>
-
-            <label className="block">
-              <span className={labelClass}>
-                {intake.email}
-                {requiredMark}
-              </span>
-              <input
-                className={inputClass}
-                value={profile.email}
-                onChange={(event) => onChange("email", event.target.value)}
-                placeholder={intake.emailPlaceholder}
-                autoComplete="email"
-                inputMode="email"
-                required
-                aria-invalid={profileTouched && !emailIsValid}
-              />
-              {showEmailError && (
-                <p className="mt-2 text-sm font-semibold text-coral">{intake.invalidEmail}</p>
-              )}
-            </label>
-
-            <label className="block md:col-span-2">
-              <span className={labelClass}>
-                {intake.phone}
-                {requiredMark}
-              </span>
-              <div
-                className="flex min-h-12 rounded-lg border border-forest/16 bg-white transition focus-within:border-copper focus-within:ring-2 focus-within:ring-copper/20"
-                aria-invalid={profileTouched && !phoneIsValid}
-              >
-                <div
-                  ref={phoneCountryMenuRef}
-                  className="relative w-[104px] shrink-0 border-r border-forest/12 sm:w-[108px]"
-                >
-                  <button
-                    type="button"
-                    className="flex h-full min-h-12 w-full items-center justify-center gap-1.5 bg-white px-2 text-forest outline-none transition hover:bg-parchment/70"
-                    aria-label={`${intake.phoneCountry} ${selectedPhoneCountryLabel} ${selectedPhoneCountry.dialCode}`}
-                    aria-expanded={phoneCountryOpen}
-                    onClick={() => {
-                      setPhoneCountryOpen((value) => {
-                        if (value) {
-                          setPhoneCountrySearch("");
-                        }
-                        return !value;
-                      });
-                    }}
-                  >
-                    <CountryFlag countryCode={selectedPhoneCountry.countryCode} />
-                    <span className="text-sm font-semibold leading-none tabular-nums">
-                      {selectedPhoneCountry.dialCode}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-forest/70"
-                    />
-                  </button>
-
-                  {phoneCountryOpen && (
-                    <div className="absolute left-0 top-[calc(100%+6px)] z-40 w-72 rounded-lg border border-forest/14 bg-white p-2 shadow-soft">
-                      <label className="relative block">
-                        <Search
-                          aria-hidden="true"
-                          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-forest/45"
-                          size={15}
-                        />
-                        <input
-                          className="min-h-9 w-full rounded-md border border-forest/14 bg-parchment/45 py-2 pl-9 pr-3 text-sm font-semibold text-forest outline-none transition placeholder:text-ink/40 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/15"
-                          value={phoneCountrySearch}
-                          onChange={(event) => setPhoneCountrySearch(event.target.value)}
-                          placeholder={intake.countrySearchPlaceholder}
-                          autoComplete="off"
-                        />
-                      </label>
-
-                      <div className="mt-2 max-h-56 overflow-y-auto pr-1">
-                      {filteredPhoneCountryOptions.map((option) => {
-                        const active = option.id === profile.phoneCountry;
-                        const countryName = phoneCountryLabels.get(option.id) ?? option.countryCode;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition ${
-                              active
-                                ? "bg-blue text-white"
-                                : "text-forest hover:bg-parchment"
-                            }`}
-                            aria-pressed={active}
-                            aria-label={`${intake.phoneCountry} ${countryName} ${option.dialCode}`}
-                            onClick={() => {
-                              onChange("phoneCountry", option.id);
-                              setPhoneCountryOpen(false);
-                              setPhoneCountrySearch("");
-                            }}
-                          >
-                            <CountryFlag countryCode={option.countryCode} />
-                            <span className="min-w-0 flex-1 truncate">{countryName}</span>
-                          </button>
-                        );
-                      })}
-                      {filteredPhoneCountryOptions.length === 0 && (
-                        <p className="px-3 py-4 text-sm font-semibold text-muted">
-                          {intake.countryNoResults}
-                        </p>
-                      )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <input
-                  className="min-w-0 flex-1 border-0 bg-white px-3 text-base text-ink outline-none placeholder:text-ink/40 sm:px-5"
-                  value={profile.phoneNumber}
-                  onChange={(event) => onChange("phoneNumber", event.target.value)}
-                  placeholder={selectedPhoneCountry?.phonePlaceholder ?? intake.phonePlaceholder}
-                  autoComplete="tel"
-                  inputMode="tel"
-                  required
-                  aria-invalid={profileTouched && !phoneIsValid}
-                />
-              </div>
-              {showPhoneError && (
-                <p className="mt-2 text-sm font-semibold text-coral">{intake.invalidPhone}</p>
-              )}
-            </label>
-
-            <label className="block md:col-span-2">
-              <span className={labelClass}>
-                {intake.relationship}
-                {requiredMark}
-              </span>
-              <select
-                className={inputClass}
-                value={profile.relationship}
-                onChange={(event) => onChange("relationship", event.target.value)}
-                required
-                aria-invalid={profileTouched && !profile.relationship}
-              >
-                <option value="" disabled>
-                  {intake.relationshipPlaceholder}
-                </option>
-                {intake.relationshipOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {relationshipRequiresDetail && (
-              <label className="block md:col-span-2">
-                <span className={labelClass}>
-                  {intake.relationshipOther}
-                  {requiredMark}
-                </span>
-                <input
-                  className={inputClass}
-                  value={profile.relationshipOther}
-                  onChange={(event) => onChange("relationshipOther", event.target.value)}
-                  placeholder={intake.relationshipOtherPlaceholder}
-                  required
-                  aria-invalid={profileTouched && !profile.relationshipOther.trim()}
-                />
-              </label>
             )}
+          </label>
 
-            <label className="block">
-              <span className={labelClass}>
-                {intake.generation}
-                {requiredMark}
-              </span>
-              <select
-                className={inputClass}
-                value={profile.generation}
-                onChange={(event) => onChange("generation", event.target.value)}
-                required
-                aria-invalid={profileTouched && !profile.generation}
-              >
-                <option value="" disabled>
-                  {intake.generationPlaceholder}
-                </option>
-                {intake.generationOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+          <div className="block md:col-span-2">
+            <label className={labelClass} htmlFor="profile-phone">
+              {intake.phone}
+              {requiredMark}
             </label>
-
-            <div className="block">
-              <span className={labelClass}>
-                {intake.country}
-                {requiredMark}
-              </span>
-              <CountrySearchSelect
-                value={profile.country}
-                options={countryOptions}
-                onChange={(value) => onChange("country", value)}
-                invalid={profileTouched && !profile.country}
-                searchPlaceholder={intake.countrySearchPlaceholder}
-                emptyMessage={intake.countryNoResults}
-              />
-            </div>
-          </div>
-
-          <div className="mt-7 rounded-lg border border-forest/10 bg-parchment/60 p-4">
-            <p className="text-sm font-semibold text-forest">{intake.privacyTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-muted">{intake.privacyNote}</p>
-          </div>
-
-          <div className="mt-7 flex flex-col gap-4 border-t border-forest/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            {showProfileError ? (
-              <p className="text-sm font-semibold text-coral">{intake.completeMessage}</p>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-sm text-ink/60">{intake.requiredNote}</p>
-                <p className="text-sm leading-6 text-ink/60">
-                  {intake.privacyAgreement}{" "}
-                  <button
-                    type="button"
-                    className="font-bold text-forest underline decoration-forest/30 underline-offset-4 transition hover:text-copper"
-                    onClick={onOpenPrivacyPolicy}
-                  >
-                    {intake.privacyLink}
-                  </button>
-                  .
-                </p>
-              </div>
-            )}
-            <button
-              type="submit"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-lavender px-5 text-sm font-bold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-forest active:translate-y-px active:scale-[0.99]"
+            <div
+              ref={phoneCountryMenuRef}
+              className="profile-phone-control"
+              data-invalid={profileTouched && !phoneIsValid}
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && phoneCountryOpen) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setPhoneCountryOpen(false);
+                  setPhoneCountrySearch("");
+                  phoneCountryButtonRef.current?.focus();
+                }
+              }}
             >
-              {intake.continue}
-              <ArrowRight aria-hidden="true" size={18} />
-            </button>
+              <button
+                ref={phoneCountryButtonRef}
+                type="button"
+                className="profile-phone-country"
+                aria-label={`${intake.phoneCountry} ${selectedPhoneCountryLabel} ${selectedPhoneCountry.dialCode}`}
+                aria-expanded={phoneCountryOpen}
+                aria-controls={
+                  phoneCountryOpen ? "profile-phone-countries" : undefined
+                }
+                onClick={() => {
+                  setPhoneCountryOpen((value) => {
+                    if (value) {
+                      setPhoneCountrySearch("");
+                    }
+                    return !value;
+                  });
+                }}
+              >
+                <CountryFlag countryCode={selectedPhoneCountry.countryCode} />
+                <span className="text-sm font-semibold leading-none tabular-nums">
+                  {selectedPhoneCountry.dialCode}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-forest/70"
+                />
+              </button>
+
+              {phoneCountryOpen && (
+                <div
+                  id="profile-phone-countries"
+                  className="profile-phone-menu"
+                >
+                  <label className="relative block">
+                    <Search
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-forest/45"
+                      size={15}
+                    />
+                    <input
+                      className="min-h-9 w-full rounded-md border border-forest/14 bg-parchment/45 py-2 pl-9 pr-3 text-sm font-semibold text-forest outline-none transition placeholder:text-ink/40 focus:border-copper focus:bg-white focus:ring-2 focus:ring-copper/15"
+                      value={phoneCountrySearch}
+                      onChange={(event) =>
+                        setPhoneCountrySearch(event.target.value)
+                      }
+                      placeholder={intake.countrySearchPlaceholder}
+                      aria-label={intake.countrySearchPlaceholder}
+                      autoComplete="off"
+                      autoFocus
+                    />
+                  </label>
+
+                  <div className="mt-2 max-h-56 overflow-y-auto pr-1">
+                    {filteredPhoneCountryOptions.map((option) => {
+                      const active = option.id === profile.phoneCountry;
+                      const countryName =
+                        phoneCountryLabels.get(option.id) ?? option.countryCode;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          className={`flex min-h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition ${
+                            active
+                              ? "bg-forest text-white"
+                              : "text-forest hover:bg-parchment"
+                          }`}
+                          aria-pressed={active}
+                          aria-label={`${intake.phoneCountry} ${countryName} ${option.dialCode}`}
+                          onClick={() => {
+                            onChange("phoneCountry", option.id);
+                            setPhoneCountryOpen(false);
+                            setPhoneCountrySearch("");
+                            phoneCountryButtonRef.current?.focus();
+                          }}
+                        >
+                          <CountryFlag countryCode={option.countryCode} />
+                          <span className="min-w-0 flex-1 truncate">
+                            {countryName}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    {filteredPhoneCountryOptions.length === 0 && (
+                      <p className="px-3 py-4 text-sm font-semibold text-muted">
+                        {intake.countryNoResults}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              <input
+                id="profile-phone"
+                className="min-w-0 flex-1 border-0 bg-white px-3 text-base text-ink outline-none placeholder:text-ink/40 sm:px-5"
+                value={profile.phoneNumber}
+                onChange={(event) =>
+                  onChange("phoneNumber", event.target.value)
+                }
+                placeholder={
+                  selectedPhoneCountry?.phonePlaceholder ??
+                  intake.phonePlaceholder
+                }
+                autoComplete="tel"
+                type="tel"
+                inputMode="tel"
+                required
+                aria-invalid={profileTouched && !phoneIsValid}
+                aria-describedby={
+                  showPhoneError ? "profile-phone-error" : undefined
+                }
+              />
+            </div>
+            {showPhoneError && (
+              <p
+                id="profile-phone-error"
+                role="alert"
+                className="mt-2 text-sm font-semibold text-red-700"
+              >
+                {intake.invalidPhone}
+              </p>
+            )}
           </div>
-        </form>
-      </div>
-    </section>
+
+          <label className="block md:col-span-2">
+            <span className={labelClass}>
+              {intake.relationship}
+              {requiredMark}
+            </span>
+            <select
+              className={inputClass}
+              value={profile.relationship}
+              onChange={(event) => onChange("relationship", event.target.value)}
+              required
+              aria-invalid={profileTouched && !profile.relationship}
+            >
+              <option value="" disabled>
+                {intake.relationshipPlaceholder}
+              </option>
+              {intake.relationshipOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {relationshipRequiresDetail && (
+            <label className="block md:col-span-2">
+              <span className={labelClass}>
+                {intake.relationshipOther}
+                {requiredMark}
+              </span>
+              <input
+                className={inputClass}
+                value={profile.relationshipOther}
+                onChange={(event) =>
+                  onChange("relationshipOther", event.target.value)
+                }
+                placeholder={intake.relationshipOtherPlaceholder}
+                required
+                aria-invalid={
+                  profileTouched && !profile.relationshipOther.trim()
+                }
+              />
+            </label>
+          )}
+
+          <label className="block">
+            <span className={labelClass}>
+              {intake.generation}
+              {requiredMark}
+            </span>
+            <select
+              className={inputClass}
+              value={profile.generation}
+              onChange={(event) => onChange("generation", event.target.value)}
+              required
+              aria-invalid={profileTouched && !profile.generation}
+            >
+              <option value="" disabled>
+                {intake.generationPlaceholder}
+              </option>
+              {intake.generationOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="block">
+            <span className={labelClass}>
+              {intake.country}
+              {requiredMark}
+            </span>
+            <CountrySearchSelect
+              label={intake.country}
+              value={profile.country}
+              options={countryOptions}
+              onChange={(value) => onChange("country", value)}
+              invalid={profileTouched && !profile.country}
+              searchPlaceholder={intake.countrySearchPlaceholder}
+              emptyMessage={intake.countryNoResults}
+            />
+          </div>
+        </div>
+
+        <div className="profile-use">
+          <p className="text-sm font-semibold text-forest">
+            {intake.privacyTitle}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            {intake.privacyNote}
+          </p>
+        </div>
+
+        <div className="profile-form-actions">
+          {showProfileError && (
+            <p role="alert" className="text-sm font-semibold text-red-700">
+              {intake.completeMessage}
+            </p>
+          )}
+          <div className="space-y-2">
+            <p className="text-sm text-ink/70">{intake.requiredNote}</p>
+            <p className="text-sm leading-6 text-ink/60">
+              {intake.privacyAgreement}{" "}
+              <button
+                type="button"
+                className="font-bold text-forest underline decoration-forest/30 underline-offset-4 transition hover:text-copper"
+                onClick={onOpenPrivacyPolicy}
+              >
+                {intake.privacyLink}
+              </button>
+              .
+            </p>
+          </div>
+          <button type="submit" className="site-button">
+            {website.begin}
+            <ArrowRight aria-hidden="true" size={18} />
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -3452,6 +2330,11 @@ function AssessmentFlow({
   if (!profileStepComplete) {
     return (
       <>
+        <AssessmentLanding
+          copy={copy}
+          language={language}
+          onStart={() => setShowPrivacyNotice(privacyConsent?.accepted !== true)}
+        />
         {showPrivacyNotice && (
           <PreAssessmentPrivacyModal
             copy={copy.preAssessmentPrivacy}
@@ -3459,21 +2342,27 @@ function AssessmentFlow({
             onReadPolicy={readPrivacyPolicyFromNotice}
           />
         )}
-        <AssessmentProfileIntake
-          copy={copy}
-          mode={mode}
-          profile={profile}
-          profileTouched={profileTouched}
-          profileIsComplete={profileIsComplete}
-          emailIsValid={emailIsValid}
-          phoneIsValid={phoneIsValid}
-          relationshipRequiresDetail={relationshipRequiresDetail}
-          countryOptions={countryOptions}
-          onBack={onBack}
-          onChange={updateProfile}
-          onSubmit={submitProfile}
-          onOpenPrivacyPolicy={onOpenPrivacyPolicy}
-        />
+        <ProfileDialog
+          language={language}
+          onClose={onBack}
+          suspended={showPrivacyNotice || privacyPolicyOpen}
+        >
+          <AssessmentProfileIntake
+            copy={copy}
+            language={language}
+            mode={mode}
+            profile={profile}
+            profileTouched={profileTouched}
+            profileIsComplete={profileIsComplete}
+            emailIsValid={emailIsValid}
+            phoneIsValid={phoneIsValid}
+            relationshipRequiresDetail={relationshipRequiresDetail}
+            countryOptions={countryOptions}
+            onChange={updateProfile}
+            onSubmit={submitProfile}
+            onOpenPrivacyPolicy={onOpenPrivacyPolicy}
+          />
+        </ProfileDialog>
       </>
     );
   }
@@ -3917,12 +2806,12 @@ function ResultsScreen({
               <ArrowRight aria-hidden="true" size={18} />
             </button>
             {submitted && (
-              <p className="mt-3 rounded-md border border-copper/20 bg-copper/10 px-3 py-2 text-sm leading-6 text-forest">
+              <p role="status" className="mt-3 rounded-md border border-success bg-success/10 px-3 py-2 text-sm leading-6 text-ink">
                 {finalCopy.successNote}
               </p>
             )}
             {submitError && (
-              <p className="mt-3 rounded-md border border-copper/25 bg-copper/10 px-3 py-2 text-sm leading-5 text-forest">
+              <p role="alert" className="mt-3 rounded-md border border-error bg-error/10 px-3 py-2 text-sm leading-5 text-ink">
                 {submitError}
               </p>
             )}
@@ -4757,81 +3646,6 @@ function getResultDetailCopy(language) {
   return RESULT_DETAIL_COPY[language] ?? RESULT_DETAIL_COPY.en;
 }
 
-function getHomeFinalCtaCopy(language) {
-  if (language === "es") {
-    return {
-      title: "¿Listos para tomar la siguiente decisión con mayor claridad?",
-      body:
-        "Cuando las responsabilidades, las expectativas o el camino a seguir no están claros, la conversación adecuada puede ayudar a la familia a encontrar una forma práctica de avanzar.",
-      note: "Empieza por la decisión, la responsabilidad o la transición que hoy necesita mayor claridad.",
-      primary: "Iniciar una conversación",
-      secondary: "Comenzar la Autoevaluación"
-    };
-  }
-
-  return {
-    title: "Ready to make the next decision clearer?",
-    body:
-      "When roles, expectations or important decisions remain unclear, the right conversation can create a practical way forward.",
-    note: "Start with the decision, role, or transition that needs attention now.",
-    primary: "Meet Gilbert",
-    secondary: "Begin the Self-Assessment"
-  };
-}
-
-function stepLabel(language, step) {
-  return language === "es" ? `Paso ${step}` : `Step ${step}`;
-}
-
-function getHomeAssessmentSteps(language) {
-  if (language === "es") {
-    return [
-      "Completa la Autoevaluación y recibe tu reporte individual",
-      "Gilbert recibe tus resultados y, cuando participan varios familiares, un resumen que le permite identificar coincidencias y distintas perspectivas",
-      "Tú decides si quieres que Gilbert te contacte para revisar los resultados"
-    ];
-  }
-
-  return [
-    "Receive and save your individual Self-Assessment report",
-    "Gilbert receives the information necessary to identify shared themes and differences in perspective",
-    "Step 3: Choose whether you would like Gilbert to contact you"
-  ];
-}
-
-function getHomeCredibilityCopy(language) {
-  if (language === "es") {
-    return {
-      label: "Experiencia y credibilidad",
-      title: "Gilbert no es el típico asesor de familias empresarias",
-      body:
-        "Gilbert aporta la perspectiva de quien ha vivido la realidad de una familia empresaria desde dentro: como integrante de la tercera generación, propietario, ejecutivo, consejero y líder de gobierno familiar.",
-      proof: [
-        { value: "15+ años", label: "Como parte de la tercera generación de una familia empresaria" },
-        { value: "12+ años", label: "Responsabilidades operativas y ejecutivas dentro de la familia empresaria" },
-        { value: "Desde 2018", label: "Consejero no ejecutivo" },
-        { value: "Desde 2020", label: "Presidente del Consejo de Familia" },
-        { value: "Más de 5 años", label: "En comités de consejo y gobierno familiar" },
-        { value: "Desde 2025", label: "Presidente del Comité de Prácticas Societarias" }
-      ]
-    };
-  }
-
-  return {
-    label: "Experience & credibility",
-    title: "Not your everyday family business advisor.",
-    body:
-      "Gilbert brings the perspective of someone who has experienced family enterprise from the inside, as an owner, executive, non-executive board member and family governance leader.",
-    proof: [
-      { value: "15+ Years", label: "Part of a third-generation family enterprise" },
-      { value: "12+ Years", label: "Operational and executive roles" },
-      { value: "Since 2018", label: "Non-Executive Board Member" },
-      { value: "Since 2020", label: "Chair of the Family Council" },
-      { value: "5+ Years", label: "Committee participation" },
-      { value: "Since 2025", label: "Chair of the Corporate Practices Committee" }
-    ]
-  };
-}
 
 function getCompareInviteCopy(language) {
   if (language === "es") {
@@ -5064,41 +3878,6 @@ function pillarBandClasses(bandId) {
   return "border-forest/14 bg-parchment/70 text-forest";
 }
 
-function getFooterContent(language) {
-  if (language === "es") {
-    return {
-      trusted: "Acompañando a familias empresarias en decisiones sobre propiedad, sucesión y consejos",
-      credentialsLabel: "Formación y credenciales",
-      credentials: [
-        "IMBA · University of Denver",
-        "FFI Family Business & Wealth Advising Certificate",
-        "Certified Professional Coach · iPEC",
-        "Board Director Diploma · IMD"
-      ],
-      linkedin: "linkedin.com/in/gilbertdevlyn/",
-      linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
-      socialLabel: "Canales sociales",
-      emailLabel: "Email",
-      trustLine: "Las conversaciones privadas y la información sensible se tratan con discreción."
-    };
-  }
-
-  return {
-    trusted: "Helping families clarify ownership, succession, and board decisions",
-    credentialsLabel: "Credentials & trust",
-    credentials: [
-      "IMBA · University of Denver",
-      "FFI Family Business & Wealth Advising Certificate",
-      "Certified Professional Coach · iPEC",
-      "Board Director Certification · IMD"
-    ],
-    linkedin: "linkedin.com/in/gilbertdevlyn/",
-    linkedinUrl: "https://www.linkedin.com/in/gilbertdevlyn/",
-    socialLabel: "Social channels",
-    emailLabel: "Email",
-    trustLine: "Private conversations and sensitive information are handled discreetly."
-  };
-}
 
 function pillarBarColor(score) {
   if (score < 40) return "bg-coral";

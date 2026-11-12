@@ -49,14 +49,14 @@ body,
 body {
   min-height: 100dvh;
   margin: 0;
-  background: #FAFAF8;
-  color: #32535D;
+  background: #ffffff;
+  color: #333333;
   font-size: 16px;
-  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-display {
-  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 h1,

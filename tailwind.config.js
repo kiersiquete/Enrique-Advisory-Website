@@ -4,26 +4,29 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ---- Gilbert Devlyn palette 1: serene sophistication ----
-        pine: "#32535D",
-        "pine-2": "#68659E",
-        ink: "#32535D",
-        cream: "#FAFAF8",
-        "cream-2": "#B7C9B9",
-        lavender: "#68659E",
-        blue: "#8AA7BD",
-        gold: "#B7C9B9",
-        coral: "#32535D",
-        muted: "#32535D",
-        white: "#FAFAF8",
+        // Enrique design system, November 2026.
+        pine: "#295560",
+        "pine-2": "#6A66A3",
+        ink: "#333333",
+        cream: "#FFFFFF",
+        "cream-2": "#B3CCB7",
+        lavender: "#6A66A3",
+        blue: "#85A9C1",
+        gold: "#B3CCB7",
+        coral: "#295560",
+        muted: "#526B7B",
+        white: "#FFFFFF",
+        success: "#28A745",
+        error: "#DC3545",
+        warning: "#FFAF3E",
 
         // ---- Legacy aliases: old class names, new colors ----
-        forest: "#32535D",
-        "forest-2": "#68659E",
-        teal: "#8AA7BD",
-        copper: "#32535D",
-        parchment: "#FAFAF8",
-        mist: "#B7C9B9"
+        forest: "#295560",
+        "forest-2": "#6A66A3",
+        teal: "#85A9C1",
+        copper: "#295560",
+        parchment: "#FFFFFF",
+        mist: "#B3CCB7"
       },
       boxShadow: {
         soft: "0 16px 40px rgba(50, 83, 93, 0.16)",
@@ -31,8 +34,8 @@ export default {
         nav: "0 10px 30px rgba(50, 83, 93, 0.08)"
       },
       fontFamily: {
-        sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"]
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       }
     }
   },

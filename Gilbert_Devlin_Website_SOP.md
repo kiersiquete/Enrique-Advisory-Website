@@ -737,15 +737,50 @@ Before handing off the website, confirm:
 - English and Spanish content are available.
 - Desktop, tablet, and mobile layouts have no horizontal overflow.
 
-## 23. Project Task List - Updated July 1, 2026
+## 23. Project Task List - Updated November 12, 2026
 
 Use this section as the single source of truth for project work. Add any new task here first so future changes stay tracked carefully.
 
-Latest source: Fathom meeting on July 1, 2026. Main direction: finish the site within a two-week window with precise, human-reviewed execution; simplify the self-assessment funnel; make comparison reports internal-only for Gilbert; and polish the consulting-site flow, copy, visuals, and brand system.
+Latest design sources: Enrique's six November PDFs (Design System V1-1, Home V2, About V1, Services V1, Self-Assessment V1 and Self-Assessment Modal), plus the November 12 phone-field screenshot and request to catch the remaining feedback. These supersede the July palette and page mockups where they differ. Implementation and verification notes: `docs/enrique-design-refresh.md`.
+
+Earlier source: Fathom meeting on July 1, 2026. Main direction: finish the site within a two-week window with precise, human-reviewed execution; simplify the self-assessment funnel; make comparison reports internal-only for Gilbert; and polish the consulting-site flow, copy, visuals, and brand system.
 
 Prior source: Enrique review meeting on June 29, 2026. Main direction: make the site feel like a robust consulting website for a technical, niche family-enterprise advisor. The assessment should become a secondary lead-generation tool, not the center of the whole site.
 
 Additional source: Gilbert Rev3 written checklist and identity exploration image shared July 1, 2026. Main direction: make the self-assessment feel more like the first step in a confidential advisory process, strengthen privacy/consent language, improve visibility of results, clarify follow-up/sharing flows, and apply the new brand palette.
+
+### November Design Feedback Coverage
+
+| Source | Implemented locally | Remaining review / dependency |
+| --- | --- | --- |
+| Design System V1-1 | Inter, supplied primary palette, heading scale, navigation/button typography, semantic status colors, shared header/footer | Final visual sign-off; compact/mobile type is intentionally smaller. Hero uses a flat light-sage background, not the reference fade. |
+| Home V2 | Hero/portrait, experience grid, credentials, six illustrated focus areas, assessment/process, services preview | Approve the two existing supporting photographs; confirm whether the earlier video request still applies. |
+| About V1 | Portrait/bio, context, experience, qualifications, focus areas, advisory invitation/process | Confirm conflicting FFI and Denver credential wording before publishing new claims. |
+| Services V1 | Four illustrated services, audience/help/outcome blocks and closing CTA | Client copy sign-off. Duplicate Board copy in 1:1 and reversed help/outcome labels were corrected rather than reproduced. |
+| Self-Assessment V1 | Unbroken title, starting-point emphasis, privacy explanation, separated facts, process, left-aligned contact strip | Contact currently opens email; the separate automated conversation-request requirement remains below. |
+| Self-Assessment Modal | Bilingual profile fields, consent, validation, process/results explanation, accessible mobile disclosure | Final client review. Existing validation and assessment logic are preserved. |
+
+- [x] Fix the November 12 phone-field UI error.
+  - One focus boundary around the full phone control; no outline overlapping the country selector.
+  - Contained input corners and a country menu that fits a 320px viewport.
+  - Keyboard search, selection and Escape return focus without closing the profile modal.
+- [x] Restore profile explanations on mobile without overloading the first screen.
+  - The process and result-includes content is available through an expandable section, not hidden by CSS.
+  - The privacy-policy link remains available after validation errors.
+- [x] Keep the profile close control separate from scrolling content.
+  - A fixed modal toolbar prevents the close button from covering headings on narrow screens.
+- [x] Polish the assessment introduction and shared UI.
+  - Keep "Self-Assessment" together in the headline, emphasize the starting-point/privacy boundaries, restore fact dividers and align the bottom contact CTA.
+  - Align navigation/button sizes and use distinct success/error states.
+- [x] Run local regression checks for the design refresh.
+  - Four public pages in English and Spanish at 1440, 1024, 390 and 320px: images, text overflow, language persistence and screenshots.
+  - Profile controls at the same widths/languages: focus, country menus, mobile explanations, validation, privacy return and keyboard containment.
+  - Complete the 50-question flow and saved-progress resume; run the full project verification/build.
+  - These checks do not prove live Outlook delivery or production data persistence. No report emails were sent.
+
+### Earlier Requirements and Outstanding Approvals
+
+The earlier checklist is retained below so meeting requirements do not disappear during a visual refresh. Historical checked items describe the implementation at that time; unchecked backend/operational items require a separate current-state audit and are not automatically marked complete by UI tests.
 
 - [x] Advisor-first homepage positioning.
   - Home now explains who Gilbert is, what family-business problem he helps solve, and why the work matters before introducing the diagnostic.
@@ -832,6 +867,7 @@ Additional source: Gilbert Rev3 written checklist and identity exploration image
   - Position the service as help structuring a governance system, creating or professionalizing a board, and professionalizing the Consejo de Administración.
 
 - [ ] Video production and placement.
+  - November reference update: Home V2 has no video section. Confirm whether to retain this earlier requirement; do not substitute a third-party video.
   - Film one interview or Q&A with Gilbert.
   - Edit a short Home page video introducing Gilbert and the advisory work.
   - Edit a longer About page video explaining Gilbert's background, lived experience, and way of working.
@@ -844,6 +880,7 @@ Additional source: Gilbert Rev3 written checklist and identity exploration image
   - If the comparison view becomes internal-only, Gilbert/admin should still be able to return to the comparison after the group result is ready.
 
 - [x] Home page consulting-site overhaul.
+  - Historical July milestone. The current November implementation follows Home V2; video placement is awaiting the decision above.
   - Rework the site so Gilbert is clearly positioned as a strong technical consultant in a niche family-enterprise advisory space.
   - Remove redundant sections such as repeated "why advisory matters" and "how Gilbert works" content.
   - Reorganize Home into the July 1 meeting flow: video, problem Gilbert solves, why advisory matters, consequences of ignoring the family dimension, and how Gilbert works.
@@ -856,6 +893,8 @@ Additional source: Gilbert Rev3 written checklist and identity exploration image
   - Add more detail on who each service is for, what Gilbert helps with, and what outcome the family should expect.
 
 - [ ] About page credentials cleanup.
+  - November content approval: the PDFs conflict on FFI Fellow versus certification wording. Certification wording is retained until confirmed.
+  - November content approval: the Denver degree label differs from the previous site. Existing IMBA / Management and Marketing wording is retained until confirmed.
   - Keep About focused on Gilbert's credentials, experience, credibility, and lived perspective.
   - Remove or reduce the large assessment CTA from About so the page does not over-push the diagnostic.
   - Move deeper family-enterprise problem framing to Services or Home instead of forcing it into About.
@@ -869,18 +908,20 @@ Additional source: Gilbert Rev3 written checklist and identity exploration image
   - Keep the self-assessment visible, but secondary to Gilbert's advisory positioning and services.
 
 - [ ] UI/UX redesign for readability and polish.
+  - November layouts are implemented and locally checked; final Enrique/Gilbert review remains open.
+  - Approve or replace the two existing Home supporting photographs used in the reference's empty image slots.
   - Reduce dense, cramped boxes, especially on the Home page.
   - Use more white space, long-scroll sections, minimalistic diagrams, frameworks, icons, and professional images.
   - Make the information feel beautiful, polished, and easy to read for the two-week finish window.
 
 - [ ] Design system refresh.
-  - Apply the identity exploration palette from the shared image: pine `#0E3B36`, cream `#F4EEE2`, lavender `#C9B2DE`, blue `#B9CEE3`, white `#FFFFFF`, gold `#F1C84C`, and coral `#EE5A3C`.
-  - Treat these sampled colors as working values until Enrique confirms official hex codes.
-  - Replace the current mustard/brown direction where it feels too heavy.
-  - Refresh typography, background tone, button colors, and visual hierarchy so the site feels more professional.
-  - Add the final logo when Enrique provides it.
+  - Implemented from the November Design System V1-1: teal `#295560`, sage `#B3CCB7`, blue `#85A9C1`, purple `#6A66A3`, text `#333333`, Inter and the supplied wordmark. The July sampled palette is superseded.
+  - Semantic colors are success `#28A745`, error `#DC3545`, warning `#FFAF3E`; success/error feedback uses the corresponding states.
+  - Final visual approval remains open. Note the flat light-sage hero background, responsive compact typography and simplified modal process presentation rather than claiming pixel-identical PDF reproduction.
 
 - [ ] Schedule conversation CTA flow.
+  - Current public Contact buttons open `mailto:info@gilbertdevlyn.com`; this is not an automated request/confirmation or a booked appointment.
+  - Confirm the intended website Contact destination separately from the results-email action; no booking URL or Contact-page design was supplied.
   - Add a direct "Schedule a Conversation with Gilbert" path for visitors who are ready to talk.
   - Do not use iCal for this version.
   - Trigger an email to Gilbert and redirect the user to a confirmation page saying: "Gilbert has been notified that you would like to speak with him."
@@ -893,10 +934,22 @@ Additional source: Gilbert Rev3 written checklist and identity exploration image
   - Confirm how Gilbert is notified when enough participants complete a group for internal comparison.
 
 - [ ] Confirm production email settings.
+  - November 12 local verification: no `.env` file or Airtable/SMTP/Resend environment configuration was present. A complete browser assessment submitted to `/api/results` returned HTTP 500; the API log confirmed `Missing Airtable configuration`. The email function returned `missing-smtp-config`. This does not establish the deployed site's configuration or delivery status.
+  - Restore the existing local project configuration securely, or confirm the deployed environment and a test recipient. Then verify an actual saved record plus receipt of participant/advisor emails, including the intended Outlook inbox.
   - Make sure production email environment variables send public contact and system notifications to the intended inbox.
   - Confirm the exact final email/domain spelling because current site copy uses `info@gilbertdevlyn.com`, the July 1 Fathom summary mentions `info@gilbertdevlin.com`, and the Gilbert Rev3 checklist mentions `info@gilbertdevly.com`.
   - Research forwarding options from the older host/domain setup to Gilbert's current inbox, including whether Gmail "Send mail as" or forwarding can solve it.
   - Keep the confirmed `info@...` address as the public-facing address unless Gilbert asks for another one.
+
+- [ ] Fix false email-delivery success feedback (confirmed November 12).
+  - With a simulated successful Airtable save but `email.sent: false`, the results page still displays "Report saved and sent" and tells the user to expect an email.
+  - Distinguish saved, email sent/accepted, and email failed/skipped states. Do not discard or overwrite delivery state when minimizing the locally saved result.
+  - Verify missing configuration and provider failure in both languages; only show delivery success when the API actually reports it.
+
+- [ ] Make failed report delivery retryable without duplicate data or duplicate successful emails (confirmed November 12).
+  - A simulated first save with provider failure followed by the same submission triggers `duplicate-submission`; the mail provider is not called again.
+  - Track delivery state separately from assessment persistence so failed participant/advisor messages can be retried safely.
+  - Cover partial delivery (participant succeeds, advisor fails), repeated requests and restored submissions in tests.
 
 - [ ] Confirm legacy architecture backlog items.
   - Decide whether abandoned-intake and completed-but-not-booked email flows are still needed.
